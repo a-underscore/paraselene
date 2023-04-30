@@ -113,7 +113,6 @@ impl<'a> System<'a> for GameUiManager {
                                     .and_then(|s| s.active.then_some(s))
                             })
                         {
-                            println!("{:?}", mouse_pos.0);
                             screen_pos.position = mouse_pos
                         }
                     }
