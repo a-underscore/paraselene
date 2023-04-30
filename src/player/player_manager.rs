@@ -2,35 +2,15 @@ use super::Player;
 use crate::util;
 use hex::{
     anyhow,
-    assets::{Shape, Texture},
+    assets::Shape,
     components::{Camera, Sprite, Transform},
     ecs::{
-        component_manager::Component,
         ev::{Control, Ev},
         system_manager::System,
-        ComponentManager, EntityManager, Id, Scene,
+        ComponentManager, EntityManager, Scene,
     },
-    glium::{
-        glutin::{
-            dpi::{PhysicalPosition, PhysicalSize},
-            event::{ElementState, Event, KeyboardInput, MouseButton, VirtualKeyCode, WindowEvent},
-            event_loop::ControlFlow,
-        },
-        texture::MipmapsOption,
-        uniforms::{MagnifySamplerFilter, SamplerBehavior},
-        Display,
-    },
-    id,
-    math::{Mat3d, Vec2d},
-};
-use hex_instance::Instance;
-use hex_physics::{collider::Collider, physical::Physical};
-use hex_ui::{ab_glyph::FontRef, ScreenPos, Text, UiCallback};
-use rand::Rng;
-use std::{
-    f32::{self, consts::PI},
-    rc::Rc,
-    time::{Duration, Instant},
+    glium::glutin::event::Event,
+    math::Vec2d,
 };
 
 pub struct PlayerManager;
@@ -76,8 +56,8 @@ impl<'a> System<'a> for PlayerManager {
     fn update(
         &mut self,
         ev: &mut Ev,
-        scene: &mut Scene,
-        (em, cm): (&mut EntityManager, &mut ComponentManager),
+        _scene: &mut Scene,
+        (_em, _cm): (&mut EntityManager, &mut ComponentManager),
     ) -> anyhow::Result<()> {
         if let Ev::Event(Control {
             event: Event::MainEventsCleared,

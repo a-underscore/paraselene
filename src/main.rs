@@ -5,7 +5,6 @@ mod util;
 use game_ui_manager::GameUiManager;
 use hex::Renderer;
 use hex::{
-    assets::Shape,
     ecs::{ComponentManager, EntityManager, Scene, SystemManager},
     glium::{
         glutin::{dpi::Size, event_loop::EventLoop, window::WindowBuilder, ContextBuilder},
@@ -13,7 +12,7 @@ use hex::{
     },
     math::Vec2d,
 };
-use hex_instance::InstanceRenderer;
+
 use hex_physics::{Box2d, PhysicsManager};
 use hex_ui::{UiManager, UiRenderer};
 use player::PlayerManager;

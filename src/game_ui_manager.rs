@@ -1,7 +1,7 @@
 use crate::util;
 use hex::{
     anyhow,
-    assets::{Shape, Texture},
+    assets::Shape,
     components::{Camera, Sprite, Transform},
     ecs::{
         component_manager::Component,
@@ -9,28 +9,18 @@ use hex::{
         system_manager::System,
         ComponentManager, EntityManager, Id, Scene,
     },
-    glium::{
-        glutin::{
-            dpi::{PhysicalPosition, PhysicalSize},
-            event::{ElementState, Event, KeyboardInput, MouseButton, VirtualKeyCode, WindowEvent},
-            event_loop::ControlFlow,
-        },
-        texture::MipmapsOption,
-        uniforms::{MagnifySamplerFilter, SamplerBehavior},
-        Display,
+    glium::glutin::{
+        dpi::{PhysicalPosition, PhysicalSize},
+        event::{Event, WindowEvent},
+        event_loop::ControlFlow,
     },
     id,
-    math::{Mat3d, Vec2d},
+    math::Vec2d,
 };
-use hex_instance::Instance;
-use hex_physics::{collider::Collider, physical::Physical};
-use hex_ui::{ab_glyph::FontRef, ScreenPos, Text, UiCallback};
-use rand::Rng;
-use std::{
-    f32::{self, consts::PI},
-    rc::Rc,
-    time::{Duration, Instant},
-};
+
+use hex_ui::ScreenPos;
+
+use std::f32::{self};
 
 #[derive(Default)]
 pub struct GameUiManager {
