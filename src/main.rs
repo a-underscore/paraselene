@@ -1,5 +1,6 @@
 mod game_ui_manager;
 mod player;
+mod tag;
 mod util;
 
 use game_ui_manager::GameUiManager;
@@ -12,6 +13,7 @@ use hex::{
     },
     math::Vec2d,
 };
+use tag::Tag;
 
 use hex_physics::{Box2d, PhysicsManager};
 use hex_ui::{UiManager, UiRenderer};
@@ -41,7 +43,7 @@ pub fn main() {
 
     let mut system_manager = SystemManager::default();
 
-    system_manager.add(PlayerManager);
+    system_manager.add(PlayerManager::default());
     system_manager.add(GameUiManager::default());
     system_manager.add(PhysicsManager::new(
         PHYSICS_RATE,

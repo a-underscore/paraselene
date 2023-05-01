@@ -1,10 +1,9 @@
-use crate::util;
+use crate::{util, Tag};
 use hex::{
     anyhow,
     assets::Shape,
     components::{Camera, Sprite, Transform},
     ecs::{
-        component_manager::Component,
         ev::{Control, Ev},
         system_manager::System,
         ComponentManager, EntityManager, Id, Scene,
@@ -14,18 +13,18 @@ use hex::{
         event::{Event, WindowEvent},
         event_loop::ControlFlow,
     },
-    id,
     math::Vec2d,
 };
 
 use hex_ui::ScreenPos;
 
-use std::f32::{self};
+use std::f32;
 
 #[derive(Default)]
 pub struct GameUiManager {
     pub mouse_pos: (f32, f32),
     pub window_dims: (u32, u32),
+    pub crosshair: Id,
 }
 
 impl GameUiManager {
@@ -57,10 +56,10 @@ impl<'a> System<'a> for GameUiManager {
         scene: &mut Scene,
         (em, cm): (&mut EntityManager, &mut ComponentManager),
     ) -> anyhow::Result<()> {
-        let crosshair = em.add();
+        self.crosshair = em.add();
 
         cm.add(
-            crosshair,
+            self.crosshair,
             ScreenPos {
                 position: Default::default(),
                 scale: Vec2d::new(1.0, 1.0),
@@ -69,7 +68,7 @@ impl<'a> System<'a> for GameUiManager {
             em,
         );
         cm.add(
-            crosshair,
+            self.crosshair,
             Sprite::new(
                 Shape::rect(&scene.display, Vec2d([1.0; 2]))?,
                 util::load_texture(&scene.display, include_bytes!("crosshair.png"))?,
@@ -79,7 +78,7 @@ impl<'a> System<'a> for GameUiManager {
             ),
             em,
         );
-        cm.add(crosshair, Crosshair, em);
+        cm.add(self.crosshair, Tag::new("crosshair"), em);
 
         Ok(())
     }
@@ -96,15 +95,11 @@ impl<'a> System<'a> for GameUiManager {
                 flow: _,
             }) => {
                 if let Some(mouse_pos) = self.mouse_position_world((em, cm)) {
-                    for e in em.entities.keys().cloned() {
-                        if let Some(screen_pos) =
-                            cm.get::<Crosshair>(e, em).cloned().and_then(|_| {
-                                cm.get_mut::<ScreenPos>(e, em)
-                                    .and_then(|s| s.active.then_some(s))
-                            })
-                        {
-                            screen_pos.position = mouse_pos
-                        }
+                    if let Some(screen_pos) = cm
+                        .get_mut::<ScreenPos>(self.crosshair, em)
+                        .and_then(|s| s.active.then_some(s))
+                    {
+                        screen_pos.position = mouse_pos
                     }
                 }
             }
@@ -144,14 +139,5 @@ impl<'a> System<'a> for GameUiManager {
         }
 
         Ok(())
-    }
-}
-
-#[derive(Default, Clone, Copy)]
-pub struct Crosshair;
-
-impl Component for Crosshair {
-    fn id() -> Id {
-        id!()
     }
 }
