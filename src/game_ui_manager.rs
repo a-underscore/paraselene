@@ -10,24 +10,71 @@ use hex::{
     },
     glium::glutin::{
         dpi::{PhysicalPosition, PhysicalSize},
-        event::{Event, WindowEvent},
+        event::{ElementState, Event, KeyboardInput, VirtualKeyCode, WindowEvent},
         event_loop::ControlFlow,
     },
     math::Vec2d,
+    once_cell::sync::OnceCell,
 };
-
+use hex_physics::Physical;
 use hex_ui::ScreenPos;
-
+use std::collections::HashMap;
 use std::f32;
+
+pub const PLAYER_MOVE_SPEED: f32 = 10.0;
 
 #[derive(Default)]
 pub struct GameUiManager {
     pub mouse_pos: (f32, f32),
     pub window_dims: (u32, u32),
     pub crosshair: Id,
+    pub player: OnceCell<Option<Id>>,
+    pub kp_cb: HashMap<
+        VirtualKeyCode,
+        Box<
+            dyn FnMut(
+                ElementState,
+                &mut Scene,
+                (&mut EntityManager, &mut ComponentManager),
+            ) -> anyhow::Result<()>,
+        >,
+    >,
 }
 
 impl GameUiManager {
+    pub fn new(
+        scene: &Scene,
+        (em, cm): (&mut EntityManager, &mut ComponentManager),
+    ) -> anyhow::Result<Self> {
+        let crosshair = em.add();
+
+        cm.add(
+            crosshair,
+            ScreenPos {
+                position: Default::default(),
+                scale: Vec2d::new(1.0, 1.0),
+                active: true,
+            },
+            em,
+        );
+        cm.add(
+            crosshair,
+            Sprite::new(
+                Shape::rect(&scene.display, Vec2d([1.0; 2]))?,
+                util::load_texture(&scene.display, include_bytes!("crosshair.png"))?,
+                [1.0; 4],
+                0.0,
+                true,
+            ),
+            em,
+        );
+        cm.add(crosshair, Tag::new("crosshair"), em);
+
+        Ok(Self {
+            crosshair,
+            ..Default::default()
+        })
+    }
     pub fn mouse_position_world(
         &self,
         (em, cm): (&mut EntityManager, &mut ComponentManager),
@@ -48,37 +95,76 @@ impl GameUiManager {
                 * (y / height as f32 * camera_dimensions.0.y() - camera_dimensions.0.y() / 2.0),
         ))
     }
+
+    pub fn add_keybind<F>(&mut self, k: VirtualKeyCode, f: F)
+    where
+        F: FnMut(
+                ElementState,
+                &mut Scene,
+                (&mut EntityManager, &mut ComponentManager),
+            ) -> anyhow::Result<()>
+            + 'static,
+    {
+        self.kp_cb.insert(k, Box::new(f));
+    }
+
+    // This will be replaced with values loaded from a configuration file.
+    fn init_default_keybinds(&mut self, (em, cm): (&mut EntityManager, &mut ComponentManager)) {
+        if let Some(player) = *self
+            .player
+            .get_or_init(|| Tag::new("player").find((em, cm)))
+        {
+            self.add_keybind(VirtualKeyCode::W, move |state, _, (em, cm)| {
+                if let Some(physical) = cm.get_mut::<Physical>(player, em) {
+                    *physical.force.y_mut() = match state {
+                        ElementState::Pressed => PLAYER_MOVE_SPEED,
+                        ElementState::Released => 0.0,
+                    };
+                }
+
+                Ok(())
+            });
+            self.add_keybind(VirtualKeyCode::S, move |state, _, (em, cm)| {
+                if let Some(physical) = cm.get_mut::<Physical>(player, em) {
+                    *physical.force.y_mut() = match state {
+                        ElementState::Pressed => -PLAYER_MOVE_SPEED,
+                        ElementState::Released => 0.0,
+                    };
+                }
+
+                Ok(())
+            });
+            self.add_keybind(VirtualKeyCode::A, move |state, _, (em, cm)| {
+                if let Some(physical) = cm.get_mut::<Physical>(player, em) {
+                    *physical.force.x_mut() = match state {
+                        ElementState::Pressed => -PLAYER_MOVE_SPEED,
+                        ElementState::Released => 0.0,
+                    };
+                }
+
+                Ok(())
+            });
+            self.add_keybind(VirtualKeyCode::D, move |state, _, (em, cm)| {
+                if let Some(physical) = cm.get_mut::<Physical>(player, em) {
+                    *physical.force.x_mut() = match state {
+                        ElementState::Pressed => PLAYER_MOVE_SPEED,
+                        ElementState::Released => 0.0,
+                    };
+                }
+
+                Ok(())
+            });
+        }
+    }
 }
 
 impl<'a> System<'a> for GameUiManager {
     fn init(
         &mut self,
-        scene: &mut Scene,
+        _: &mut Scene,
         (em, cm): (&mut EntityManager, &mut ComponentManager),
     ) -> anyhow::Result<()> {
-        self.crosshair = em.add();
-
-        cm.add(
-            self.crosshair,
-            ScreenPos {
-                position: Default::default(),
-                scale: Vec2d::new(1.0, 1.0),
-                active: true,
-            },
-            em,
-        );
-        cm.add(
-            self.crosshair,
-            Sprite::new(
-                Shape::rect(&scene.display, Vec2d([1.0; 2]))?,
-                util::load_texture(&scene.display, include_bytes!("crosshair.png"))?,
-                [1.0; 4],
-                0.0,
-                true,
-            ),
-            em,
-        );
-        cm.add(self.crosshair, Tag::new("crosshair"), em);
+        self.init_default_keybinds((em, cm));
 
         Ok(())
     }
@@ -106,25 +192,27 @@ impl<'a> System<'a> for GameUiManager {
             Ev::Event(Control {
                 event:
                     Event::WindowEvent {
+                        window_id,
                         event: WindowEvent::Resized(PhysicalSize { width, height }),
-                        ..
                     },
                 flow: _,
-            }) => {
+            }) if *window_id == scene.display.gl_window().window().id() => {
                 self.window_dims = (*width, *height);
             }
             Ev::Event(Control {
                 event:
                     Event::WindowEvent {
+                        window_id,
                         event:
                             WindowEvent::CursorMoved {
                                 position: PhysicalPosition { x, y },
                                 ..
                             },
-                        ..
                     },
                 flow: _,
-            }) => self.mouse_pos = (*x as f32, *y as f32),
+            }) if *window_id == scene.display.gl_window().window().id() => {
+                self.mouse_pos = (*x as f32, *y as f32);
+            }
             Ev::Event(Control {
                 flow,
                 event:
@@ -134,6 +222,28 @@ impl<'a> System<'a> for GameUiManager {
                     },
             }) if *window_id == scene.display.gl_window().window().id() => {
                 *flow = Some(ControlFlow::Exit);
+            }
+            Ev::Event(Control {
+                event:
+                    Event::WindowEvent {
+                        window_id,
+                        event:
+                            WindowEvent::KeyboardInput {
+                                input:
+                                    KeyboardInput {
+                                        virtual_keycode: Some(code),
+                                        state,
+                                        ..
+                                    },
+                                ..
+                            },
+                        ..
+                    },
+                flow: _,
+            }) if *window_id == scene.display.gl_window().window().id() => {
+                if let Some(key) = self.kp_cb.get_mut(code) {
+                    key(*state, scene, (em, cm))?;
+                }
             }
             _ => {}
         }

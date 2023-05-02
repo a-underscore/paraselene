@@ -37,14 +37,14 @@ pub fn main() {
 
     display.gl_window().window().set_cursor_visible(false);
 
-    let em = EntityManager::default();
-    let cm = ComponentManager::default();
+    let mut em = EntityManager::default();
+    let mut cm = ComponentManager::default();
     let scene = Scene::new(display, [0.0, 0.0, 0.0, 1.0]);
 
     let mut system_manager = SystemManager::default();
 
-    system_manager.add(PlayerManager::default());
-    system_manager.add(GameUiManager::default());
+    system_manager.add(PlayerManager::new(&scene, (&mut em, &mut cm)).unwrap());
+    system_manager.add(GameUiManager::new(&scene, (&mut em, &mut cm)).unwrap());
     system_manager.add(PhysicsManager::new(
         PHYSICS_RATE,
         PHYSICS_CYCLES,
