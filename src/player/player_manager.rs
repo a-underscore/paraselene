@@ -36,7 +36,7 @@ impl PlayerManager {
             Transform::new(Default::default(), 0.0, Vec2d::new(1.0, 1.0), true),
             em,
         );
-        cm.add(player, Player::new(&scene)?, em);
+        cm.add(player, Player::new(scene)?, em);
         cm.add(
             player,
             Instance::new(
@@ -115,7 +115,7 @@ impl<'a> System<'a> for PlayerManager {
                     let ref p @ (_, ref projectile, _) = player.projectile.clone();
 
                     (player.firing && now.duration_since(player.fire_time) >= projectile.cooldown)
-                        .then_some((transform.clone(), p.clone()))
+                        .then_some((transform, p.clone()))
                         .map(|d| {
                             player.fire_time = now;
 

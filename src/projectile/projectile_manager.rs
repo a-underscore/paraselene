@@ -41,7 +41,7 @@ impl<'a> System<'a> for ProjectileManager {
                                 .filter_map(|c| cm.get::<Collider>(c, em))
                                 .any(|c| !c.ghost)
                                 || Instant::now().duration_since(
-                                    *projectile.spawn_time.get_or_init(|| Instant::now()),
+                                    *projectile.spawn_time.get_or_init(Instant::now),
                                 ) >= projectile.alive_time
                         })?
                         .then_some(e)

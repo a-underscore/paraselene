@@ -27,22 +27,24 @@ use std::f32;
 
 pub const PLAYER_MOVE_SPEED: f32 = 10.0;
 
+pub type Binds = HashMap<
+    Input,
+    Box<
+        dyn FnMut(
+            ElementState,
+            &mut Scene,
+            (&mut EntityManager, &mut ComponentManager),
+        ) -> anyhow::Result<()>,
+    >,
+>;
+
 #[derive(Default)]
 pub struct GameUiManager {
     pub mouse_pos: (f32, f32),
     pub window_dims: (u32, u32),
     pub crosshair: Id,
     pub player: OnceCell<Option<Id>>,
-    pub kp_cb: HashMap<
-        Input,
-        Box<
-            dyn FnMut(
-                ElementState,
-                &mut Scene,
-                (&mut EntityManager, &mut ComponentManager),
-            ) -> anyhow::Result<()>,
-        >,
-    >,
+    pub kp_cb: Binds,
 }
 
 impl GameUiManager {
