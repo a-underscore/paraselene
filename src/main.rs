@@ -1,24 +1,27 @@
 mod game_ui_manager;
 mod player;
+mod projectile;
 mod tag;
 mod util;
 
 use game_ui_manager::GameUiManager;
-use hex::Renderer;
 use hex::{
-    ecs::{ComponentManager, EntityManager, Scene, SystemManager},
+    assets::Shape,
+    ecs::{ComponentManager, EntityManager, Id, Scene, SystemManager},
     glium::{
         glutin::{dpi::Size, event_loop::EventLoop, window::WindowBuilder, ContextBuilder},
         Display,
     },
     math::Vec2d,
 };
-use tag::Tag;
-
+use hex_instance::InstanceRenderer;
 use hex_physics::{Box2d, PhysicsManager};
 use hex_ui::{UiManager, UiRenderer};
+use player::Player;
 use player::PlayerManager;
+use projectile::Projectile;
 use std::time::Duration;
+use tag::Tag;
 
 pub const WINDOW_DIMS_X: u32 = 1920;
 pub const WINDOW_DIMS_Y: u32 = 1080;
@@ -26,6 +29,8 @@ pub const ASP_RATIO: f32 = WINDOW_DIMS_Y as f32 / WINDOW_DIMS_X as f32;
 pub const PHYSICS_CYCLES: u32 = 2;
 pub const PHYSICS_RATE: u32 = 2;
 pub const TREE_ITEM_COUNT: usize = 4;
+pub const PROJECTILE_LAYER: Id = 1;
+pub const PLAYER_LAYER: Id = 1;
 
 pub fn main() {
     let ev = EventLoop::new();
@@ -55,7 +60,13 @@ pub fn main() {
         ),
     ));
     system_manager.add(UiManager::default());
-    system_manager.add(Renderer::new(&scene.display).unwrap());
+    system_manager.add(
+        InstanceRenderer::new(
+            &scene.display,
+            Shape::rect(&scene.display, Vec2d([1.0; 2])).unwrap(),
+        )
+        .unwrap(),
+    );
     system_manager.add(UiRenderer::new(&scene.display).unwrap());
 
     scene.init(ev, (em, cm), system_manager).unwrap();

@@ -1,4 +1,8 @@
-use crate::{util, Tag};
+pub mod input;
+
+pub use input::Input;
+
+use crate::{util, Player, Tag};
 use hex::{
     anyhow,
     assets::Shape,
@@ -10,7 +14,7 @@ use hex::{
     },
     glium::glutin::{
         dpi::{PhysicalPosition, PhysicalSize},
-        event::{ElementState, Event, KeyboardInput, VirtualKeyCode, WindowEvent},
+        event::{ElementState, Event, KeyboardInput, MouseButton, VirtualKeyCode, WindowEvent},
         event_loop::ControlFlow,
     },
     math::Vec2d,
@@ -30,7 +34,7 @@ pub struct GameUiManager {
     pub crosshair: Id,
     pub player: OnceCell<Option<Id>>,
     pub kp_cb: HashMap<
-        VirtualKeyCode,
+        Input,
         Box<
             dyn FnMut(
                 ElementState,
@@ -96,7 +100,7 @@ impl GameUiManager {
         ))
     }
 
-    pub fn add_keybind<F>(&mut self, k: VirtualKeyCode, f: F)
+    pub fn add_keybind<F>(&mut self, i: Input, f: F)
     where
         F: FnMut(
                 ElementState,
@@ -105,7 +109,7 @@ impl GameUiManager {
             ) -> anyhow::Result<()>
             + 'static,
     {
-        self.kp_cb.insert(k, Box::new(f));
+        self.kp_cb.insert(i, Box::new(f));
     }
 
     // This will be replaced with values loaded from a configuration file.
@@ -114,46 +118,73 @@ impl GameUiManager {
             .player
             .get_or_init(|| Tag::new("player").find((em, cm)))
         {
-            self.add_keybind(VirtualKeyCode::W, move |state, _, (em, cm)| {
-                if let Some(physical) = cm.get_mut::<Physical>(player, em) {
-                    *physical.force.y_mut() = match state {
-                        ElementState::Pressed => PLAYER_MOVE_SPEED,
-                        ElementState::Released => 0.0,
-                    };
-                }
+            self.add_keybind(
+                Input::Keyboard(VirtualKeyCode::W),
+                move |state, _, (em, cm)| {
+                    if let Some(physical) = cm.get_mut::<Physical>(player, em) {
+                        *physical.force.y_mut() = match state {
+                            ElementState::Pressed => PLAYER_MOVE_SPEED,
+                            ElementState::Released => 0.0,
+                        };
+                    }
 
-                Ok(())
-            });
-            self.add_keybind(VirtualKeyCode::S, move |state, _, (em, cm)| {
-                if let Some(physical) = cm.get_mut::<Physical>(player, em) {
-                    *physical.force.y_mut() = match state {
-                        ElementState::Pressed => -PLAYER_MOVE_SPEED,
-                        ElementState::Released => 0.0,
-                    };
-                }
+                    Ok(())
+                },
+            );
+            self.add_keybind(
+                Input::Keyboard(VirtualKeyCode::S),
+                move |state, _, (em, cm)| {
+                    if let Some(physical) = cm.get_mut::<Physical>(player, em) {
+                        *physical.force.y_mut() = match state {
+                            ElementState::Pressed => -PLAYER_MOVE_SPEED,
+                            ElementState::Released => 0.0,
+                        };
+                    }
 
-                Ok(())
-            });
-            self.add_keybind(VirtualKeyCode::A, move |state, _, (em, cm)| {
-                if let Some(physical) = cm.get_mut::<Physical>(player, em) {
-                    *physical.force.x_mut() = match state {
-                        ElementState::Pressed => -PLAYER_MOVE_SPEED,
-                        ElementState::Released => 0.0,
-                    };
-                }
+                    Ok(())
+                },
+            );
+            self.add_keybind(
+                Input::Keyboard(VirtualKeyCode::A),
+                move |state, _, (em, cm)| {
+                    if let Some(physical) = cm.get_mut::<Physical>(player, em) {
+                        *physical.force.x_mut() = match state {
+                            ElementState::Pressed => -PLAYER_MOVE_SPEED,
+                            ElementState::Released => 0.0,
+                        };
+                    }
 
-                Ok(())
-            });
-            self.add_keybind(VirtualKeyCode::D, move |state, _, (em, cm)| {
-                if let Some(physical) = cm.get_mut::<Physical>(player, em) {
-                    *physical.force.x_mut() = match state {
-                        ElementState::Pressed => PLAYER_MOVE_SPEED,
-                        ElementState::Released => 0.0,
-                    };
-                }
+                    Ok(())
+                },
+            );
+            self.add_keybind(
+                Input::Keyboard(VirtualKeyCode::D),
+                move |state, _, (em, cm)| {
+                    if let Some(physical) = cm.get_mut::<Physical>(player, em) {
+                        *physical.force.x_mut() = match state {
+                            ElementState::Pressed => PLAYER_MOVE_SPEED,
+                            ElementState::Released => 0.0,
+                        };
+                    }
 
-                Ok(())
-            });
+                    Ok(())
+                },
+            );
+            self.add_keybind(
+                Input::Mouse(MouseButton::Left),
+                move |state, _, (em, cm)| {
+                    let firing = match state {
+                        ElementState::Pressed => true,
+                        ElementState::Released => false,
+                    };
+
+                    if let Some(player) = cm.get_mut::<Player>(player, em) {
+                        player.firing = firing;
+                    }
+
+                    Ok(())
+                },
+            );
         }
     }
 }
@@ -241,7 +272,20 @@ impl<'a> System<'a> for GameUiManager {
                     },
                 flow: _,
             }) if *window_id == scene.display.gl_window().window().id() => {
-                if let Some(key) = self.kp_cb.get_mut(code) {
+                if let Some(key) = self.kp_cb.get_mut(&Input::Keyboard(*code)) {
+                    key(*state, scene, (em, cm))?;
+                }
+            }
+            Ev::Event(Control {
+                event:
+                    Event::WindowEvent {
+                        window_id,
+                        event: WindowEvent::MouseInput { button, state, .. },
+                        ..
+                    },
+                flow: _,
+            }) if *window_id == scene.display.gl_window().window().id() => {
+                if let Some(key) = self.kp_cb.get_mut(&Input::Mouse(*button)) {
                     key(*state, scene, (em, cm))?;
                 }
             }
