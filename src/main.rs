@@ -20,6 +20,7 @@ use hex_ui::{UiManager, UiRenderer};
 use player::Player;
 use player::PlayerManager;
 use projectile::Projectile;
+use projectile::ProjectileManager;
 use std::time::Duration;
 use tag::Tag;
 
@@ -59,6 +60,7 @@ pub fn main() {
             TREE_ITEM_COUNT,
         ),
     ));
+    system_manager.add(ProjectileManager);
     system_manager.add(UiManager::default());
     system_manager.add(
         InstanceRenderer::new(

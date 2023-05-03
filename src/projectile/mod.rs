@@ -1,15 +1,18 @@
 pub mod projectile_manager;
 
+pub use projectile_manager::ProjectileManager;
+
 use hex::{
     ecs::{component_manager::Component, Id},
     id,
     math::Vec2d,
+    once_cell::sync::OnceCell,
 };
 use std::time::{Duration, Instant};
 
 #[derive(Clone)]
 pub struct Projectile {
-    pub spawn_time: Instant,
+    pub spawn_time: OnceCell<Instant>,
     pub alive_time: Duration,
     pub velocity: Vec2d,
     pub cooldown: Duration,
@@ -19,7 +22,7 @@ pub struct Projectile {
 impl Projectile {
     pub fn player_bullet() -> Self {
         Self {
-            spawn_time: Instant::now(),
+            spawn_time: OnceCell::new(),
             alive_time: Duration::from_secs_f32(2.0),
             velocity: Vec2d::new(0.0, 30.0),
             cooldown: Duration::from_millis(36),

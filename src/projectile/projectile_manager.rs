@@ -4,16 +4,14 @@ use hex::{
     ecs::{
         ev::{Control, Ev},
         system_manager::System,
-        ComponentManager, EntityManager, Id, Scene,
+        ComponentManager, EntityManager, Scene,
     },
     glium::glutin::event::Event,
 };
 use hex_physics::Collider;
 use std::time::Instant;
 
-pub struct ProjectileManager {
-    pub player_collider: Id,
-}
+pub struct ProjectileManager;
 
 impl<'a> System<'a> for ProjectileManager {
     fn update(
@@ -32,18 +30,19 @@ impl<'a> System<'a> for ProjectileManager {
                 .keys()
                 .cloned()
                 .filter_map(|e| {
-                    let projectile = cm.get::<Projectile>(e, em).cloned()?;
+                    let projectile = cm.get::<Projectile>(e, em)?;
 
                     cm.get::<Collider>(e, em)
-                        .map(|player_collider| {
-                            player_collider
+                        .map(|collider| {
+                            collider
                                 .collisions
                                 .iter()
                                 .cloned()
                                 .filter_map(|c| cm.get::<Collider>(c, em))
                                 .any(|c| !c.ghost)
-                                || Instant::now().duration_since(projectile.spawn_time)
-                                    >= projectile.alive_time
+                                || Instant::now().duration_since(
+                                    *projectile.spawn_time.get_or_init(|| Instant::now()),
+                                ) >= projectile.alive_time
                         })?
                         .then_some(e)
                 })
