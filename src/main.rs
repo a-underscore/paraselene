@@ -60,7 +60,7 @@ pub fn main() {
             TREE_ITEM_COUNT,
         ),
     ));
-    system_manager.add(ProjectileManager);
+    system_manager.add(ProjectileManager::default());
     system_manager.add(UiManager::default());
     system_manager.add(
         InstanceRenderer::new(

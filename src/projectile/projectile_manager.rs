@@ -4,14 +4,17 @@ use hex::{
     ecs::{
         ev::{Control, Ev},
         system_manager::System,
-        ComponentManager, EntityManager, Scene,
+        ComponentManager, EntityManager, Id, Scene,
     },
     glium::glutin::event::Event,
 };
 use hex_physics::Collider;
 use std::time::Instant;
 
-pub struct ProjectileManager;
+#[derive(Default)]
+pub struct ProjectileManager {
+    queued_rm: Vec<Id>,
+}
 
 impl<'a> System<'a> for ProjectileManager {
     fn update(
@@ -25,7 +28,13 @@ impl<'a> System<'a> for ProjectileManager {
             flow: _,
         }) = event
         {
-            for e in em
+            let now = Instant::now();
+
+            while let Some(e) = self.queued_rm.pop() {
+                em.rm(e, cm);
+            }
+
+            let removed: Vec<_> = em
                 .entities
                 .keys()
                 .cloned()
@@ -40,16 +49,14 @@ impl<'a> System<'a> for ProjectileManager {
                                 .cloned()
                                 .filter_map(|c| cm.get::<Collider>(c, em))
                                 .any(|c| !c.ghost)
-                                || Instant::now().duration_since(
-                                    *projectile.spawn_time.get_or_init(Instant::now),
-                                ) >= projectile.alive_time
+                                || now.duration_since(*projectile.spawn_time.get_or_init(|| now))
+                                    >= projectile.alive_time
                         })?
                         .then_some(e)
                 })
-                .collect::<Vec<_>>()
-            {
-                em.rm(e, cm);
-            }
+                .collect();
+
+            self.queued_rm.extend(removed);
         }
 
         Ok(())
