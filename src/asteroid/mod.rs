@@ -14,11 +14,11 @@ pub struct Asteroid {
 }
 
 impl Asteroid {
-    pub fn large_asteroid(active: bool) -> Self {
+    pub fn _large_asteroid(active: bool) -> Self {
         Self { order: 1, active }
     }
 
-    pub fn small_asteroid(active: bool) -> Self {
+    pub fn _small_asteroid(active: bool) -> Self {
         Self { order: 0, active }
     }
 }
