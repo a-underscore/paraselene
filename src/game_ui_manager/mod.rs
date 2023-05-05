@@ -20,12 +20,8 @@ use hex::{
     math::Vec2d,
     once_cell::sync::OnceCell,
 };
-use hex_physics::Physical;
 use hex_ui::ScreenPos;
-use std::collections::HashMap;
-use std::f32;
-
-pub const PLAYER_MOVE_SPEED: f32 = 10.0;
+use std::{collections::HashMap, f32};
 
 pub type Binds = HashMap<
     Input,
@@ -123,10 +119,10 @@ impl GameUiManager {
             self.add_keybind(
                 Input::Keyboard(VirtualKeyCode::W),
                 move |state, _, (em, cm)| {
-                    if let Some(physical) = cm.get_mut::<Physical>(player, em) {
-                        *physical.force.y_mut() = match state {
-                            ElementState::Pressed => PLAYER_MOVE_SPEED,
-                            ElementState::Released => 0.0,
+                    if let Some(p) = cm.get_mut::<Player>(player, em) {
+                        p.states.forward = match state {
+                            ElementState::Pressed => true,
+                            ElementState::Released => false,
                         };
                     }
 
@@ -136,10 +132,10 @@ impl GameUiManager {
             self.add_keybind(
                 Input::Keyboard(VirtualKeyCode::S),
                 move |state, _, (em, cm)| {
-                    if let Some(physical) = cm.get_mut::<Physical>(player, em) {
-                        *physical.force.y_mut() = match state {
-                            ElementState::Pressed => -PLAYER_MOVE_SPEED,
-                            ElementState::Released => 0.0,
+                    if let Some(p) = cm.get_mut::<Player>(player, em) {
+                        p.states.backward = match state {
+                            ElementState::Pressed => true,
+                            ElementState::Released => false,
                         };
                     }
 
@@ -149,10 +145,10 @@ impl GameUiManager {
             self.add_keybind(
                 Input::Keyboard(VirtualKeyCode::A),
                 move |state, _, (em, cm)| {
-                    if let Some(physical) = cm.get_mut::<Physical>(player, em) {
-                        *physical.force.x_mut() = match state {
-                            ElementState::Pressed => -PLAYER_MOVE_SPEED,
-                            ElementState::Released => 0.0,
+                    if let Some(p) = cm.get_mut::<Player>(player, em) {
+                        p.states.left = match state {
+                            ElementState::Pressed => true,
+                            ElementState::Released => false,
                         };
                     }
 
@@ -162,10 +158,10 @@ impl GameUiManager {
             self.add_keybind(
                 Input::Keyboard(VirtualKeyCode::D),
                 move |state, _, (em, cm)| {
-                    if let Some(physical) = cm.get_mut::<Physical>(player, em) {
-                        *physical.force.x_mut() = match state {
-                            ElementState::Pressed => PLAYER_MOVE_SPEED,
-                            ElementState::Released => 0.0,
+                    if let Some(p) = cm.get_mut::<Player>(player, em) {
+                        p.states.right = match state {
+                            ElementState::Pressed => true,
+                            ElementState::Released => false,
                         };
                     }
 
@@ -181,7 +177,22 @@ impl GameUiManager {
                     };
 
                     if let Some(player) = cm.get_mut::<Player>(player, em) {
-                        player.firing = firing;
+                        player.states.firing = firing;
+                    }
+
+                    Ok(())
+                },
+            );
+            self.add_keybind(
+                Input::Keyboard(VirtualKeyCode::LShift),
+                move |state, _, (em, cm)| {
+                    let dashing = match state {
+                        ElementState::Pressed => true,
+                        ElementState::Released => false,
+                    };
+
+                    if let Some(player) = cm.get_mut::<Player>(player, em) {
+                        player.states.dashing = dashing;
                     }
 
                     Ok(())

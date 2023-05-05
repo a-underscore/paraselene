@@ -24,6 +24,8 @@ use projectile::ProjectileManager;
 use std::time::Duration;
 use tag::Tag;
 
+pub const PLAYER_MOVE_SPEED: f32 = 10.0;
+pub const PLAYER_DASH_MULTIPLIER: f32 = 2.5;
 pub const WINDOW_DIMS_X: u32 = 1920;
 pub const WINDOW_DIMS_Y: u32 = 1080;
 pub const ASP_RATIO: f32 = WINDOW_DIMS_Y as f32 / WINDOW_DIMS_X as f32;

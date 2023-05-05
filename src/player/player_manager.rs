@@ -47,7 +47,7 @@ impl PlayerManager {
             ),
             em,
         );
-        cm.add(player, Physical::new(Vec2d::new(0.0, 0.0), true), em);
+        cm.add(player, Physical::new(Default::default(), true), em);
         cm.add(
             player,
             Collider::rect(
@@ -107,6 +107,24 @@ impl<'a> System<'a> for PlayerManager {
                 }
             }
 
+            let res = if let Some(player) = cm.get_mut::<Player>(self.player, em) {
+                if now.duration_since(player.dash_time) >= player.dash_cooldown {
+                    player.dash_time = now;
+                }
+
+                Some(player)
+            } else {
+                None
+            };
+
+            if let Some(player) = res {
+                let force = player.force();
+
+                if let Some(p) = cm.get_mut::<Physical>(self.player, em) {
+                    p.force = force;
+                }
+            }
+
             let res = cm
                 .get::<Transform>(self.player, em)
                 .cloned()
@@ -114,7 +132,8 @@ impl<'a> System<'a> for PlayerManager {
                 .and_then(|(transform, player)| {
                     let ref p @ (_, ref projectile, _) = player.projectile.clone();
 
-                    (player.firing && now.duration_since(player.fire_time) >= projectile.cooldown)
+                    (player.states.firing
+                        && now.duration_since(player.fire_time) >= projectile.cooldown)
                         .then_some((transform, p.clone()))
                         .map(|d| {
                             player.fire_time = now;
