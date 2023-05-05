@@ -1,4 +1,3 @@
-mod asteroid;
 mod game_ui_manager;
 mod player;
 mod projectile;
@@ -58,7 +57,10 @@ pub fn main() {
         PHYSICS_CYCLES,
         Some(Duration::from_secs_f32(1.0 / 30.0)),
         (
-            Box2d::new(Vec2d::new(100.0, 100.0), (100.0_f32.powi(2) * 2.0).sqrt()),
+            Box2d::new(
+                Vec2d::new(WINDOW_DIMS_X as f32, WINDOW_DIMS_Y as f32),
+                (100.0_f32.powi(2) * 2.0).sqrt(),
+            ),
             TREE_ITEM_COUNT,
         ),
     ));
