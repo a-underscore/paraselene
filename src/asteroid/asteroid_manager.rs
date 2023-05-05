@@ -6,14 +6,17 @@ use hex::{
     ecs::{
         ev::{Control, Ev},
         system_manager::System,
-        ComponentManager, EntityManager, Scene,
+        ComponentManager, EntityManager, Id, Scene,
     },
     glium::glutin::event::Event,
 };
 
 use hex_physics::Collider;
 
-pub struct AsteroidManager;
+#[derive(Default)]
+pub struct AsteroidManager {
+    pub queue_rm: Vec<Id>,
+}
 
 impl System<'_> for AsteroidManager {
     fn update(
@@ -27,6 +30,10 @@ impl System<'_> for AsteroidManager {
             flow: _,
         }) = ev
         {
+            while let Some(e) = self.queue_rm.pop() {
+                em.rm(e, cm);
+            }
+
             for e in em.entities.keys().cloned() {
                 if let Some((c, a_id)) = cm
                     .get::<Collider>(e, em)
@@ -38,8 +45,21 @@ impl System<'_> for AsteroidManager {
                             .and_then(|p| p.active.then_some(c))
                             .is_some()
                     }) {
-                        if let Some(a) = cm.get_cache_mut::<Asteroid>(a_id) {
-                            a.order -= 1;
+                        let res = cm
+                            .get_cache_mut::<Asteroid>(a_id)
+                            .map(|a| {
+                                if a.order == 0 {
+                                    true
+                                } else {
+                                    a.order -= 1;
+
+                                    false
+                                }
+                            })
+                            .unwrap_or_default();
+
+                        if res {
+                            self.queue_rm.push(e);
                         }
                     }
                 }
