@@ -17,16 +17,18 @@ pub struct Projectile {
     pub velocity: Vec2d,
     pub cooldown: Duration,
     pub dmg: f32,
+    pub active: bool,
 }
 
 impl Projectile {
-    pub fn player_bullet() -> Self {
+    pub fn player_bullet(active: bool) -> Self {
         Self {
             spawn_time: OnceCell::new(),
             alive_time: Duration::from_secs_f32(2.0),
             velocity: Vec2d::new(0.0, 30.0),
             cooldown: Duration::from_millis(36),
             dmg: 2.0,
+            active,
         }
     }
 }

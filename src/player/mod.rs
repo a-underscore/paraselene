@@ -35,7 +35,7 @@ impl Player {
                     false,
                     true,
                 ),
-                Projectile::player_bullet(),
+                Projectile::player_bullet(true),
                 Instance::new(
                     util::load_texture(&scene.display, include_bytes!("player_projectile.png"))?,
                     [1.0; 4],

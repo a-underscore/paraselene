@@ -39,7 +39,9 @@ impl<'a> System<'a> for ProjectileManager {
                 .keys()
                 .cloned()
                 .filter_map(|e| {
-                    let projectile = cm.get::<Projectile>(e, em)?;
+                    let projectile = cm
+                        .get::<Projectile>(e, em)
+                        .and_then(|p| p.active.then_some(p))?;
 
                     cm.get::<Collider>(e, em)
                         .map(|collider| {

@@ -1,4 +1,5 @@
 use super::Asteroid;
+use crate::Projectile;
 use crate::{util, Tag, PLAYER_LAYER, PROJECTILE_LAYER};
 use hex::{
     anyhow,
@@ -26,16 +27,27 @@ impl System<'_> for AsteroidManager {
         scene: &mut Scene,
         (em, cm): (&mut EntityManager, &mut ComponentManager),
     ) -> anyhow::Result<()> {
-        for e in em.entities.keys().cloned() {
-            if let Some((a, s, t, c)) = cm.get::<Asteroid>(e, em).and_then(|a| {
-                Some((
-                    a.active.then_some(a)?,
-                    cm.get::<Sprite>(e, em)?,
-                    cm.get::<Transform>(e, em)?,
-                    cm.get::<Collider>(e, em)?,
-                ))
-            }) {
-
+        if let Ev::Event(Control {
+            event: Event::MainEventsCleared,
+            flow: _,
+        }) = ev
+        {
+            for e in em.entities.keys().cloned() {
+                if let Some((c, a_id)) = cm
+                    .get::<Collider>(e, em)
+                    .cloned()
+                    .and_then(|c| Some((c.active.then_some(c)?, cm.get_id::<Asteroid>(e, em)?)))
+                {
+                    if c.collisions.iter().cloned().any(|c| {
+                        cm.get::<Projectile>(e, em)
+                            .and_then(|p| p.active.then_some(c))
+                            .is_some()
+                    }) {
+                        if let Some(a) = cm.get_cache_mut::<Asteroid>(a_id) {
+                            a.order -= 1;
+                        }
+                    }
+                }
             }
         }
 
