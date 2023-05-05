@@ -1,3 +1,4 @@
+mod asteroid;
 mod game_ui_manager;
 mod player;
 mod projectile;
@@ -31,7 +32,8 @@ pub const PHYSICS_CYCLES: u32 = 2;
 pub const PHYSICS_RATE: u32 = 2;
 pub const TREE_ITEM_COUNT: usize = 4;
 pub const PROJECTILE_LAYER: Id = 1;
-pub const PLAYER_LAYER: Id = 1;
+pub const PLAYER_LAYER: Id = 2;
+pub const ASTEROID_LAYER: Id = 3;
 
 pub fn main() {
     let ev = EventLoop::new();
@@ -45,7 +47,7 @@ pub fn main() {
 
     let mut em = EntityManager::default();
     let mut cm = ComponentManager::default();
-    let scene = Scene::new(display, [0.0, 0.0, 0.0, 1.0]);
+    let scene = Scene::new(display, [0.1, 0.1, 0.1, 1.0]);
 
     let mut system_manager = SystemManager::default();
 
