@@ -34,7 +34,7 @@ impl Player {
             health: 25.0,
             fire_time: Instant::now(),
             dash_time: Instant::now(),
-            dash_cooldown: Duration::from_secs_f32(0.25),
+            dash_cooldown: Duration::from_secs_f32(0.5),
             dash_duration: Duration::from_secs_f32(0.15),
             states: Default::default(),
             projectile: (

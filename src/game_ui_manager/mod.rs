@@ -3,6 +3,7 @@ pub mod input;
 pub use input::Input;
 
 use crate::{util, Player, Tag};
+use hashbrown::HashMap;
 use hex::{
     anyhow,
     assets::Shape,
@@ -21,7 +22,7 @@ use hex::{
     once_cell::sync::OnceCell,
 };
 use hex_ui::ScreenPos;
-use std::{collections::HashMap, f32};
+use std::f32;
 
 pub type Binds = HashMap<
     Input,
