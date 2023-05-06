@@ -57,7 +57,7 @@ impl Player {
         })
     }
 
-    pub fn force(&mut self) -> Vec2d {
+    pub fn force(&self) -> Vec2d {
         let mut force = Vec2d::default();
 
         if self.states.forward {
