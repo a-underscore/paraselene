@@ -19,10 +19,8 @@ use hex::{
 use hex_instance::InstanceRenderer;
 use hex_physics::{Box2d, PhysicsManager};
 use hex_ui::{UiManager, UiRenderer};
-use player::Player;
-use player::PlayerManager;
-use projectile::Projectile;
-use projectile::ProjectileManager;
+use player::{Player, PlayerManager};
+use projectile::{Projectile, ProjectileManager};
 use std::{cell::Cell, time::Duration};
 use tag::Tag;
 
