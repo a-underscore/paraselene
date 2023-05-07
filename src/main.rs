@@ -24,6 +24,8 @@ use projectile::{Projectile, ProjectileManager};
 use std::{cell::Cell, time::Duration};
 use tag::Tag;
 
+pub const MAP_DIMS_X: f32 = 100.0;
+pub const MAP_DIMS_Y: f32 = 100.0;
 pub const PLAYER_MOVE_SPEED: f32 = 10.0;
 pub const PLAYER_DASH_MULTIPLIER: f32 = 2.5;
 pub const WINDOW_DIMS_X: u32 = 1920;
@@ -63,8 +65,6 @@ pub fn main() {
 
     let mut system_manager = SystemManager::default();
 
-    system_manager.add(PlayerManager::new(&scene, (&mut em, &mut cm)).unwrap());
-    system_manager.add(GameUiManager::new(&scene, (&mut em, &mut cm)).unwrap());
     system_manager.add(PhysicsManager::new(
         PHYSICS_RATE,
         PHYSICS_CYCLES,
@@ -72,11 +72,13 @@ pub fn main() {
         (
             Box2d::new(
                 Default::default(),
-                ((WINDOW_DIMS_X as f32).powi(2) * (WINDOW_DIMS_Y as f32).powi(2)).sqrt(),
+                ((MAP_DIMS_X as f32).powi(2) * (MAP_DIMS_Y as f32).powi(2)).sqrt(),
             ),
             TREE_ITEM_COUNT,
         ),
     ));
+    system_manager.add(PlayerManager::new(&scene, (&mut em, &mut cm)).unwrap());
+    system_manager.add(GameUiManager::new(&scene, (&mut em, &mut cm)).unwrap());
     system_manager.add(ProjectileManager::default());
     system_manager.add(UiManager::default());
     system_manager.add(AsteroidManager::new(&scene).unwrap());

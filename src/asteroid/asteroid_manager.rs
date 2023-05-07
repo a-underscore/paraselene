@@ -1,5 +1,5 @@
 use super::Asteroid;
-use crate::{util, ASTEROID_LAYER, CAM_DIMS, PLAYER_LAYER};
+use crate::{util, ASTEROID_LAYER, MAP_DIMS_X, MAP_DIMS_Y, PLAYER_LAYER};
 use hex::{
     anyhow,
     assets::Texture,
@@ -61,8 +61,8 @@ impl AsteroidManager {
                 asteroid,
                 Transform::new(
                     Vec2d::new(
-                        rng.gen_range((-CAM_DIMS / 2.0)..(CAM_DIMS / 2.0)),
-                        rng.gen_range((-CAM_DIMS / 2.0)..(CAM_DIMS / 2.0)),
+                        rng.gen_range((-MAP_DIMS_X / 2.0)..(MAP_DIMS_Y / 2.0)),
+                        rng.gen_range((-MAP_DIMS_X / 2.0)..(MAP_DIMS_Y / 2.0)),
                     ),
                     0.0,
                     Vec2d([1.0; 2]),

@@ -101,8 +101,7 @@ impl<'a> System<'a> for PlayerManager {
                     .map(|s| s.position)
                     .and_then(|p| Some((p, cm.get_mut::<Transform>(self.player, em)?)))
                 {
-                    transform
-                        .set_rotation(Vec2d::new(0.0, -1.0).angle(transform.position() - position));
+                    transform.set_rotation(Vec2d::new(0.0, 1.0).angle(position));
                 }
             }
 
@@ -156,6 +155,12 @@ impl<'a> System<'a> for PlayerManager {
                 cm.add(p, projectile, em);
                 cm.add(p, instance, em);
                 cm.add(p, transform, em);
+            }
+
+            if let Some(position) = cm.get::<Transform>(self.player, em).map(|t| t.position()) {
+                if let Some(transform) = cm.get_mut::<Transform>(self.camera, em) {
+                    transform.set_position(position);
+                }
             }
         }
 
