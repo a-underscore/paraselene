@@ -6,7 +6,8 @@ pub use player_manager::PlayerManager;
 pub use states::States;
 
 use crate::{
-    util, Projectile, PLAYER_DASH_MULTIPLIER, PLAYER_LAYER, PLAYER_MOVE_SPEED, PROJECTILE_LAYER,
+    util, Projectile, ASTEROID_LAYER, PLAYER_DASH_MULTIPLIER, PLAYER_LAYER, PLAYER_MOVE_SPEED,
+    PROJECTILE_LAYER,
 };
 use hex::{
     anyhow,
@@ -38,10 +39,9 @@ impl Player {
             dash_duration: Duration::from_secs_f32(0.15),
             states: Default::default(),
             projectile: (
-                Collider::oct(
-                    Vec2d::new(1.0 / 3.0, 1.0 / 3.0),
-                    Vec2d::new(1.0 / 3.0, 1.0 / 3.0).magnitude(),
-                    vec![PLAYER_LAYER, PROJECTILE_LAYER],
+                Collider::rect(
+                    Vec2d([1.0 / 3.0; 2]),
+                    vec![PLAYER_LAYER, ASTEROID_LAYER, PROJECTILE_LAYER],
                     vec![PROJECTILE_LAYER],
                     false,
                     true,

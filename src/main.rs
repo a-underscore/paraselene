@@ -1,9 +1,11 @@
+mod asteroid;
 mod game_ui_manager;
 mod player;
 mod projectile;
 mod tag;
 mod util;
 
+use asteroid::AsteroidManager;
 use game_ui_manager::GameUiManager;
 use hex::{
     assets::Shape,
@@ -21,7 +23,7 @@ use player::Player;
 use player::PlayerManager;
 use projectile::Projectile;
 use projectile::ProjectileManager;
-use std::time::Duration;
+use std::{cell::Cell, time::Duration};
 use tag::Tag;
 
 pub const PLAYER_MOVE_SPEED: f32 = 10.0;
@@ -29,12 +31,19 @@ pub const PLAYER_DASH_MULTIPLIER: f32 = 2.5;
 pub const WINDOW_DIMS_X: u32 = 1920;
 pub const WINDOW_DIMS_Y: u32 = 1080;
 pub const ASP_RATIO: f32 = WINDOW_DIMS_Y as f32 / WINDOW_DIMS_X as f32;
+pub const CAM_DIMS: f32 = 20.0 * ASP_RATIO;
 pub const PHYSICS_CYCLES: u32 = 2;
 pub const PHYSICS_RATE: u32 = 2;
 pub const TREE_ITEM_COUNT: usize = 4;
 pub const PROJECTILE_LAYER: Id = 1;
 pub const PLAYER_LAYER: Id = 2;
 pub const ASTEROID_LAYER: Id = 3;
+pub const ASTEROID_RESET: usize = 0;
+
+thread_local! {
+    pub static RESET: Cell<Option<usize>> = Default::default();
+    pub static LEVEL: Cell<usize> = Default::default();
+}
 
 pub fn main() {
     let ev = EventLoop::new();
@@ -51,6 +60,7 @@ pub fn main() {
 
     let mut em = EntityManager::default();
     let mut cm = ComponentManager::default();
+
     let scene = Scene::new(display, [0.1, 0.1, 0.1, 1.0]);
 
     let mut system_manager = SystemManager::default();
@@ -63,14 +73,15 @@ pub fn main() {
         Some(Duration::from_secs_f32(1.0 / 30.0)),
         (
             Box2d::new(
-                Vec2d::new(WINDOW_DIMS_X as f32, WINDOW_DIMS_Y as f32),
-                (100.0_f32.powi(2) * 2.0).sqrt(),
+                Default::default(),
+                ((WINDOW_DIMS_X as f32).powi(2) * (WINDOW_DIMS_Y as f32).powi(2)).sqrt(),
             ),
             TREE_ITEM_COUNT,
         ),
     ));
     system_manager.add(ProjectileManager::default());
     system_manager.add(UiManager::default());
+    system_manager.add(AsteroidManager::new(&scene).unwrap());
     system_manager.add(
         InstanceRenderer::new(
             &scene.display,

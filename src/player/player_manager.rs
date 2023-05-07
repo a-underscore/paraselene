@@ -1,5 +1,5 @@
 use super::Player;
-use crate::{util, Tag, PLAYER_LAYER, PROJECTILE_LAYER};
+use crate::{util, Tag, ASTEROID_LAYER, CAM_DIMS, PLAYER_LAYER, PROJECTILE_LAYER};
 use hex::{
     anyhow,
     components::{Camera, Transform},
@@ -50,10 +50,9 @@ impl PlayerManager {
         cm.add(player, Physical::new(Default::default(), true), em);
         cm.add(
             player,
-            Collider::rect(
-                Vec2d::new(1.0 / 3.0, 1.0 / 3.0),
-                Vec2d::new(1.0 / 3.0, 1.0 / 3.0).magnitude(),
-                vec![PLAYER_LAYER, PROJECTILE_LAYER],
+            Collider::oct(
+                Vec2d([1.0 / 3.0; 2]),
+                vec![ASTEROID_LAYER, PLAYER_LAYER],
                 vec![PROJECTILE_LAYER],
                 false,
                 true,
@@ -69,7 +68,7 @@ impl PlayerManager {
             Transform::new(Default::default(), 0.0, Vec2d::new(1.0, 1.0), true),
             em,
         );
-        cm.add(camera, Camera::new((Vec2d([20.0; 2]), 10.0), true), em);
+        cm.add(camera, Camera::new((Vec2d([CAM_DIMS; 2]), 10.0), true), em);
 
         Ok(Self {
             camera,
