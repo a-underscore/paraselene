@@ -24,14 +24,14 @@ use projectile::{Projectile, ProjectileManager};
 use std::{cell::Cell, time::Duration};
 use tag::Tag;
 
-pub const MAP_DIMS_X: f32 = 100.0;
-pub const MAP_DIMS_Y: f32 = 100.0;
 pub const PLAYER_MOVE_SPEED: f32 = 10.0;
 pub const PLAYER_DASH_MULTIPLIER: f32 = 2.5;
 pub const WINDOW_DIMS_X: u32 = 1920;
 pub const WINDOW_DIMS_Y: u32 = 1080;
 pub const ASP_RATIO: f32 = WINDOW_DIMS_Y as f32 / WINDOW_DIMS_X as f32;
 pub const CAM_DIMS: f32 = 20.0 * ASP_RATIO;
+pub const MAP_DIMS_X: f32 = CAM_DIMS;
+pub const MAP_DIMS_Y: f32 = CAM_DIMS;
 pub const PHYSICS_CYCLES: u32 = 2;
 pub const PHYSICS_RATE: u32 = 2;
 pub const TREE_ITEM_COUNT: usize = 4;
@@ -48,7 +48,7 @@ thread_local! {
 pub fn main() {
     let ev = EventLoop::new();
     let wb = WindowBuilder::new()
-        .with_title("KNO3")
+        .with_title("Parselene")
         .with_max_inner_size(Size::Logical((WINDOW_DIMS_X, WINDOW_DIMS_Y).into()));
     let cb = ContextBuilder::new()
         .with_srgb(true)
