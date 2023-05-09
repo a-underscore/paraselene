@@ -1,5 +1,8 @@
 use super::Player;
-use crate::{util, Tag, ASTEROID_LAYER, CAM_DIMS, PLAYER_LAYER, PROJECTILE_LAYER};
+use crate::{
+    util, Tag, ASTEROID_LAYER, CAM_DIMS, PLAYER_LAYER, PLAYER_MOVE_EASING, PLAYER_MOVE_SPEED,
+    PROJECTILE_LAYER,
+};
 use hex::{
     anyhow,
     components::{Camera, Transform},
@@ -128,7 +131,22 @@ impl<'a> System<'a> for PlayerManager {
                     .get_mut::<Physical>(self.player, em)
                     .and_then(|p| p.active.then_some(p))
                 {
-                    p.force = force;
+                    let force = (force.magnitude() != 0.0)
+                        .then(|| {
+                            util::lerp_vec2d(
+                                force,
+                                force.normal() * PLAYER_MOVE_SPEED,
+                                PLAYER_MOVE_EASING,
+                            )
+                        })
+                        .unwrap_or_else(|| {
+                            -util::lerp_vec2d(p.force, Vec2d::default(), PLAYER_MOVE_EASING)
+                        })
+                        + p.force;
+
+                    p.force = (force.magnitude() != 0.0)
+                        .then(|| force.normal() * force.magnitude().min(PLAYER_MOVE_SPEED))
+                        .unwrap_or_default();
                 }
             }
 

@@ -6,6 +6,7 @@ use hex::{
         uniforms::{MagnifySamplerFilter, SamplerBehavior},
         Display,
     },
+    math::Vec2d,
 };
 use std::io::Cursor;
 
@@ -27,4 +28,12 @@ pub fn load_texture(display: &Display, p: &[u8]) -> anyhow::Result<Texture> {
             ..Default::default()
         },
     )
+}
+
+pub fn lerp(f1: f32, f2: f32, t: f32) -> f32 {
+    f1 * (1.0 - t) + f2 * t
+}
+
+pub fn lerp_vec2d(v1: Vec2d, v2: Vec2d, t: f32) -> Vec2d {
+    Vec2d::new(lerp(v1.x(), v2.x(), t), lerp(v1.y(), v2.y(), t))
 }
