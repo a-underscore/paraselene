@@ -119,12 +119,19 @@ impl<'a> System<'a> for PlayerManager {
                     player.dash_time = now;
                 }
 
-                Some(player)
+                Some(player.clone())
             } else {
                 None
             };
 
-            if let Some(player) = res {
+            if let Some((player, transform)) = res.and_then(|p| {
+                Some((
+                    p,
+                    cm.get::<Transform>(self.player, em)
+                        .and_then(|t| t.active.then_some(t))?
+                        .clone(),
+                ))
+            }) {
                 let force = player.force();
 
                 if let Some(p) = cm
@@ -133,16 +140,22 @@ impl<'a> System<'a> for PlayerManager {
                 {
                     let force = (force.magnitude() != 0.0)
                         .then(|| {
-                            util::lerp_vec2d(
-                                force,
-                                force.normal() * PLAYER_MOVE_SPEED,
-                                PLAYER_MOVE_EASING,
-                            )
+                            p.force
+                                + (Mat3d::rotation(transform.rotation())
+                                    * (
+                                        util::lerp_vec2d(
+                                            force,
+                                            Vec2d::default(),
+                                            PLAYER_MOVE_EASING,
+                                        ),
+                                        1.0,
+                                    ))
+                                    .0
                         })
                         .unwrap_or_else(|| {
-                            -util::lerp_vec2d(p.force, Vec2d::default(), PLAYER_MOVE_EASING)
-                        })
-                        + p.force;
+                            p.force
+                                - util::lerp_vec2d(p.force, Vec2d::default(), PLAYER_MOVE_EASING)
+                        });
 
                     p.force = (force.magnitude() != 0.0)
                         .then(|| force.normal() * force.magnitude().min(PLAYER_MOVE_SPEED))
