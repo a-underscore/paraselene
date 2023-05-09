@@ -88,7 +88,10 @@ impl GameUiManager {
         })?;
         let (x, y) = self.mouse_pos;
         let camera_dimensions = camera.dimensions();
-        let camera_transform = cm.get::<Transform>(e, em)?.clone();
+        let camera_transform = cm
+            .get::<Transform>(e, em)
+            .and_then(|t| t.active.then_some(t))?
+            .clone();
         let (width, height) = self.window_dims;
 
         Some(Vec2d::new(

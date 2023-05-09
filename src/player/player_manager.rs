@@ -98,11 +98,16 @@ impl<'a> System<'a> for PlayerManager {
             {
                 if let Some((position, transform)) = cm
                     .get::<ScreenPos>(*crosshair, em)
-                    .map(|s| s.position)
-                    .and_then(|p| Some((p, cm.get_mut::<Transform>(self.player, em)?)))
+                    .and_then(|s| s.active.then_some(s.position))
+                    .and_then(|p| {
+                        Some((
+                            p,
+                            cm.get_mut::<Transform>(self.player, em)
+                                .and_then(|t| t.active.then_some(t))?,
+                        ))
+                    })
                 {
-                    transform
-                        .set_rotation(Vec2d::new(0.0, 1.0).angle(position - transform.position()));
+                    transform.set_rotation(Vec2d::new(0.0, 1.0).angle(position));
                 }
             }
 
@@ -119,7 +124,10 @@ impl<'a> System<'a> for PlayerManager {
             if let Some(player) = res {
                 let force = player.force();
 
-                if let Some(p) = cm.get_mut::<Physical>(self.player, em) {
+                if let Some(p) = cm
+                    .get_mut::<Physical>(self.player, em)
+                    .and_then(|p| p.active.then_some(p))
+                {
                     p.force = force;
                 }
             }
@@ -127,13 +135,21 @@ impl<'a> System<'a> for PlayerManager {
             let res = cm
                 .get::<Transform>(self.player, em)
                 .cloned()
-                .and_then(|t| Some((t, cm.get_mut::<Player>(self.player, em)?)))
-                .and_then(|(transform, player)| {
+                .and_then(|t| {
+                    Some((
+                        t.active.then_some(t)?,
+                        cm.get::<Physical>(self.player, em)
+                            .and_then(|p| p.active.then_some(p))?
+                            .clone(),
+                        cm.get_mut::<Player>(self.player, em)?,
+                    ))
+                })
+                .and_then(|(transform, physical, player)| {
                     let ref p @ (_, ref projectile, _) = player.projectile.clone();
 
                     (player.states.firing
                         && now.duration_since(player.fire_time) >= projectile.cooldown)
-                        .then_some((transform, p.clone()))
+                        .then_some(((transform, physical), p.clone()))
                         .map(|d| {
                             player.fire_time = now;
 
@@ -141,13 +157,15 @@ impl<'a> System<'a> for PlayerManager {
                         })
                 });
 
-            if let Some((transform, (collider, projectile, instance))) = res {
+            if let Some(((transform, physical), (collider, projectile, instance))) = res {
                 let p = em.add();
 
                 cm.add(
                     p,
                     Physical::new(
-                        (Mat3d::rotation(transform.rotation()) * (projectile.velocity, 1.0)).0,
+                        physical.velocity()
+                            + (Mat3d::rotation(transform.rotation()) * (projectile.velocity, 1.0))
+                                .0,
                         true,
                     ),
                     em,
@@ -157,6 +175,16 @@ impl<'a> System<'a> for PlayerManager {
                 cm.add(p, instance, em);
                 cm.add(p, transform, em);
             }
+        }
+
+        if let Some((t, ct)) = cm.get::<Transform>(self.player, em).cloned().and_then(|t| {
+            Some((
+                t.active.then_some(t)?,
+                cm.get_mut::<Transform>(self.camera, em)
+                    .and_then(|t| t.active.then_some(t))?,
+            ))
+        }) {
+            ct.set_position(t.position());
         }
 
         Ok(())
