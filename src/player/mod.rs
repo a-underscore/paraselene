@@ -5,10 +5,7 @@ pub use hex_instance::Instance;
 pub use player_manager::PlayerManager;
 pub use states::States;
 
-use crate::{
-    util, Projectile, ASTEROID_LAYER, PLAYER_DASH_MULTIPLIER, PLAYER_LAYER, PLAYER_MOVE_SPEED,
-    PROJECTILE_LAYER,
-};
+use crate::{util, Projectile, ASTEROID_LAYER, PLAYER_LAYER, PLAYER_MOVE_SPEED, PROJECTILE_LAYER};
 use hex::{
     anyhow,
     ecs::{component_manager::Component, Id, Scene},
@@ -16,15 +13,12 @@ use hex::{
     math::Vec2d,
 };
 use hex_physics::Collider;
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
 #[derive(Clone)]
 pub struct Player {
     pub health: f32,
     pub fire_time: Instant,
-    pub dash_time: Instant,
-    pub dash_cooldown: Duration,
-    pub dash_duration: Duration,
     pub states: States,
     pub projectile: (Collider, Projectile, Instance),
 }
@@ -34,9 +28,6 @@ impl Player {
         Ok(Self {
             health: 25.0,
             fire_time: Instant::now(),
-            dash_time: Instant::now(),
-            dash_cooldown: Duration::from_secs_f32(0.5),
-            dash_duration: Duration::from_secs_f32(0.15),
             states: Default::default(),
             projectile: (
                 Collider::rect(
@@ -78,12 +69,6 @@ impl Player {
 
         if force.magnitude() > 0.0 {
             force = force.normal() * PLAYER_MOVE_SPEED;
-        }
-
-        let now = Instant::now();
-
-        if self.states.dashing && now.duration_since(self.dash_time) <= self.dash_duration {
-            force *= PLAYER_DASH_MULTIPLIER;
         }
 
         force

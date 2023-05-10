@@ -1,7 +1,6 @@
 use super::Player;
 use crate::{
-    util, Tag, ASTEROID_LAYER, CAM_DIMS, PLAYER_LAYER, PLAYER_MOVE_EASING, PLAYER_MOVE_SPEED,
-    PROJECTILE_LAYER,
+    util, Tag, ASTEROID_LAYER, CAM_DIMS, PLAYER_LAYER, PLAYER_MOVE_SPEED, PROJECTILE_LAYER,
 };
 use hex::{
     anyhow,
@@ -20,11 +19,11 @@ use hex_physics::{Collider, Physical};
 use hex_ui::ScreenPos;
 use std::time::Instant;
 
-#[derive(Default)]
 pub struct PlayerManager {
     pub player: Id,
     pub camera: Id,
     pub crosshair: OnceCell<Option<Id>>,
+    pub frame: Instant,
 }
 
 impl PlayerManager {
@@ -76,7 +75,8 @@ impl PlayerManager {
         Ok(Self {
             camera,
             player,
-            ..Default::default()
+            frame: Instant::now(),
+            crosshair: OnceCell::new(),
         })
     }
 }
@@ -94,6 +94,10 @@ impl<'a> System<'a> for PlayerManager {
         }) = ev
         {
             let now = Instant::now();
+
+            let delta = now.duration_since(self.frame);
+
+            self.frame = now;
 
             if let Some(crosshair) = self
                 .crosshair
@@ -114,52 +118,39 @@ impl<'a> System<'a> for PlayerManager {
                 }
             }
 
-            let res = if let Some(player) = cm.get_mut::<Player>(self.player, em) {
-                if now.duration_since(player.dash_time) >= player.dash_cooldown {
-                    player.dash_time = now;
-                }
-
-                Some(player.clone())
-            } else {
-                None
-            };
-
-            if let Some((player, transform)) = res.and_then(|p| {
-                Some((
-                    p,
-                    cm.get::<Transform>(self.player, em)
-                        .and_then(|t| t.active.then_some(t))?
-                        .clone(),
-                ))
-            }) {
-                let force = player.force();
+            if let Some((player, transform)) =
+                cm.get::<Player>(self.player, em).cloned().and_then(|p| {
+                    Some((
+                        p,
+                        cm.get::<Transform>(self.player, em)
+                            .and_then(|t| t.active.then_some(t))?
+                            .clone(),
+                    ))
+                })
+            {
+                let f = player.force();
 
                 if let Some(p) = cm
                     .get_mut::<Physical>(self.player, em)
                     .and_then(|p| p.active.then_some(p))
                 {
-                    let force = (force.magnitude() != 0.0)
-                        .then(|| {
-                            p.force
-                                + (Mat3d::rotation(transform.rotation())
-                                    * (
-                                        util::lerp_vec2d(
-                                            force,
-                                            Vec2d::default(),
-                                            PLAYER_MOVE_EASING,
-                                        ),
-                                        1.0,
-                                    ))
-                                    .0
-                        })
-                        .unwrap_or_else(|| {
-                            p.force
-                                - util::lerp_vec2d(p.force, Vec2d::default(), PLAYER_MOVE_EASING)
-                        });
+                    let force = if f.magnitude() != 0.0 {
+                        p.force
+                            + (Mat3d::rotation(transform.rotation())
+                                * (
+                                    util::lerp_vec2d(f, Vec2d::default(), delta.as_secs_f32()),
+                                    1.0,
+                                ))
+                                .0
+                    } else {
+                        p.force - util::lerp_vec2d(p.force, Vec2d::default(), delta.as_secs_f32())
+                    };
 
-                    p.force = (force.magnitude() != 0.0)
-                        .then(|| force.normal() * force.magnitude().min(PLAYER_MOVE_SPEED))
-                        .unwrap_or_default();
+                    p.force = if force.magnitude() != 0.0 {
+                        force.normal() * force.magnitude().min(PLAYER_MOVE_SPEED)
+                    } else {
+                        Vec2d::default()
+                    };
                 }
             }
 

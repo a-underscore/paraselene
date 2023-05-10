@@ -4,6 +4,5 @@ pub struct States {
     pub backward: bool,
     pub left: bool,
     pub right: bool,
-    pub dashing: bool,
     pub firing: bool,
 }

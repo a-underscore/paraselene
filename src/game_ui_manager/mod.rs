@@ -187,21 +187,6 @@ impl GameUiManager {
                     Ok(())
                 },
             );
-            self.add_keybind(
-                Input::Keyboard(VirtualKeyCode::LShift),
-                move |state, _, (em, cm)| {
-                    let dashing = match state {
-                        ElementState::Pressed => true,
-                        ElementState::Released => false,
-                    };
-
-                    if let Some(player) = cm.get_mut::<Player>(player, em) {
-                        player.states.dashing = dashing;
-                    }
-
-                    Ok(())
-                },
-            );
         }
     }
 }

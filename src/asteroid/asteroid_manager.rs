@@ -4,16 +4,20 @@ use hex::{
     anyhow,
     assets::Texture,
     components::Transform,
-    ecs::{system_manager::System, ComponentManager, EntityManager, Ev, Scene},
+    ecs::{ev::Control, system_manager::System, ComponentManager, EntityManager, Ev, Id, Scene},
+    glium::glutin::event::Event,
     math::Vec2d,
+    once_cell::sync::OnceCell,
 };
 use hex_instance::Instance;
 use hex_physics::{Collider, Physical};
 use rand::prelude::*;
 use std::rc::Rc;
 
+#[derive(Default)]
 pub struct AsteroidManager {
     pub asteroid_textures: Vec<Rc<Texture>>,
+    pub player: OnceCell<Option<Id>>,
 }
 
 impl AsteroidManager {
@@ -23,6 +27,7 @@ impl AsteroidManager {
                 &scene.display,
                 include_bytes!("asteroid.png"),
             )?)],
+            ..Default::default()
         })
     }
 
@@ -82,7 +87,7 @@ impl<'a> System<'a> for AsteroidManager {
         (em, cm): (&mut EntityManager, &mut ComponentManager),
     ) -> anyhow::Result<()> {
         // Test
-        for _ in 0..10 {
+        for _ in 0..100 {
             self.spawn_asteroid((em, cm));
         }
 
@@ -91,10 +96,55 @@ impl<'a> System<'a> for AsteroidManager {
 
     fn update(
         &mut self,
-        _: &mut Ev,
+        ev: &mut Ev,
         _: &mut Scene,
-        _: (&mut EntityManager, &mut ComponentManager),
+        (em, cm): (&mut EntityManager, &mut ComponentManager),
     ) -> anyhow::Result<()> {
+        if let Ev::Event(Control {
+            event: Event::MainEventsCleared,
+            flow: _,
+        }) = ev
+        {
+            let asteroids = em
+                .entities
+                .keys()
+                .cloned()
+                .filter(|e| {
+                    cm.get::<Asteroid>(*e, em)
+                        .and_then(|a| a.active.then_some(a))
+                        .is_some()
+                })
+                .collect::<Vec<_>>();
+            let colliders = em
+                .entities
+                .keys()
+                .cloned()
+                .filter(|e| !asteroids.contains(&e))
+                .filter_map(|e| {
+                    cm.get::<Collider>(e, em).and_then(|c| {
+                        Some((
+                            c.active.then_some(c.boundary)?,
+                            cm.get::<Transform>(e, em)
+                                .and_then(|t| t.active.then_some(t.position()))?,
+                        ))
+                    })
+                })
+                .collect::<Vec<_>>();
+
+            for e in asteroids {
+                if let Some((position, collider)) = cm
+                    .get::<Transform>(e, em)
+                    .and_then(|t| t.active.then_some(t.position()))
+                    .and_then(|p| Some((p, cm.get_mut::<Collider>(e, em)?)))
+                {
+                    collider.active = colliders
+                        .iter()
+                        .cloned()
+                        .any(|(b, p)| (position - p).magnitude() <= collider.boundary + b);
+                }
+            }
+        }
+
         Ok(())
     }
 }
