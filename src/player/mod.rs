@@ -19,7 +19,9 @@ use std::time::Instant;
 pub struct Player {
     pub health: f32,
     pub fire_time: Instant,
+    pub trail_time: Instant,
     pub states: States,
+    pub trail: (Projectile, Instance),
     pub projectile: (Collider, Projectile, Instance),
 }
 
@@ -28,7 +30,17 @@ impl Player {
         Ok(Self {
             health: 25.0,
             fire_time: Instant::now(),
+            trail_time: Instant::now(),
             states: Default::default(),
+            trail: (
+                Projectile::player_trail(true),
+                Instance::new(
+                    util::load_texture(&scene.display, include_bytes!("player_trail.png"))?,
+                    [1.0; 4],
+                    0.0,
+                    true,
+                ),
+            ),
             projectile: (
                 Collider::rect(
                     Vec2d([1.0 / 3.0; 2]),

@@ -86,14 +86,12 @@ impl<'a> System<'a> for AsteroidManager {
         _: &mut Scene,
         (em, cm): (&mut EntityManager, &mut ComponentManager),
     ) -> anyhow::Result<()> {
-        // Test
         for _ in 0..100 {
             self.spawn_asteroid((em, cm));
         }
 
         Ok(())
     }
-
     fn update(
         &mut self,
         ev: &mut Ev,
@@ -105,7 +103,7 @@ impl<'a> System<'a> for AsteroidManager {
             flow: _,
         }) = ev
         {
-            let asteroids = em
+            let asteroids: Vec<_> = em
                 .entities
                 .keys()
                 .cloned()
@@ -114,8 +112,8 @@ impl<'a> System<'a> for AsteroidManager {
                         .and_then(|a| a.active.then_some(a))
                         .is_some()
                 })
-                .collect::<Vec<_>>();
-            let colliders = em
+                .collect();
+            let colliders: Vec<_> = em
                 .entities
                 .keys()
                 .cloned()
@@ -129,13 +127,16 @@ impl<'a> System<'a> for AsteroidManager {
                         ))
                     })
                 })
-                .collect::<Vec<_>>();
+                .collect();
 
             for e in asteroids {
-                if let Some((position, collider)) = cm
-                    .get::<Transform>(e, em)
-                    .and_then(|t| t.active.then_some(t.position()))
-                    .and_then(|p| Some((p, cm.get_mut::<Collider>(e, em)?)))
+                if let Some((position, collider)) =
+                    cm.get::<Transform>(e, em).cloned().and_then(|t| {
+                        Some((
+                            t.active.then_some(t.position())?,
+                            cm.get_mut::<Collider>(e, em)?,
+                        ))
+                    })
                 {
                     collider.active = colliders
                         .iter()

@@ -94,7 +94,6 @@ impl<'a> System<'a> for PlayerManager {
         }) = ev
         {
             let now = Instant::now();
-
             let delta = now.duration_since(self.frame);
 
             self.frame = now;
@@ -103,12 +102,10 @@ impl<'a> System<'a> for PlayerManager {
                 .crosshair
                 .get_or_init(|| Tag::new("crosshair").find((em, cm)))
             {
-                if let Some((position, transform)) = cm
-                    .get::<ScreenPos>(*crosshair, em)
-                    .and_then(|s| s.active.then_some(s.position))
-                    .and_then(|p| {
+                if let Some((position, transform)) =
+                    cm.get::<ScreenPos>(*crosshair, em).cloned().and_then(|s| {
                         Some((
-                            p,
+                            s.active.then_some(s.position)?,
                             cm.get_mut::<Transform>(self.player, em)
                                 .and_then(|t| t.active.then_some(t))?,
                         ))
@@ -154,32 +151,32 @@ impl<'a> System<'a> for PlayerManager {
                 }
             }
 
-            let res = cm
-                .get::<Transform>(self.player, em)
-                .cloned()
-                .and_then(|t| {
-                    Some((
-                        t.active.then_some(t)?,
-                        cm.get::<Physical>(self.player, em)
-                            .and_then(|p| p.active.then_some(p))?
-                            .clone(),
-                        cm.get_mut::<Player>(self.player, em)?,
-                    ))
-                })
-                .and_then(|(transform, physical, player)| {
+            let res = cm.get::<Transform>(self.player, em).cloned().and_then(|t| {
+                Some((
+                    t.active.then_some(t)?,
+                    cm.get::<Physical>(self.player, em)
+                        .and_then(|p| p.active.then_some(p))?
+                        .clone(),
+                ))
+            });
+
+            if let Some(((transform, physical), (collider, projectile, instance))) =
+                res.as_ref().and_then(|(transform, physical)| {
+                    let player = cm.get_mut::<Player>(self.player, em)?;
                     let ref p @ (_, ref projectile, _) = player.projectile.clone();
 
-                    (player.states.firing
+                    if let Some(d) = (player.states.firing
                         && now.duration_since(player.fire_time) >= projectile.cooldown)
-                        .then_some(((transform, physical), p.clone()))
-                        .map(|d| {
-                            player.fire_time = now;
+                        .then(|| ((transform, physical), p.clone()))
+                    {
+                        player.fire_time = now;
 
-                            d
-                        })
-                });
-
-            if let Some(((transform, physical), (collider, projectile, instance))) = res {
+                        Some(d)
+                    } else {
+                        None
+                    }
+                })
+            {
                 let p = em.add();
 
                 cm.add(
@@ -195,7 +192,46 @@ impl<'a> System<'a> for PlayerManager {
                 cm.add(p, collider, em);
                 cm.add(p, projectile, em);
                 cm.add(p, instance, em);
-                cm.add(p, transform, em);
+                cm.add(p, transform.clone(), em);
+            }
+
+            if let Some(((transform, physical), (projectile, instance))) = res
+                .as_ref()
+                .and_then(|(transform, physical)| {
+                    let player = cm.get_mut::<Player>(self.player, em)?;
+
+                    (player.force().magnitude() != 0.0).then_some((transform, physical, player))
+                })
+                .and_then(|(transform, physical, player)| {
+                    let ref p @ (ref projectile, _) = player.trail.clone();
+                    let delta = now.duration_since(player.trail_time);
+
+                    if let Some(d) =
+                        (delta >= projectile.cooldown).then(|| ((transform, physical), p.clone()))
+                    {
+                        player.trail_time = now;
+
+                        Some(d)
+                    } else {
+                        None
+                    }
+                })
+            {
+                let p = em.add();
+
+                cm.add(
+                    p,
+                    Physical::new(
+                        physical.velocity()
+                            + (Mat3d::rotation(transform.rotation()) * (projectile.velocity, 1.0))
+                                .0,
+                        true,
+                    ),
+                    em,
+                );
+                cm.add(p, projectile, em);
+                cm.add(p, instance, em);
+                cm.add(p, transform.clone(), em);
             }
         }
 

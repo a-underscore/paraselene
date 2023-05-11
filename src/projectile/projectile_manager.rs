@@ -8,6 +8,7 @@ use hex::{
     },
     glium::glutin::event::Event,
 };
+use hex_instance::Instance;
 use hex_physics::Collider;
 use std::time::Instant;
 
@@ -39,11 +40,29 @@ impl<'a> System<'a> for ProjectileManager {
                 .keys()
                 .cloned()
                 .filter_map(|e| {
-                    let projectile = cm
-                        .get::<Projectile>(e, em)
-                        .and_then(|p| p.active.then_some(p))?;
+                    let (spawn_time, projectile) = {
+                        let projectile = cm
+                            .get::<Projectile>(e, em)
+                            .and_then(|p| p.active.then_some(p))?;
 
-                    cm.get::<Collider>(e, em)
+                        let spawn_time = *projectile.spawn_time.get_or_init(|| now);
+                        (spawn_time, projectile.clone())
+                    };
+                    let delta = now.duration_since(spawn_time);
+
+                    if let Some(instance) = cm
+                        .get_mut::<Instance>(e, em)
+                        .and_then(|i| i.active.then_some(i))
+                    {
+                        if let Some(vis_mul) = projectile
+                            .vis_mul
+                            .map(|v| (1.0 - now.duration_since(spawn_time).as_secs_f32() * v))
+                        {
+                            instance.color[3] = vis_mul;
+                        }
+                    }
+
+                    (cm.get::<Collider>(e, em)
                         .map(|collider| {
                             collider
                                 .collisions
@@ -51,9 +70,9 @@ impl<'a> System<'a> for ProjectileManager {
                                 .cloned()
                                 .filter_map(|c| cm.get::<Collider>(c, em))
                                 .any(|c| !c.ghost)
-                                || now.duration_since(*projectile.spawn_time.get_or_init(|| now))
-                                    >= projectile.alive_time
-                        })?
+                        })
+                        .unwrap_or(false)
+                        || delta >= projectile.alive_time)
                         .then_some(e)
                 })
                 .collect();
