@@ -222,7 +222,7 @@ impl<'a> System<'a> for PlayerManager {
                 cm.add(
                     p,
                     Physical::new(
-                        physical.velocity()
+                        -physical.velocity()
                             + (Mat3d::rotation(transform.rotation()) * (projectile.velocity, 1.0))
                                 .0,
                         true,

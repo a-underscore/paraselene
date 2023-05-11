@@ -38,8 +38,8 @@ impl Projectile {
         Self {
             spawn_time: OnceCell::new(),
             alive_time: Duration::from_secs_f32(0.5),
-            velocity: Vec2d::new(0.0, -1.0),
-            cooldown: Duration::from_millis(5),
+            velocity: Vec2d::new(0.0, 0.0),
+            cooldown: Duration::from_millis(1),
             vis_mul: Some(2.0),
             dmg: 0.0,
             active,
