@@ -72,7 +72,7 @@ pub fn main() {
         (
             Box2d::new(
                 Default::default(),
-                ((MAP_DIMS_X as f32).powi(2) * (MAP_DIMS_Y as f32).powi(2)).sqrt(),
+                (MAP_DIMS_X.powi(2) * MAP_DIMS_Y.powi(2)).sqrt(),
             ),
             TREE_ITEM_COUNT,
         ),

@@ -117,7 +117,7 @@ impl<'a> System<'a> for AsteroidManager {
                 .entities
                 .keys()
                 .cloned()
-                .filter(|e| !asteroids.contains(&e))
+                .filter(|e| !asteroids.contains(e))
                 .filter_map(|e| {
                     cm.get::<Collider>(e, em).and_then(|c| {
                         Some((
