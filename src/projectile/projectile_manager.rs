@@ -100,15 +100,12 @@ impl<'a> System<'a> for ProjectileManager {
 
             self.queued_rm.extend(removed);
 
-            if let Some((_, player_pos)) = self
+            if let Some(player_pos) = self
                 .player
                 .get_or_init(|| Tag::new("player").find((em, cm)))
                 .and_then(|p| {
-                    Some((
-                        p,
-                        cm.get::<Transform>(p, em)
-                            .and_then(|t| t.active.then_some(t.position()))?,
-                    ))
+                    cm.get::<Transform>(p, em)
+                        .and_then(|t| t.active.then_some(t.position()))
                 })
             {
                 trail.sort_by(|(_, p1), (_, p2)| {

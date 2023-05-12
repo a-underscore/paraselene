@@ -25,9 +25,9 @@ impl Projectile {
     pub fn player_bullet(active: bool) -> Self {
         Self {
             spawn_time: OnceCell::new(),
-            alive_time: Duration::from_secs_f32(2.0),
+            alive_time: Duration::from_secs_f32(1.0),
             velocity: Vec2d::new(0.0, 30.0),
-            cooldown: Duration::from_millis(36),
+            cooldown: Duration::from_millis(50),
             trail_data: None,
             dmg: 2.0,
             active,
