@@ -1,12 +1,16 @@
 use super::Projectile;
+use crate::Tag;
 use hex::{
     anyhow,
+    components::Transform,
     ecs::{
         ev::{Control, Ev},
         system_manager::System,
         ComponentManager, EntityManager, Id, Scene,
     },
     glium::glutin::event::Event,
+    math::Vec2d,
+    once_cell::sync::OnceCell,
 };
 use hex_instance::Instance;
 use hex_physics::Collider;
@@ -14,6 +18,7 @@ use std::time::Instant;
 
 #[derive(Default)]
 pub struct ProjectileManager {
+    pub player: OnceCell<Option<Id>>,
     queued_rm: Vec<Id>,
 }
 
@@ -35,34 +40,38 @@ impl<'a> System<'a> for ProjectileManager {
                 em.rm(e, cm);
             }
 
-            let removed: Vec<_> = em
+            let projectiles: Vec<_> = em
                 .entities
                 .keys()
                 .cloned()
                 .filter_map(|e| {
-                    let (spawn_time, projectile) = {
-                        let projectile = cm
-                            .get::<Projectile>(e, em)
-                            .and_then(|p| p.active.then_some(p))?;
+                    let projectile = cm
+                        .get::<Projectile>(e, em)
+                        .and_then(|p| p.active.then_some(p))?;
+                    let spawn_time = *projectile.spawn_time.get_or_init(|| now);
 
-                        let spawn_time = *projectile.spawn_time.get_or_init(|| now);
-                        (spawn_time, projectile.clone())
-                    };
+                    Some((e, spawn_time, projectile.clone()))
+                })
+                .collect();
+            let (removed, mut trail) = projectiles.into_iter().fold(
+                (Vec::new(), Vec::new()),
+                |(mut rm, mut trail), (e, spawn_time, projectile)| {
                     let delta = now.duration_since(spawn_time);
-
-                    if let Some(instance) = cm
+                    let t = cm
                         .get_mut::<Instance>(e, em)
                         .and_then(|i| i.active.then_some(i))
-                    {
-                        if let Some(vis_mul) = projectile
-                            .vis_mul
-                            .map(|v| (1.0 - now.duration_since(spawn_time).as_secs_f32() * v))
-                        {
-                            instance.color[3] = vis_mul;
-                        }
-                    }
+                        .and_then(|instance| {
+                            if let Some(t) = projectile.trail_data {
+                                instance.color[3] =
+                                    1.0 - now.duration_since(spawn_time).as_secs_f32() * t;
 
-                    (cm.get::<Collider>(e, em)
+                                Some(t)
+                            } else {
+                                None
+                            }
+                        });
+                    let r = (cm
+                        .get::<Collider>(e, em)
                         .map(|collider| {
                             collider
                                 .collisions
@@ -73,11 +82,52 @@ impl<'a> System<'a> for ProjectileManager {
                         })
                         .unwrap_or(false)
                         || delta >= projectile.alive_time)
+                        .then_some(e);
+
+                    if let Some(r) = r {
+                        rm.push(r);
+                    } else if let Some(t) = t
+                        .is_some()
                         .then_some(e)
-                })
-                .collect();
+                        .and_then(|e| cm.get::<Transform>(e, em))
+                    {
+                        trail.push((e, t.position()));
+                    }
+
+                    (rm, trail)
+                },
+            );
 
             self.queued_rm.extend(removed);
+
+            if let Some((_, player_pos)) = self
+                .player
+                .get_or_init(|| Tag::new("player").find((em, cm)))
+                .and_then(|p| {
+                    Some((
+                        p,
+                        cm.get::<Transform>(p, em)
+                            .and_then(|t| t.active.then_some(t.position()))?,
+                    ))
+                })
+            {
+                trail.sort_by(|(_, p1), (_, p2)| {
+                    (player_pos - *p1)
+                        .magnitude()
+                        .total_cmp(&(player_pos - *p2).magnitude())
+                });
+
+                for t in trail.windows(2) {
+                    if let [(e1, _), (_, p2)] = t {
+                        if let Some(t) = cm
+                            .get_mut::<Transform>(*e1, em)
+                            .and_then(|t| t.active.then_some(t))
+                        {
+                            t.set_rotation(Vec2d::new(0.0, 1.0).angle(t.position() - *p2));
+                        }
+                    }
+                }
+            }
         }
 
         Ok(())

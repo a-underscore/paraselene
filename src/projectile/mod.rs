@@ -16,7 +16,7 @@ pub struct Projectile {
     pub alive_time: Duration,
     pub velocity: Vec2d,
     pub cooldown: Duration,
-    pub vis_mul: Option<f32>,
+    pub trail_data: Option<f32>,
     pub dmg: f32,
     pub active: bool,
 }
@@ -28,7 +28,7 @@ impl Projectile {
             alive_time: Duration::from_secs_f32(2.0),
             velocity: Vec2d::new(0.0, 30.0),
             cooldown: Duration::from_millis(36),
-            vis_mul: None,
+            trail_data: None,
             dmg: 2.0,
             active,
         }
@@ -39,8 +39,8 @@ impl Projectile {
             spawn_time: OnceCell::new(),
             alive_time: Duration::from_secs_f32(0.5),
             velocity: Vec2d::new(0.0, 0.0),
-            cooldown: Duration::from_millis(1),
-            vis_mul: Some(2.0),
+            cooldown: Duration::from_millis(10),
+            trail_data: Some(2.0),
             dmg: 0.0,
             active,
         }
