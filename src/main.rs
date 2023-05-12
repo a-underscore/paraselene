@@ -29,7 +29,7 @@ pub const PLAYER_DASH_MULTIPLIER: f32 = 2.5;
 pub const WINDOW_DIMS_X: u32 = 1920;
 pub const WINDOW_DIMS_Y: u32 = 1080;
 pub const ASP_RATIO: f32 = WINDOW_DIMS_Y as f32 / WINDOW_DIMS_X as f32;
-pub const CAM_DIMS: f32 = 30.0 * ASP_RATIO;
+pub const CAM_DIMS: f32 = 50.0 * ASP_RATIO;
 pub const MAP_DIMS_X: f32 = 100.0;
 pub const MAP_DIMS_Y: f32 = 100.0;
 pub const PHYSICS_CYCLES: u32 = 3;
@@ -39,6 +39,7 @@ pub const PROJECTILE_LAYER: Id = 1;
 pub const PLAYER_LAYER: Id = 2;
 pub const ASTEROID_LAYER: Id = 3;
 pub const ASTEROID_RESET: usize = 0;
+pub const NUM_ASTEROIDS: usize = 500;
 
 thread_local! {
     pub static RESET: Cell<Option<usize>> = Default::default();

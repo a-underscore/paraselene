@@ -1,5 +1,5 @@
 use super::Asteroid;
-use crate::{util, ASTEROID_LAYER, MAP_DIMS_X, MAP_DIMS_Y, PLAYER_LAYER};
+use crate::{util, ASTEROID_LAYER, MAP_DIMS_X, MAP_DIMS_Y, NUM_ASTEROIDS, PLAYER_LAYER};
 use hex::{
     anyhow,
     assets::Texture,
@@ -10,7 +10,7 @@ use hex::{
     once_cell::sync::OnceCell,
 };
 use hex_instance::Instance;
-use hex_physics::{Collider, Physical};
+use hex_physics::Collider;
 use rand::prelude::*;
 use std::rc::Rc;
 
@@ -23,10 +23,16 @@ pub struct AsteroidManager {
 impl AsteroidManager {
     pub fn new(scene: &Scene) -> anyhow::Result<Self> {
         Ok(Self {
-            asteroid_textures: vec![Rc::new(util::load_texture(
-                &scene.display,
-                include_bytes!("asteroid.png"),
-            )?)],
+            asteroid_textures: vec![
+                Rc::new(util::load_texture(
+                    &scene.display,
+                    include_bytes!("asteroid.png"),
+                )?),
+                Rc::new(util::load_texture(
+                    &scene.display,
+                    include_bytes!("asteroid2.png"),
+                )?),
+            ],
             ..Default::default()
         })
     }
@@ -61,7 +67,6 @@ impl AsteroidManager {
                 ),
                 em,
             );
-            cm.add(asteroid, Physical::new(Default::default(), true), em);
             cm.add(
                 asteroid,
                 Transform::new(
@@ -86,7 +91,7 @@ impl<'a> System<'a> for AsteroidManager {
         _: &mut Scene,
         (em, cm): (&mut EntityManager, &mut ComponentManager),
     ) -> anyhow::Result<()> {
-        for _ in 0..100 {
+        for _ in 0..NUM_ASTEROIDS {
             self.spawn_asteroid((em, cm));
         }
 
