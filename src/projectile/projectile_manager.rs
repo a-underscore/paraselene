@@ -60,13 +60,10 @@ impl<'a> System<'a> for ProjectileManager {
                     let t = projectile.trail_data.and_then(|t| {
                         let scale = 1.0 - now.duration_since(spawn_time).as_secs_f32() * t;
 
-                        if let Some(instance) = cm.get_mut::<Instance>(e, em) {
-                            instance.color[3] = scale;
-                        }
+                        cm.get_mut::<Instance>(e, em)?.color[3] = scale;
 
-                        if let Some(transform) = cm.get_mut::<Transform>(e, em) {
-                            transform.set_scale(Vec2d([scale; 2]));
-                        }
+                        cm.get_mut::<Transform>(e, em)
+                            .map(|t| t.set_scale(Vec2d::new(scale, t.scale().y())))?;
 
                         Some(t)
                     });
