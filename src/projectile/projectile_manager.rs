@@ -57,18 +57,19 @@ impl<'a> System<'a> for ProjectileManager {
                 (&mut self.queued_rm, Vec::new()),
                 |(rm, mut trail), (e, spawn_time, projectile)| {
                     let delta = now.duration_since(spawn_time);
-                    let t = cm.get_mut::<Instance>(e, em).and_then(|instance| {
-                        instance.active.then_some(instance).and_then(|instance| {
-                            if let Some(t) = projectile.trail_data {
-                                instance.color[3] =
-                                    1.0 - now.duration_since(spawn_time).as_secs_f32() * t;
+                    let t =
+                        cm.get_mut::<Instance>(e, em)
+                            .filter(|i| i.active)
+                            .and_then(|instance| {
+                                if let Some(t) = projectile.trail_data {
+                                    instance.color[3] =
+                                        1.0 - now.duration_since(spawn_time).as_secs_f32() * t;
 
-                                Some(t)
-                            } else {
-                                None
-                            }
-                        })
-                    });
+                                    Some(t)
+                                } else {
+                                    None
+                                }
+                            });
                     let r = (cm
                         .get::<Collider>(e, em)
                         .map(|collider| {
