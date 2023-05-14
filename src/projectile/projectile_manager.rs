@@ -53,9 +53,9 @@ impl<'a> System<'a> for ProjectileManager {
                     Some((e, spawn_time, projectile.clone()))
                 })
                 .collect();
-            let (removed, mut trail) = projectiles.into_iter().fold(
-                (Vec::new(), Vec::new()),
-                |(mut rm, mut trail), (e, spawn_time, projectile)| {
+            let (_, mut trail) = projectiles.into_iter().fold(
+                (&mut self.queued_rm, Vec::new()),
+                |(rm, mut trail), (e, spawn_time, projectile)| {
                     let delta = now.duration_since(spawn_time);
                     let t = cm
                         .get_mut::<Instance>(e, em)
@@ -97,8 +97,6 @@ impl<'a> System<'a> for ProjectileManager {
                     (rm, trail)
                 },
             );
-
-            self.queued_rm.extend(removed);
 
             if let Some(player_pos) = self
                 .player

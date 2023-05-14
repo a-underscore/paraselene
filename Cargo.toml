@@ -7,7 +7,7 @@ inherits = "release"
 debug = true
 
 [package]
-name = "kno3"
+name = "parselene"
 version = "0.1.0"
 edition = "2021"
 
