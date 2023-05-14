@@ -37,7 +37,7 @@ impl Player {
                 Instance::new(
                     util::load_texture(&scene.display, include_bytes!("player_trail.png"))?,
                     [1.0; 4],
-                    0.0,
+                    -1.0,
                     true,
                 ),
             ),
@@ -53,7 +53,7 @@ impl Player {
                 Instance::new(
                     util::load_texture(&scene.display, include_bytes!("player_projectile.png"))?,
                     [1.0; 4],
-                    0.0,
+                    -1.0,
                     true,
                 ),
             ),
