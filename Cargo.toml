@@ -15,7 +15,8 @@ edition = "2021"
 hashbrown = "0.13.2"
 hex = { git = "https://github.com/a-underscore/hex", version = "0.2.0", branch = "0.2.0" }
 hex_instance = { git = "https://github.com/a-underscore/hex_instance", version = "0.2.0", branch = "0.2.0" }
-hex_physics = { git = "https://github.com/a-underscore/hex_physics", version = "0.2.0", branch = "0.2.0" }
+#hex_physics = { git = "https://github.com/a-underscore/hex_physics", version = "0.2.0", branch = "0.2.0" }
+hex_physics = { path = "../hex_physics" }
 hex_ui = { git = "https://github.com/a-underscore/hex_ui", version = "0.2.0", branch = "0.2.0" }
 image = "0.24.5"
 rand = "0.8.5"
