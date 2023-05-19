@@ -1,16 +1,15 @@
 use super::Asteroid;
-use crate::{util, ASTEROID_LAYER, MAP_DIMS_X, MAP_DIMS_Y, NUM_ASTEROIDS, PLAYER_LAYER};
+use crate::{util, MAP_DIMS_X, MAP_DIMS_Y};
 use hex::{
     anyhow,
     assets::Texture,
     components::Transform,
-    ecs::{ev::Control, system_manager::System, ComponentManager, EntityManager, Ev, Id, Scene},
-    glium::glutin::event::Event,
+    ecs::{system_manager::System, ComponentManager, EntityManager, Id, Scene},
     math::Vec2d,
     once_cell::sync::OnceCell,
 };
 use hex_instance::Instance;
-use hex_physics::Collider;
+use noise::{NoiseFn, Perlin};
 use rand::prelude::*;
 use std::rc::Rc;
 
@@ -37,13 +36,16 @@ impl AsteroidManager {
         })
     }
 
-    pub fn spawn_asteroid(&mut self, (em, cm): (&mut EntityManager, &mut ComponentManager)) {
+    pub fn spawn_asteroid(
+        &mut self,
+        pos: Vec2d,
+        (em, cm): (&mut EntityManager, &mut ComponentManager),
+    ) {
         if let Some(texture) = self
             .asteroid_textures
             .choose(&mut rand::thread_rng())
             .cloned()
         {
-            let mut rng = rand::thread_rng();
             let asteroid = em.add();
 
             cm.add(
@@ -51,33 +53,14 @@ impl AsteroidManager {
                 Instance {
                     texture,
                     color: [1.0; 4],
-                    z: 1.0,
+                    z: -2.0,
                     active: true,
                 },
                 em,
             );
             cm.add(
                 asteroid,
-                Collider::oct(
-                    Vec2d([1.0 / 3.0; 2]),
-                    vec![PLAYER_LAYER, ASTEROID_LAYER],
-                    Vec::new(),
-                    false,
-                    true,
-                ),
-                em,
-            );
-            cm.add(
-                asteroid,
-                Transform::new(
-                    Vec2d::new(
-                        rng.gen_range((-MAP_DIMS_X / 2.0)..(MAP_DIMS_Y / 2.0)),
-                        rng.gen_range((-MAP_DIMS_X / 2.0)..(MAP_DIMS_Y / 2.0)),
-                    ),
-                    0.0,
-                    Vec2d([1.0; 2]),
-                    true,
-                ),
+                Transform::new(pos, 0.0, Vec2d([1.0; 2]), true),
                 em,
             );
             cm.add(asteroid, Asteroid::new(true), em);
@@ -91,62 +74,14 @@ impl<'a> System<'a> for AsteroidManager {
         _: &mut Scene,
         (em, cm): (&mut EntityManager, &mut ComponentManager),
     ) -> anyhow::Result<()> {
-        for _ in 0..NUM_ASTEROIDS {
-            self.spawn_asteroid((em, cm));
-        }
+        let perlin = Perlin::new(thread_rng().gen_range(0..u32::MAX));
 
-        Ok(())
-    }
-    fn update(
-        &mut self,
-        ev: &mut Ev,
-        _: &mut Scene,
-        (em, cm): (&mut EntityManager, &mut ComponentManager),
-    ) -> anyhow::Result<()> {
-        if let Ev::Event(Control {
-            event: Event::MainEventsCleared,
-            flow: _,
-        }) = ev
-        {
-            let asteroids: Vec<_> = em
-                .entities
-                .keys()
-                .cloned()
-                .filter(|e| {
-                    cm.get::<Asteroid>(*e, em)
-                        .and_then(|a| a.active.then_some(a))
-                        .is_some()
-                })
-                .collect();
-            let colliders: Vec<_> = em
-                .entities
-                .keys()
-                .cloned()
-                .filter(|e| !asteroids.contains(e))
-                .filter_map(|e| {
-                    cm.get::<Collider>(e, em).and_then(|c| {
-                        Some((
-                            c.active.then_some(c.boundary)?,
-                            cm.get::<Transform>(e, em)
-                                .and_then(|t| t.active.then_some(t.position()))?,
-                        ))
-                    })
-                })
-                .collect();
+        for i in 0..(MAP_DIMS_X as u32) {
+            for j in 0..(MAP_DIMS_Y as u32) {
+                let val = perlin.get([i as f64 * 1.0 / 25.0, j as f64 * 1.0 / 25.0, 0.0]);
 
-            for e in asteroids {
-                if let Some((position, collider)) =
-                    cm.get::<Transform>(e, em).cloned().and_then(|t| {
-                        Some((
-                            t.active.then_some(t.position())?,
-                            cm.get_mut::<Collider>(e, em)?,
-                        ))
-                    })
-                {
-                    collider.active = colliders
-                        .iter()
-                        .cloned()
-                        .any(|(b, p)| (position - p).magnitude() <= collider.boundary + b);
+                if val > 0.5 {
+                    self.spawn_asteroid(Vec2d::new(i as f32, j as f32), (em, cm));
                 }
             }
         }

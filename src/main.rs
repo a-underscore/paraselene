@@ -39,7 +39,6 @@ pub const PROJECTILE_LAYER: Id = 1;
 pub const PLAYER_LAYER: Id = 2;
 pub const ASTEROID_LAYER: Id = 3;
 pub const ASTEROID_RESET: usize = 0;
-pub const NUM_ASTEROIDS: usize = 500;
 
 thread_local! {
     pub static RESET: Cell<Option<usize>> = Default::default();

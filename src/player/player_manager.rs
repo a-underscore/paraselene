@@ -35,7 +35,7 @@ impl PlayerManager {
 
         cm.add(
             player,
-            Transform::new(Default::default(), 0.0, Vec2d::new(1.0, 1.0), true),
+            Transform::new(Vec2d::new(-1.0, -1.0), 0.0, Vec2d::new(1.0, 1.0), true),
             em,
         );
         cm.add(player, Player::new(scene)?, em);
