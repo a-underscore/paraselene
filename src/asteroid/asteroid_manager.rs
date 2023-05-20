@@ -60,8 +60,8 @@ impl AsteroidManager {
         for i in 0..CHUNK_SIZE {
             for j in 0..CHUNK_SIZE {
                 let val = perlin.get([
-                    (pos.x() as f64 * CHUNK_SIZE as f64 + i as f64) / 5.0,
-                    (pos.y() as f64 * CHUNK_SIZE as f64 + j as f64) / 5.0,
+                    (pos.x() as f64 * CHUNK_SIZE as f64 + i as f64) / 25.0,
+                    (pos.y() as f64 * CHUNK_SIZE as f64 + j as f64) / 25.0,
                     0.0,
                 ]);
                 let (rect, data) = if val > 0.25 {
