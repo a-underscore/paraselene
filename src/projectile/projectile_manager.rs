@@ -25,14 +25,14 @@ pub struct ProjectileManager {
 impl<'a> System<'a> for ProjectileManager {
     fn update(
         &mut self,
-        event: &mut Ev,
+        ev: &mut Ev,
         _: &mut Scene,
         (em, cm): (&mut EntityManager, &mut ComponentManager),
     ) -> anyhow::Result<()> {
         if let Ev::Event(Control {
             event: Event::MainEventsCleared,
             flow: _,
-        }) = event
+        }) = ev
         {
             let now = Instant::now();
 
