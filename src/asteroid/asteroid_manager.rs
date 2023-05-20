@@ -76,7 +76,7 @@ impl AsteroidManager {
                 let data = if let Some(asteroid) = self
                     .asteroids
                     .choose(&mut thread_rng())
-                    .and_then(|a| (val > 0.0).then_some(a))
+                    .and_then(|a| (val > 0.5).then_some(a))
                 {
                     let data: Vec<_> = asteroid.buffer.read();
 
