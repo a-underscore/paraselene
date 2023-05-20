@@ -99,9 +99,9 @@ impl AsteroidManager {
         cm.add(
             asteroid,
             Transform::new(
-                Vec2d::new(pos.x() * x as f32, pos.y() * y as f32),
+                pos * CHUNK_SIZE as f32,
                 0.0,
-                Vec2d::new(x as f32, y as f32),
+                Vec2d([CHUNK_SIZE as f32; 2]),
                 true,
             ),
             em,
@@ -185,7 +185,8 @@ impl<'a> System<'a> for AsteroidManager {
                                 })
                             {
                                 instance.active = (position - player_pos).magnitude()
-                                    < (CAM_DIMS.powi(2) * 2.0).sqrt();
+                                    < (CAM_DIMS.powi(2) * 2.0).sqrt()
+                                        + (((CHUNK_SIZE as f32) / 2.0).powi(2) * 2.0).sqrt();
                             }
                         }
                     }
