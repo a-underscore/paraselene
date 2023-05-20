@@ -24,15 +24,16 @@ use projectile::{Projectile, ProjectileManager};
 use std::{cell::Cell, time::Duration};
 use tag::Tag;
 
-pub const ASTEROID_UPDATE_TIME: Duration = Duration::from_millis(100);
+pub const ASTEROID_UPDATE_TIME: Duration = Duration::from_millis(50);
 pub const PLAYER_MOVE_SPEED: f32 = 10.0;
 pub const PLAYER_DASH_MULTIPLIER: f32 = 2.5;
 pub const WINDOW_DIMS_X: u32 = 1920;
 pub const WINDOW_DIMS_Y: u32 = 1080;
 pub const ASP_RATIO: f32 = WINDOW_DIMS_Y as f32 / WINDOW_DIMS_X as f32;
 pub const CAM_DIMS: f32 = 50.0 * ASP_RATIO;
-pub const MAP_DIMS_X: f32 = 100.0;
-pub const MAP_DIMS_Y: f32 = 100.0;
+pub const MAP_DIMS_X: u32 = 100;
+pub const MAP_DIMS_Y: u32 = 100;
+pub const CHUNK_SIZE: u32 = 10;
 pub const PHYSICS_CYCLES: u32 = 3;
 pub const PHYSICS_RATE: u32 = 3;
 pub const TREE_ITEM_COUNT: usize = 5;
@@ -73,7 +74,7 @@ pub fn main() {
         (
             Box2d::new(
                 Default::default(),
-                (MAP_DIMS_X.powi(2) * MAP_DIMS_Y.powi(2)).sqrt(),
+                ((MAP_DIMS_X.pow(2) * MAP_DIMS_Y.pow(2)) as f32).sqrt(),
             ),
             TREE_ITEM_COUNT,
         ),
