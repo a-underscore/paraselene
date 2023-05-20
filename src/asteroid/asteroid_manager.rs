@@ -64,26 +64,20 @@ impl AsteroidManager {
                     (pos.y() as f64 * CHUNK_SIZE as f64 + j as f64) / 25.0,
                     0.0,
                 ]);
-                let (rect, data) = if val > 0.25 {
-                    let rect = Rect {
-                        left: i * x,
-                        bottom: j * y,
-                        width: x,
-                        height: y,
-                    };
+                let rect = Rect {
+                    left: i * x,
+                    bottom: j * y,
+                    width: x,
+                    height: y,
+                };
+                let data = if val > 0.0 {
                     let data: Vec<_> = self.asteroid.buffer.read();
 
-                    (rect, data)
+                    data
                 } else {
-                    let rect = Rect {
-                        left: i * x,
-                        bottom: j * y,
-                        width: x,
-                        height: y,
-                    };
                     let data: Vec<_> = self.space.buffer.read();
 
-                    (rect, data)
+                    data
                 };
 
                 texture.buffer.write(rect, data);
@@ -92,7 +86,7 @@ impl AsteroidManager {
 
         let asteroid = em.add();
 
-        cm.add(asteroid, Instance::new(texture, [1.0; 4], -2.0, true), em);
+        cm.add(asteroid, Instance::new(texture, [1.0; 4], -3.0, true), em);
         cm.add(
             asteroid,
             Transform::new(

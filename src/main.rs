@@ -24,15 +24,15 @@ use projectile::{Projectile, ProjectileManager};
 use std::{cell::Cell, time::Duration};
 use tag::Tag;
 
-pub const ASTEROID_UPDATE_TIME: Duration = Duration::from_millis(50);
+pub const ASTEROID_UPDATE_TIME: Duration = Duration::from_millis(10);
 pub const PLAYER_MOVE_SPEED: f32 = 10.0;
 pub const PLAYER_DASH_MULTIPLIER: f32 = 2.5;
 pub const WINDOW_DIMS_X: u32 = 1920;
 pub const WINDOW_DIMS_Y: u32 = 1080;
 pub const ASP_RATIO: f32 = WINDOW_DIMS_Y as f32 / WINDOW_DIMS_X as f32;
 pub const CAM_DIMS: f32 = 50.0 * ASP_RATIO;
-pub const MAP_DIMS_X: u32 = 100;
-pub const MAP_DIMS_Y: u32 = 100;
+pub const MAP_DIMS_X: u32 = 200;
+pub const MAP_DIMS_Y: u32 = 200;
 pub const CHUNK_SIZE: u32 = 10;
 pub const PHYSICS_CYCLES: u32 = 3;
 pub const PHYSICS_RATE: u32 = 3;
