@@ -1,5 +1,7 @@
 use super::Asteroid;
-use crate::{util, Tag, ASTEROID_UPDATE_TIME, CAM_DIMS, CHUNK_SIZE, MAP_DIMS_X, MAP_DIMS_Y};
+use crate::{
+    util, Tag, ASTEROID_BIAS, ASTEROID_UPDATE_TIME, CAM_DIMS, CHUNK_SIZE, MAP_DIMS_X, MAP_DIMS_Y,
+};
 use hex::{
     anyhow,
     assets::Texture,
@@ -66,7 +68,7 @@ impl AsteroidManager {
                     (pos.x() as f64 * CHUNK_SIZE as f64 + i as f64) / 25.0,
                     (pos.y() as f64 * CHUNK_SIZE as f64 + j as f64) / 25.0,
                     0.0,
-                ]);
+                ]) - ASTEROID_BIAS;
                 let rect = Rect {
                     left: i * x,
                     bottom: j * y,
@@ -76,7 +78,7 @@ impl AsteroidManager {
                 let data = if let Some(asteroid) = self
                     .asteroids
                     .choose(&mut thread_rng())
-                    .and_then(|a| (val > 0.5).then_some(a))
+                    .and_then(|a| (val > 0.0).then_some(a))
                 {
                     let data: Vec<_> = asteroid.buffer.read();
 
