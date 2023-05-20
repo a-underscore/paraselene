@@ -20,7 +20,7 @@ use rand::prelude::*;
 use std::{rc::Rc, time::Instant};
 
 pub struct AsteroidManager {
-    pub asteroid: Texture,
+    pub asteroids: Vec<Texture>,
     pub space: Texture,
     pub player: OnceCell<Option<Id>>,
     pub check: Instant,
@@ -29,7 +29,10 @@ pub struct AsteroidManager {
 impl AsteroidManager {
     pub fn new(scene: &Scene) -> anyhow::Result<Self> {
         Ok(Self {
-            asteroid: util::load_texture(&scene.display, include_bytes!("asteroid.png"))?,
+            asteroids: vec![
+                util::load_texture(&scene.display, include_bytes!("asteroid.png"))?,
+                util::load_texture(&scene.display, include_bytes!("asteroid2.png"))?,
+            ],
             space: util::load_texture(&scene.display, include_bytes!("space.png"))?,
             player: OnceCell::new(),
             check: Instant::now(),
@@ -70,8 +73,12 @@ impl AsteroidManager {
                     width: x,
                     height: y,
                 };
-                let data = if val > 0.0 {
-                    let data: Vec<_> = self.asteroid.buffer.read();
+                let data = if let Some(asteroid) = self
+                    .asteroids
+                    .choose(&mut thread_rng())
+                    .and_then(|a| (val > 0.0).then_some(a))
+                {
+                    let data: Vec<_> = asteroid.buffer.read();
 
                     data
                 } else {
@@ -107,7 +114,7 @@ impl AsteroidManager {
         scene: &mut Scene,
         (em, cm): (&mut EntityManager, &mut ComponentManager),
     ) -> anyhow::Result<()> {
-        let (x, y) = self.asteroid.buffer.dimensions();
+        let (x, y) = self.space.buffer.dimensions();
         let perlin = Perlin::new(thread_rng().gen_range(u32::MIN..u32::MAX));
 
         for i in 0..(MAP_DIMS_X / CHUNK_SIZE) {
