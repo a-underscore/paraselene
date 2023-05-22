@@ -25,15 +25,15 @@ use std::{cell::Cell, time::Duration};
 use tag::Tag;
 
 pub const ASTEROID_UPDATE_TIME: Duration = Duration::from_millis(10);
-pub const ASTEROID_BIAS: f64 = 0.25;
 pub const PLAYER_MOVE_SPEED: f32 = 10.0;
 pub const PLAYER_DASH_MULTIPLIER: f32 = 2.5;
 pub const WINDOW_DIMS_X: u32 = 1920;
 pub const WINDOW_DIMS_Y: u32 = 1080;
 pub const ASP_RATIO: f32 = WINDOW_DIMS_Y as f32 / WINDOW_DIMS_X as f32;
 pub const CAM_DIMS: f32 = 75.0 * ASP_RATIO;
-pub const MAP_DIMS_X: u32 = 500;
-pub const MAP_DIMS_Y: u32 = 500;
+pub const TILE_SIZE: u32 = 32;
+pub const MAP_DIMS_X: u32 = 100;
+pub const MAP_DIMS_Y: u32 = 100;
 pub const CHUNK_SIZE: u32 = 50;
 pub const PHYSICS_CYCLES: u32 = 3;
 pub const PHYSICS_RATE: u32 = 3;
@@ -84,7 +84,7 @@ pub fn main() {
     system_manager.add(GameUiManager::new(&scene, (&mut em, &mut cm)).unwrap());
     system_manager.add(ProjectileManager::default());
     system_manager.add(UiManager::default());
-    system_manager.add(AsteroidManager::new(&scene).unwrap());
+    system_manager.add(AsteroidManager::default());
     system_manager.add(
         InstanceRenderer::new(
             &scene.display,

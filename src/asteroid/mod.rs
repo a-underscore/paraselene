@@ -1,6 +1,8 @@
 pub mod asteroid_manager;
+pub mod ore;
 
 pub use asteroid_manager::AsteroidManager;
+pub use ore::Ore;
 
 use hex::{
     ecs::{component_manager::Component, Id},
