@@ -17,8 +17,8 @@ impl Ore {
             min: 0.25,
             rand: 1.0,
             texture: vec![
-                util::load_texture(&display, include_bytes!("asteroid.png"))?,
-                util::load_texture(&display, include_bytes!("asteroid2.png"))?,
+                util::load_texture(display, include_bytes!("asteroid.png"))?,
+                util::load_texture(display, include_bytes!("asteroid2.png"))?,
             ],
         })
     }
@@ -28,7 +28,7 @@ impl Ore {
             max: 1.0,
             min: 2.0 / 3.0,
             rand: 2.0 / 3.0,
-            texture: vec![util::load_texture(&display, include_bytes!("metal.png"))?],
+            texture: vec![util::load_texture(display, include_bytes!("metal.png"))?],
         })
     }
 

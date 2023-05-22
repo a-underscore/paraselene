@@ -39,7 +39,7 @@ impl AsteroidManager {
     pub fn spawn_asteroid(
         &mut self,
         pos: Vec2d,
-        ores: &Vec<Ore>,
+        ores: &[Ore],
         space: &Texture,
         perlin: &Perlin,
         scene: &mut Scene,
@@ -65,7 +65,7 @@ impl AsteroidManager {
                     (pos.y() as f64 * CHUNK_SIZE as f64 + j as f64) / 25.0,
                     0.0,
                 ]);
-                let ores: Vec<_>= ores.iter().filter_map(|t| t.check(val)).collect();
+                let ores: Vec<_> = ores.iter().filter_map(|t| t.check(val)).collect();
                 let t = ores.choose(&mut thread_rng()).unwrap_or(&space);
                 let data: Vec<_> = t.buffer.read();
                 let rect = Rect {
