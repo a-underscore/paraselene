@@ -1,4 +1,4 @@
-use super::{Asteroid, Ore};
+use super::{Asteroid, Chunk, Ore};
 use crate::{
     util, Tag, ASTEROID_UPDATE_TIME, CAM_DIMS, CHUNK_SIZE, MAP_DIMS_X, MAP_DIMS_Y, TILE_SIZE,
 };
@@ -36,7 +36,7 @@ impl Default for AsteroidManager {
 }
 
 impl AsteroidManager {
-    pub fn spawn_asteroid(
+    pub fn spawn_chunk(
         &mut self,
         pos: Vec2d,
         ores: &[Ore],
@@ -57,16 +57,27 @@ impl AsteroidManager {
                 ..Default::default()
             },
         };
+        let dbg_instance = Instance::new(
+            util::load_texture(
+                &scene.display,
+                include_bytes!("../game_ui_manager/crosshair.png"),
+            )?,
+            [1.0; 4],
+            1.0,
+            true,
+        );
 
         for i in 0..CHUNK_SIZE {
             for j in 0..CHUNK_SIZE {
-                let val = perlin.get([
-                    (pos.x() as f64 * CHUNK_SIZE as f64 + i as f64) / 25.0,
-                    (pos.y() as f64 * CHUNK_SIZE as f64 + j as f64) / 25.0,
-                    0.0,
-                ]);
+                let x = pos.x() as f64 * CHUNK_SIZE as f64 + i as f64;
+                let y = pos.y() as f64 * CHUNK_SIZE as f64 + j as f64;
+                let val = perlin.get([x / 25.0, y / 25.0, 0.0]);
                 let ores: Vec<_> = ores.iter().filter_map(|t| t.check(val)).collect();
-                let t = ores.choose(&mut thread_rng()).unwrap_or(&space);
+                let (id, t) = ores
+                    .choose(&mut thread_rng())
+                    .cloned()
+                    .map(|(id, t)| (Some(id), t))
+                    .unwrap_or((None, space));
                 let data: Vec<_> = t.buffer.read();
                 let rect = Rect {
                     left: i * TILE_SIZE,
@@ -76,14 +87,35 @@ impl AsteroidManager {
                 };
 
                 texture.buffer.write(rect, data);
+
+                if let Some(id) = id {
+                    let asteroid = em.add();
+
+                    cm.add(asteroid, Asteroid::new(id.clone(), true), em);
+                    cm.add(
+                        asteroid,
+                        Transform::new(
+                            Vec2d::new(
+                                x as f32 - (CHUNK_SIZE / 2) as f32 + 0.5,
+                                y as f32 - (CHUNK_SIZE / 2) as f32 + 0.5,
+                            ),
+                            0.0,
+                            Vec2d([1.0; 2]),
+                            true,
+                        ),
+                        em,
+                    );
+                    cm.add(asteroid, dbg_instance.clone(), em);
+                }
             }
         }
 
-        let asteroid = em.add();
+        let chunk = em.add();
 
-        cm.add(asteroid, Instance::new(texture, [1.0; 4], -3.0, true), em);
+        cm.add(chunk, Chunk::new(true), em);
+        cm.add(chunk, Instance::new(texture, [1.0; 4], -3.0, true), em);
         cm.add(
-            asteroid,
+            chunk,
             Transform::new(
                 pos * CHUNK_SIZE as f32,
                 0.0,
@@ -92,7 +124,6 @@ impl AsteroidManager {
             ),
             em,
         );
-        cm.add(asteroid, Asteroid::new(true), em);
 
         Ok(())
     }
@@ -108,7 +139,7 @@ impl AsteroidManager {
 
         for i in 0..(MAP_DIMS_X / CHUNK_SIZE) {
             for j in 0..(MAP_DIMS_Y / CHUNK_SIZE) {
-                self.spawn_asteroid(
+                self.spawn_chunk(
                     Vec2d::new(i as f32, j as f32),
                     &ores,
                     &space,
@@ -160,8 +191,8 @@ impl<'a> System<'a> for AsteroidManager {
                 {
                     for e in em.entities.keys().cloned() {
                         if cm
-                            .get::<Asteroid>(e, em)
-                            .and_then(|a| a.active.then_some(a))
+                            .get::<Chunk>(e, em)
+                            .and_then(|c| c.active.then_some(c))
                             .is_some()
                         {
                             if let Some((position, instance)) =

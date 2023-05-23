@@ -1,6 +1,7 @@
 use crate::util;
 use hex::{anyhow, assets::Texture, glium::Display};
 use rand::prelude::*;
+use std::rc::Rc;
 
 #[derive(Clone)]
 pub struct Ore {
@@ -8,6 +9,7 @@ pub struct Ore {
     pub min: f64,
     pub rand: f64,
     pub texture: Vec<Texture>,
+    pub id: Rc<String>,
 }
 
 impl Ore {
@@ -20,6 +22,7 @@ impl Ore {
                 util::load_texture(display, include_bytes!("asteroid.png"))?,
                 util::load_texture(display, include_bytes!("asteroid2.png"))?,
             ],
+            id: Rc::new("rock".to_string()),
         })
     }
 
@@ -29,14 +32,15 @@ impl Ore {
             min: 2.0 / 3.0,
             rand: 2.0 / 3.0,
             texture: vec![util::load_texture(display, include_bytes!("metal.png"))?],
+            id: Rc::new("metal".to_string()),
         })
     }
 
-    pub fn check(&self, value: f64) -> Option<&Texture> {
+    pub fn check(&self, value: f64) -> Option<(&Rc<String>, &Texture)> {
         let mut rng = thread_rng();
 
         if rng.gen_bool(self.rand) && self.max >= value && self.min <= value {
-            self.texture.choose(&mut rng)
+            Some((&self.id, self.texture.choose(&mut rng)?))
         } else {
             None
         }
