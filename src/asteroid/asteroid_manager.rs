@@ -57,15 +57,6 @@ impl AsteroidManager {
                 ..Default::default()
             },
         };
-        let dbg_instance = Instance::new(
-            util::load_texture(
-                &scene.display,
-                include_bytes!("../game_ui_manager/crosshair.png"),
-            )?,
-            [1.0; 4],
-            1.0,
-            true,
-        );
 
         for i in 0..CHUNK_SIZE {
             for j in 0..CHUNK_SIZE {
@@ -105,7 +96,6 @@ impl AsteroidManager {
                         ),
                         em,
                     );
-                    cm.add(asteroid, dbg_instance.clone(), em);
                 }
             }
         }
@@ -191,9 +181,13 @@ impl<'a> System<'a> for AsteroidManager {
                 {
                     for e in em.entities.keys().cloned() {
                         if cm
-                            .get::<Chunk>(e, em)
-                            .and_then(|c| c.active.then_some(c))
+                            .get::<Asteroid>(e, em)
+                            .and_then(|a| a.active.then_some(a))
                             .is_some()
+                            || cm
+                                .get::<Chunk>(e, em)
+                                .and_then(|c| c.active.then_some(c))
+                                .is_some()
                         {
                             if let Some((position, instance)) =
                                 cm.get::<Transform>(e, em).cloned().and_then(|t| {
