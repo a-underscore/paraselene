@@ -5,12 +5,11 @@ pub use chunk_data::ChunkData;
 pub use tile_data::TileData;
 
 use crate::CHUNK_SIZE;
-use std::rc::Rc;
-
 use hex::{
     ecs::{component_manager::Component, Id},
     id,
 };
+use std::rc::Rc;
 
 pub struct Chunk {
     pub grid: Vec<Vec<Option<Rc<String>>>>,

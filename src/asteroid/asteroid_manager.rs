@@ -42,7 +42,11 @@ impl AsteroidManager {
             player: OnceCell::new(),
             check: Instant::now(),
             rng: StdRng::seed_from_u64(0),
-            ores: vec![Ore::rock(&scene.display)?, Ore::metal(&scene.display)?],
+            ores: vec![
+                Ore::asteroid_1(&scene.display)?,
+                Ore::asteroid_2(&scene.display)?,
+                Ore::metal(&scene.display)?,
+            ],
             loaded: HashSet::new(),
         })
     }
@@ -84,7 +88,7 @@ impl AsteroidManager {
                 let (id, t) = ores
                     .choose(&mut self.rng)
                     .cloned()
-                    .map(|(id, t)| (Some(id), t))
+                    .map(|(id, t)| (Some(id.clone()), t))
                     .unwrap_or((None, space));
                 let data: Vec<_> = t.buffer.read();
                 let rect = Rect {
@@ -96,7 +100,7 @@ impl AsteroidManager {
 
                 texture.buffer.write(rect, data);
 
-                chunk.grid[i as usize][j as usize] = id.cloned();
+                chunk.grid[i as usize][j as usize] = id;
             }
         }
 
