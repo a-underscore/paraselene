@@ -35,6 +35,7 @@ pub const TILE_SIZE: u32 = 32;
 pub const MAP_DIMS_X: u32 = 100;
 pub const MAP_DIMS_Y: u32 = 100;
 pub const CHUNK_SIZE: u32 = 50;
+pub const CHUNK_DIST: u32 = 10;
 pub const PHYSICS_CYCLES: u32 = 2;
 pub const PHYSICS_RATE: u32 = 3;
 pub const TREE_ITEM_COUNT: usize = 4;
@@ -84,7 +85,7 @@ pub fn main() {
     system_manager.add(GameUiManager::new(&scene, (&mut em, &mut cm)).unwrap());
     system_manager.add(ProjectileManager::default());
     system_manager.add(UiManager::default());
-    system_manager.add(AsteroidManager::default());
+    system_manager.add(AsteroidManager::new(&scene).unwrap());
     system_manager.add(
         InstanceRenderer::new(
             &scene.display,

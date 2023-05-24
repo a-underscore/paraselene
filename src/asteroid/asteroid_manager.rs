@@ -1,6 +1,7 @@
-use super::{Asteroid, Chunk, Ore};
+use super::{chunk::ChunkData, Asteroid, Chunk, Ore};
 use crate::{
-    util, Tag, ASTEROID_UPDATE_TIME, CAM_DIMS, CHUNK_SIZE, MAP_DIMS_X, MAP_DIMS_Y, TILE_SIZE,
+    util, Tag, ASTEROID_UPDATE_TIME, CAM_DIMS, CHUNK_DIST, CHUNK_SIZE, MAP_DIMS_X, MAP_DIMS_Y,
+    TILE_SIZE,
 };
 use hex::{
     anyhow,
@@ -19,21 +20,31 @@ use hex::{
 use hex_instance::Instance;
 use noise::{NoiseFn, Perlin};
 use rand::prelude::*;
-use std::{rc::Rc, time::Instant};
+use std::{
+    collections::HashSet,
+    fs,
+    io::{Read, Write},
+    rc::Rc,
+    time::Instant,
+};
 
 pub struct AsteroidManager {
     pub player: OnceCell<Option<Id>>,
     pub check: Instant,
     pub rng: StdRng,
+    pub ores: Vec<Ore>,
+    pub loaded: HashSet<(u32, u32)>,
 }
 
-impl Default for AsteroidManager {
-    fn default() -> Self {
-        Self {
+impl AsteroidManager {
+    pub fn new(scene: &Scene) -> anyhow::Result<Self> {
+        Ok(Self {
             player: OnceCell::new(),
             check: Instant::now(),
             rng: StdRng::seed_from_u64(0),
-        }
+            ores: vec![Ore::rock(&scene.display)?, Ore::metal(&scene.display)?],
+            loaded: HashSet::new(),
+        })
     }
 }
 
@@ -41,7 +52,6 @@ impl AsteroidManager {
     pub fn spawn_chunk(
         &mut self,
         pos: Vec2d,
-        ores: &[Ore],
         space: &Texture,
         perlin: &Perlin,
         scene: &mut Scene,
@@ -59,13 +69,15 @@ impl AsteroidManager {
                 ..Default::default()
             },
         };
+        let mut chunk = Chunk::new(true);
 
         for i in 0..CHUNK_SIZE {
             for j in 0..CHUNK_SIZE {
                 let x = pos.x() as f64 * CHUNK_SIZE as f64 + i as f64;
                 let y = pos.y() as f64 * CHUNK_SIZE as f64 + j as f64;
                 let val = perlin.get([x / 25.0, y / 25.0, 0.0]);
-                let ores: Vec<_> = ores
+                let ores: Vec<_> = self
+                    .ores
                     .iter()
                     .filter_map(|t| t.check(&mut self.rng, val))
                     .collect();
@@ -84,33 +96,16 @@ impl AsteroidManager {
 
                 texture.buffer.write(rect, data);
 
-                if let Some(id) = id {
-                    let asteroid = em.add();
-
-                    cm.add(asteroid, Asteroid::new(id.clone(), true), em);
-                    cm.add(
-                        asteroid,
-                        Transform::new(
-                            Vec2d::new(
-                                x as f32 - (CHUNK_SIZE / 2) as f32 + 0.5,
-                                y as f32 - (CHUNK_SIZE / 2) as f32 + 0.5,
-                            ),
-                            0.0,
-                            Vec2d([1.0; 2]),
-                            true,
-                        ),
-                        em,
-                    );
-                }
+                chunk.grid[i as usize][j as usize] = id.cloned();
             }
         }
 
-        let chunk = em.add();
+        let c = em.add();
 
-        cm.add(chunk, Chunk::new(true), em);
-        cm.add(chunk, Instance::new(texture, [1.0; 4], -3.0, true), em);
+        cm.add(c, chunk, em);
+        cm.add(c, Instance::new(texture, [1.0; 4], -3.0, true), em);
         cm.add(
-            chunk,
+            c,
             Transform::new(
                 pos * CHUNK_SIZE as f32,
                 0.0,
@@ -123,12 +118,22 @@ impl AsteroidManager {
         Ok(())
     }
 
+    pub fn load_chunks(
+        &mut self,
+        (x, y): (u32, u32),
+        (em, cm): (&mut EntityManager, &mut ComponentManager),
+    ) -> anyhow::Result<()> {
+        let content = fs::read_to_string(format!("[{x}][{y}].json"))?;
+        let data: ChunkData = serde_json::from_str(content.as_str())?;
+
+        Ok(())
+    }
+
     pub fn spawn_map(
         &mut self,
         scene: &mut Scene,
         (em, cm): (&mut EntityManager, &mut ComponentManager),
     ) -> anyhow::Result<()> {
-        let ores = vec![Ore::rock(&scene.display)?, Ore::metal(&scene.display)?];
         let space = util::load_texture(&scene.display, include_bytes!("space.png"))?;
         let perlin = Perlin::new(self.rng.gen_range(u32::MIN..u32::MAX));
 
@@ -136,7 +141,6 @@ impl AsteroidManager {
             for j in 0..(MAP_DIMS_Y / CHUNK_SIZE) {
                 self.spawn_chunk(
                     Vec2d::new(i as f32, j as f32),
-                    &ores,
                     &space,
                     &perlin,
                     scene,
@@ -146,6 +150,12 @@ impl AsteroidManager {
         }
 
         Ok(())
+    }
+
+    pub fn chunk_pos(pos: Vec2d) -> (u32, u32) {
+        let pos = pos / CHUNK_SIZE as f32;
+
+        (pos.x().floor() as u32, pos.y().floor() as u32)
     }
 }
 
@@ -176,12 +186,12 @@ impl<'a> System<'a> for AsteroidManager {
             if now.duration_since(self.check) >= ASTEROID_UPDATE_TIME {
                 self.check = now;
 
-                if let Some(player_pos) = self
+                if let Some(player_chunk) = self
                     .player
                     .get_or_init(|| Tag::new("player").find((em, cm)))
                     .and_then(|p| {
                         cm.get::<Transform>(p, em)
-                            .and_then(|t| t.active.then_some(t.position()))
+                            .and_then(|t| t.active.then_some(Self::chunk_pos(t.position())))
                     })
                 {
                     for e in em.entities.keys().cloned() {
@@ -197,14 +207,26 @@ impl<'a> System<'a> for AsteroidManager {
                             if let Some((position, instance)) =
                                 cm.get::<Transform>(e, em).cloned().and_then(|t| {
                                     Some((
-                                        t.active.then_some(t.position())?,
+                                        t.active.then_some(Self::chunk_pos(t.position()))?,
                                         cm.get_mut::<Instance>(e, em)?,
                                     ))
                                 })
                             {
-                                instance.active = (position - player_pos).magnitude()
-                                    < (CAM_DIMS.powi(2) * 2.0).sqrt()
-                                        + (((CHUNK_SIZE as f32) / 2.0).powi(2) * 2.0).sqrt();
+                                let offset =
+                                    (CAM_DIMS / CHUNK_SIZE as f32).ceil() as u32 * CHUNK_DIST / 2;
+                                let min = (
+                                    player_chunk.0.checked_sub(offset).unwrap_or_default(),
+                                    player_chunk.1.checked_sub(offset).unwrap_or_default(),
+                                );
+                                let max = (
+                                    player_chunk.0.checked_add(offset).unwrap_or(u32::MAX),
+                                    player_chunk.1.checked_add(offset).unwrap_or(u32::MAX),
+                                );
+
+                                instance.active = position.0 >= min.0
+                                    && position.0 <= max.0
+                                    && position.1 >= min.1
+                                    && position.1 <= max.1;
                             }
                         }
                     }
