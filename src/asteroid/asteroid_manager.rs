@@ -104,19 +104,19 @@ impl AsteroidManager {
         scene: &Scene,
         (em, cm): (&mut EntityManager, &mut ComponentManager),
     ) -> anyhow::Result<()> {
-        let path = SAVE_DIR.join(format!("{x},{y}.json"));
-        let data = if Path::exists(&path) {
-            let content = fs::read_to_string(path)?;
-            let data: ChunkData = serde_json::from_str(content.as_str())?;
+                        let path = SAVE_DIR.join(format!("{x},{y}.json"));
+                        let data = if Path::exists(&path) {
+                            let content = fs::read_to_string(path)?;
+                            let data: ChunkData = serde_json::from_str(content.as_str())?;
 
-            data
-        } else {
-            let data = self.gen_chunk(Vec2d::new(x as f32, y as f32))?;
+                            data
+                        } else {
+                            let data = self.gen_chunk(Vec2d::new(x as f32, y as f32))?;
 
-            fs::write(path, &serde_json::to_string(&data)?)?;
+                            fs::write(path, &serde_json::to_string(&data)?)?;
 
-            data
-        };
+                            data
+                        };
         let texture = Texture {
             buffer: Rc::new(Texture2d::empty_with_mipmaps(
                 &scene.display,
@@ -161,7 +161,7 @@ impl AsteroidManager {
             }
         }
 
-        let c = em.add();
+                let c = em.add();
 
         cm.add(c, chunk, em);
         cm.add(c, Instance::new(texture, [1.0; 4], -3.0, true), em);
@@ -226,9 +226,9 @@ impl<'a> System<'a> for AsteroidManager {
                             let chunk = (i, j);
 
                             if !self.loaded.contains(&chunk) {
-                                self.load_chunk(chunk, scene, (em, cm))?;
-
                                 self.loaded.insert(chunk);
+
+                                self.load_chunk(chunk, scene, (em, cm))?;
                             }
                         }
                     }
