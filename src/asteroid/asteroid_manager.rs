@@ -1,6 +1,7 @@
 use super::{chunk::ChunkData, Chunk, Ore, SaveData};
 use crate::{
     util, Tag, ASTEROID_UPDATE_TIME, CAM_DIMS, CHUNK_DIST, CHUNK_SIZE, SAVE_DIR, TILE_SIZE,
+    UNLOAD_BIAS,
 };
 use hex::{
     anyhow,
@@ -210,7 +211,7 @@ impl<'a> System<'a> for AsteroidManager {
                             .and_then(|t| t.active.then_some(Self::chunk_pos(t.position())))
                     })
                 {
-                    let offset = (CAM_DIMS / CHUNK_SIZE as f32).ceil() as u32 * CHUNK_DIST / 2;
+                    let offset = (CAM_DIMS / CHUNK_SIZE as f32 * CHUNK_DIST) as u32;
                     let min = (
                         player_chunk.0.checked_sub(offset).unwrap_or_default(),
                         player_chunk.1.checked_sub(offset).unwrap_or_default(),
@@ -225,9 +226,9 @@ impl<'a> System<'a> for AsteroidManager {
                             let chunk = (i, j);
 
                             if !self.loaded.contains(&chunk) {
-                                self.loaded.insert(chunk);
-
                                 self.load_chunk(chunk, scene, (em, cm))?;
+
+                                self.loaded.insert(chunk);
                             }
                         }
                     }
@@ -243,10 +244,14 @@ impl<'a> System<'a> for AsteroidManager {
                                 .cloned()
                                 .and_then(|t| t.active.then_some(Self::chunk_pos(t.position())))
                             {
-                                if !(position.0 >= min.0
-                                    && position.0 <= max.0
-                                    && position.1 >= min.1
-                                    && position.1 <= max.1)
+                                if !(position.0
+                                    >= min.0.checked_sub(UNLOAD_BIAS).unwrap_or_default()
+                                    && position.0
+                                        <= max.0.checked_add(UNLOAD_BIAS).unwrap_or(u32::MAX)
+                                    && position.1
+                                        >= min.1.checked_sub(UNLOAD_BIAS).unwrap_or_default()
+                                    && position.1
+                                        <= max.1.checked_add(UNLOAD_BIAS).unwrap_or(u32::MAX))
                                 {
                                     self.loaded.remove(&position);
 

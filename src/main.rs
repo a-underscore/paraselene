@@ -25,7 +25,7 @@ use projectile::{Projectile, ProjectileManager};
 use std::{cell::Cell, path::PathBuf, time::Duration};
 use tag::Tag;
 
-pub static ASTEROID_UPDATE_TIME: Duration = Duration::from_secs(5);
+pub static ASTEROID_UPDATE_TIME: Duration = Duration::from_millis(250);
 pub static SAVE_DIR: Lazy<PathBuf> = Lazy::new(|| PathBuf::from("save"));
 pub static PLAYER_MOVE_SPEED: f32 = 10.0;
 pub static PLAYER_DASH_MULTIPLIER: f32 = 2.5;
@@ -34,10 +34,9 @@ pub static WINDOW_DIMS_Y: u32 = 1080;
 pub static ASP_RATIO: f32 = WINDOW_DIMS_Y as f32 / WINDOW_DIMS_X as f32;
 pub static CAM_DIMS: f32 = 100.0 * ASP_RATIO;
 pub static TILE_SIZE: u32 = 32;
-pub static MAP_DIMS_X: u32 = 100;
-pub static MAP_DIMS_Y: u32 = 100;
-pub static CHUNK_SIZE: u32 = 10;
-pub static CHUNK_DIST: u32 = 2;
+pub static CHUNK_SIZE: u32 = 5;
+pub static CHUNK_DIST: f32 = 1.0;
+pub static UNLOAD_BIAS: u32 = 1;
 pub static PHYSICS_CYCLES: u32 = 2;
 pub static PHYSICS_RATE: u32 = 3;
 pub static TREE_ITEM_COUNT: usize = 4;
@@ -75,13 +74,7 @@ pub fn main() {
         PHYSICS_RATE,
         PHYSICS_CYCLES,
         Some(Duration::from_secs_f32(1.0 / 30.0)),
-        (
-            Box2d::new(
-                Default::default(),
-                ((MAP_DIMS_X.pow(2) * MAP_DIMS_Y.pow(2)) as f32).sqrt(),
-            ),
-            TREE_ITEM_COUNT,
-        ),
+        (Box2d::new(Default::default(), f32::MAX), TREE_ITEM_COUNT),
     ));
     system_manager.add(PlayerManager::new(&scene, (&mut em, &mut cm)).unwrap());
     system_manager.add(GameUiManager::new(&scene, (&mut em, &mut cm)).unwrap());
