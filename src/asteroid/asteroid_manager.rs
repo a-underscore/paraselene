@@ -24,6 +24,7 @@ use std::{rc::Rc, time::Instant};
 pub struct AsteroidManager {
     pub player: OnceCell<Option<Id>>,
     pub check: Instant,
+    pub rng: StdRng,
 }
 
 impl Default for AsteroidManager {
@@ -31,6 +32,7 @@ impl Default for AsteroidManager {
         Self {
             player: OnceCell::new(),
             check: Instant::now(),
+            rng: StdRng::seed_from_u64(1),
         }
     }
 }
@@ -63,9 +65,12 @@ impl AsteroidManager {
                 let x = pos.x() as f64 * CHUNK_SIZE as f64 + i as f64;
                 let y = pos.y() as f64 * CHUNK_SIZE as f64 + j as f64;
                 let val = perlin.get([x / 25.0, y / 25.0, 0.0]);
-                let ores: Vec<_> = ores.iter().filter_map(|t| t.check(val)).collect();
+                let ores: Vec<_> = ores
+                    .iter()
+                    .filter_map(|t| t.check(&mut self.rng, val))
+                    .collect();
                 let (id, t) = ores
-                    .choose(&mut thread_rng())
+                    .choose(&mut self.rng)
                     .cloned()
                     .map(|(id, t)| (Some(id), t))
                     .unwrap_or((None, space));
@@ -125,7 +130,7 @@ impl AsteroidManager {
     ) -> anyhow::Result<()> {
         let ores = vec![Ore::rock(&scene.display)?, Ore::metal(&scene.display)?];
         let space = util::load_texture(&scene.display, include_bytes!("space.png"))?;
-        let perlin = Perlin::new(thread_rng().gen_range(u32::MIN..u32::MAX));
+        let perlin = Perlin::new(self.rng.gen_range(u32::MIN..u32::MAX));
 
         for i in 0..(MAP_DIMS_X / CHUNK_SIZE) {
             for j in 0..(MAP_DIMS_Y / CHUNK_SIZE) {

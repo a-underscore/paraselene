@@ -36,11 +36,9 @@ impl Ore {
         })
     }
 
-    pub fn check(&self, value: f64) -> Option<(&Rc<String>, &Texture)> {
-        let mut rng = thread_rng();
-
+    pub fn check(&self, rng: &mut StdRng, value: f64) -> Option<(&Rc<String>, &Texture)> {
         if rng.gen_bool(self.rand) && self.max >= value && self.min <= value {
-            Some((&self.id, self.texture.choose(&mut rng)?))
+            Some((&self.id, self.texture.choose(rng)?))
         } else {
             None
         }
