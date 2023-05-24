@@ -32,7 +32,7 @@ impl Default for AsteroidManager {
         Self {
             player: OnceCell::new(),
             check: Instant::now(),
-            rng: StdRng::seed_from_u64(1),
+            rng: StdRng::seed_from_u64(0),
         }
     }
 }
