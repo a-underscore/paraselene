@@ -38,18 +38,17 @@ impl AsteroidManager {
 
         fs::create_dir_all(&*SAVE_DIR)?;
 
-        let save_data = match fs::read_to_string(&save_path)
-            .and_then(|s| Ok(serde_json::from_str(&s)?))
-        {
-            Ok(data) => data,
-            Err(_) => {
-                let data = SaveData::default();
+        let save_data =
+            match fs::read_to_string(&save_path).and_then(|s| Ok(serde_json::from_str(&s)?)) {
+                Ok(data) => data,
+                Err(_) => {
+                    let data = SaveData::default();
 
-                fs::write(&save_path, serde_json::to_string(&data)?)?;
+                    fs::write(&save_path, serde_json::to_string(&data)?)?;
 
-                data
-            }
-        };
+                    data
+                }
+            };
         let mut rng = StdRng::seed_from_u64(save_data.seed);
 
         Ok(Self {
@@ -104,19 +103,19 @@ impl AsteroidManager {
         scene: &Scene,
         (em, cm): (&mut EntityManager, &mut ComponentManager),
     ) -> anyhow::Result<()> {
-                        let path = SAVE_DIR.join(format!("{x},{y}.json"));
-                        let data = if Path::exists(&path) {
-                            let content = fs::read_to_string(path)?;
-                            let data: ChunkData = serde_json::from_str(content.as_str())?;
+        let path = SAVE_DIR.join(format!("{x},{y}.json"));
+        let data = if Path::exists(&path) {
+            let content = fs::read_to_string(path)?;
+            let data: ChunkData = serde_json::from_str(content.as_str())?;
 
-                            data
-                        } else {
-                            let data = self.gen_chunk(Vec2d::new(x as f32, y as f32))?;
+            data
+        } else {
+            let data = self.gen_chunk(Vec2d::new(x as f32, y as f32))?;
 
-                            fs::write(path, &serde_json::to_string(&data)?)?;
+            fs::write(path, &serde_json::to_string(&data)?)?;
 
-                            data
-                        };
+            data
+        };
         let texture = Texture {
             buffer: Rc::new(Texture2d::empty_with_mipmaps(
                 &scene.display,
@@ -161,7 +160,7 @@ impl AsteroidManager {
             }
         }
 
-                let c = em.add();
+        let c = em.add();
 
         cm.add(c, chunk, em);
         cm.add(c, Instance::new(texture, [1.0; 4], -3.0, true), em);
