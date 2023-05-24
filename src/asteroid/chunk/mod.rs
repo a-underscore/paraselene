@@ -19,8 +19,8 @@ pub struct Chunk {
 impl Chunk {
     pub fn new(active: bool) -> Self {
         Self {
-            active,
             grid: vec![vec![None; CHUNK_SIZE as usize]; CHUNK_SIZE as usize],
+            active,
         }
     }
 }

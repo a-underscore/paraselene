@@ -15,27 +15,29 @@ use hex::{
         Display,
     },
     math::Vec2d,
+    once_cell::sync::Lazy,
 };
 use hex_instance::InstanceRenderer;
 use hex_physics::{Box2d, PhysicsManager};
 use hex_ui::{UiManager, UiRenderer};
 use player::{Player, PlayerManager};
 use projectile::{Projectile, ProjectileManager};
-use std::{cell::Cell, time::Duration};
+use std::{cell::Cell, path::PathBuf, time::Duration};
 use tag::Tag;
 
-pub const ASTEROID_UPDATE_TIME: Duration = Duration::from_millis(10);
+pub const ASTEROID_UPDATE_TIME: Duration = Duration::from_secs(5);
+pub const SAVE_DIR: Lazy<PathBuf> = Lazy::new(|| PathBuf::from("save"));
 pub const PLAYER_MOVE_SPEED: f32 = 10.0;
 pub const PLAYER_DASH_MULTIPLIER: f32 = 2.5;
 pub const WINDOW_DIMS_X: u32 = 1920;
 pub const WINDOW_DIMS_Y: u32 = 1080;
 pub const ASP_RATIO: f32 = WINDOW_DIMS_Y as f32 / WINDOW_DIMS_X as f32;
-pub const CAM_DIMS: f32 = 50.0 * ASP_RATIO;
+pub const CAM_DIMS: f32 = 100.0 * ASP_RATIO;
 pub const TILE_SIZE: u32 = 32;
 pub const MAP_DIMS_X: u32 = 100;
 pub const MAP_DIMS_Y: u32 = 100;
-pub const CHUNK_SIZE: u32 = 50;
-pub const CHUNK_DIST: u32 = 10;
+pub const CHUNK_SIZE: u32 = 10;
+pub const CHUNK_DIST: u32 = 2;
 pub const PHYSICS_CYCLES: u32 = 2;
 pub const PHYSICS_RATE: u32 = 3;
 pub const TREE_ITEM_COUNT: usize = 4;
