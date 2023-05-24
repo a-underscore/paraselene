@@ -38,7 +38,7 @@ impl AsteroidManager {
 
         fs::create_dir_all(&*SAVE_DIR)?;
 
-        let save_data = match anyhow::Result::from(fs::read_to_string(&save_path))
+        let save_data = match fs::read_to_string(&save_path)
             .and_then(|s| Ok(serde_json::from_str(&s)?))
         {
             Ok(data) => data,
