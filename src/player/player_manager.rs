@@ -218,6 +218,16 @@ impl<'a> System<'a> for PlayerManager {
                 })
             {
                 let p = em.add();
+                let transform = {
+                    let mut transform = transform.clone();
+
+                    transform.set_scale(Vec2d::new(
+                        transform.scale().x() * 5.0,
+                        transform.scale().y(),
+                    ));
+
+                    transform
+                };
 
                 cm.add(
                     p,

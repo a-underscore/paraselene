@@ -12,7 +12,6 @@ use hex::{
     math::Vec2d,
     once_cell::sync::OnceCell,
 };
-use hex_instance::Instance;
 use hex_physics::Collider;
 use std::time::Instant;
 
@@ -59,8 +58,6 @@ impl<'a> System<'a> for ProjectileManager {
                     let delta = now.duration_since(spawn_time);
                     let t = projectile.trail_data.and_then(|t| {
                         let scale = 1.0 - now.duration_since(spawn_time).as_secs_f32() * t;
-
-                        cm.get_mut::<Instance>(e, em)?.color[3] = scale;
 
                         cm.get_mut::<Transform>(e, em)
                             .map(|t| t.set_scale(Vec2d::new(scale, t.scale().y())))?;
