@@ -15,35 +15,32 @@ use hex::{
         Display,
     },
     math::Vec2d,
-    once_cell::sync::Lazy,
 };
 use hex_instance::InstanceRenderer;
 use hex_physics::{Box2d, PhysicsManager};
 use hex_ui::{UiManager, UiRenderer};
 use player::{Player, PlayerManager};
 use projectile::{Projectile, ProjectileManager};
-use std::{cell::Cell, path::PathBuf, time::Duration};
+use std::{cell::Cell, time::Duration};
 use tag::Tag;
 
-pub static ASTEROID_UPDATE_TIME: Duration = Duration::from_millis(250);
-pub static SAVE_DIR: Lazy<PathBuf> = Lazy::new(|| PathBuf::from("save"));
-pub static PLAYER_MOVE_SPEED: f32 = 10.0;
-pub static PLAYER_DASH_MULTIPLIER: f32 = 2.5;
-pub static WINDOW_DIMS_X: u32 = 1920;
-pub static WINDOW_DIMS_Y: u32 = 1080;
-pub static ASP_RATIO: f32 = WINDOW_DIMS_Y as f32 / WINDOW_DIMS_X as f32;
-pub static CAM_DIMS: f32 = 100.0 * ASP_RATIO;
-pub static TILE_SIZE: u32 = 32;
-pub static CHUNK_SIZE: u32 = 5;
-pub static CHUNK_DIST: f32 = 1.0;
-pub static UNLOAD_BIAS: u32 = 1;
-pub static PHYSICS_CYCLES: u32 = 2;
-pub static PHYSICS_RATE: u32 = 3;
-pub static TREE_ITEM_COUNT: usize = 4;
-pub static PROJECTILE_LAYER: Id = 1;
-pub static PLAYER_LAYER: Id = 2;
-pub static ASTEROID_LAYER: Id = 3;
-pub static ASTEROID_RESET: usize = 0;
+static SAVE_DIR: &str = "save";
+static ASTEROID_UPDATE_TIME: Duration = Duration::from_millis(250);
+static PLAYER_MOVE_SPEED: f32 = 10.0;
+static WINDOW_DIMS_X: u32 = 1920;
+static WINDOW_DIMS_Y: u32 = 1080;
+static CAM_DIMS: f32 = 50.0;
+static TILE_SIZE: u32 = 32;
+static CHUNK_SIZE: u32 = 5;
+static CHUNK_DIST: f32 = 1.0;
+static UNLOAD_BIAS: u32 = 5;
+static FRAME_LOAD_AMOUNT: u64 = 5;
+static PHYSICS_CYCLES: u32 = 2;
+static PHYSICS_RATE: u32 = 3;
+static TREE_ITEM_COUNT: usize = 4;
+static PROJECTILE_LAYER: Id = 1;
+static PLAYER_LAYER: Id = 2;
+static ASTEROID_LAYER: Id = 3;
 
 thread_local! {
     pub static RESET: Cell<Option<usize>> = Default::default();

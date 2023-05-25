@@ -1,7 +1,7 @@
 use super::{chunk::ChunkData, Chunk, Ore, SaveData};
 use crate::{
-    util, Tag, ASTEROID_UPDATE_TIME, CAM_DIMS, CHUNK_DIST, CHUNK_SIZE, SAVE_DIR, TILE_SIZE,
-    UNLOAD_BIAS,
+    util, Tag, ASTEROID_UPDATE_TIME, CAM_DIMS, CHUNK_DIST, CHUNK_SIZE, FRAME_LOAD_AMOUNT, SAVE_DIR,
+    TILE_SIZE, UNLOAD_BIAS,
 };
 use hex::{
     anyhow,
@@ -20,22 +20,30 @@ use hex::{
 use hex_instance::Instance;
 use noise::{NoiseFn, Perlin};
 use rand::prelude::*;
-use std::{collections::HashSet, fs, path::Path, rc::Rc, time::Instant};
+use std::{
+    collections::HashSet,
+    fs,
+    path::{Path, PathBuf},
+    rc::Rc,
+    time::Instant,
+};
 
 pub struct AsteroidManager {
     pub player: OnceCell<Option<Id>>,
     pub check: Instant,
+    pub frame: Instant,
     pub rng: StdRng,
     pub perlin: Perlin,
     pub ores: Vec<Ore>,
     pub space: Texture,
     pub loaded: HashSet<(u32, u32)>,
+    pub load_queue: Vec<(u32, u32)>,
     pub save_data: SaveData,
 }
 
 impl AsteroidManager {
     pub fn new(scene: &Scene) -> anyhow::Result<Self> {
-        let save_path = SAVE_DIR.join("save.json");
+        let save_path = PathBuf::from(SAVE_DIR).join("save.json");
 
         fs::create_dir_all(&*SAVE_DIR)?;
 
@@ -55,6 +63,7 @@ impl AsteroidManager {
         Ok(Self {
             player: OnceCell::new(),
             check: Instant::now(),
+            frame: Instant::now(),
             perlin: Perlin::new(rng.gen_range(u32::MIN..u32::MAX)),
             rng,
             ores: vec![
@@ -64,6 +73,7 @@ impl AsteroidManager {
             ],
             space: util::load_texture(&scene.display, include_bytes!("space.png"))?,
             loaded: HashSet::new(),
+            load_queue: Vec::new(),
             save_data,
         })
     }
@@ -104,7 +114,7 @@ impl AsteroidManager {
         scene: &Scene,
         (em, cm): (&mut EntityManager, &mut ComponentManager),
     ) -> anyhow::Result<()> {
-        let path = SAVE_DIR.join(format!("{x},{y}.json"));
+        let path = PathBuf::from(SAVE_DIR).join(format!("{x},{y}.json"));
         let data = if Path::exists(&path) {
             let content = fs::read_to_string(path)?;
             let data: ChunkData = serde_json::from_str(content.as_str())?;
@@ -182,7 +192,7 @@ impl AsteroidManager {
     pub fn chunk_pos(pos: Vec2d) -> (u32, u32) {
         let pos = pos / CHUNK_SIZE as f32;
 
-        (pos.x().floor() as u32, pos.y().floor() as u32)
+        (pos.x().ceil() as u32, pos.y().ceil() as u32)
     }
 }
 
@@ -199,6 +209,17 @@ impl<'a> System<'a> for AsteroidManager {
         }) = ev
         {
             let now = Instant::now();
+            let delta = now.duration_since(self.frame);
+
+            self.frame = now;
+
+            for _ in 0..FRAME_LOAD_AMOUNT * delta.as_secs_f32().ceil() as u64 {
+                if let Some(chunk) = self.load_queue.pop() {
+                    self.load_chunk(chunk, scene, (em, cm))?;
+                } else {
+                    break;
+                }
+            }
 
             if now.duration_since(self.check) >= ASTEROID_UPDATE_TIME {
                 self.check = now;
@@ -222,12 +243,11 @@ impl<'a> System<'a> for AsteroidManager {
                     );
 
                     for i in min.0..max.0 {
-                        for j in min.0..max.0 {
+                        for j in min.1..max.1 {
                             let chunk = (i, j);
 
                             if !self.loaded.contains(&chunk) {
-                                self.load_chunk(chunk, scene, (em, cm))?;
-
+                                self.load_queue.push(chunk);
                                 self.loaded.insert(chunk);
                             }
                         }
@@ -241,7 +261,6 @@ impl<'a> System<'a> for AsteroidManager {
                         {
                             if let Some(position) = cm
                                 .get::<Transform>(e, em)
-                                .cloned()
                                 .and_then(|t| t.active.then_some(Self::chunk_pos(t.position())))
                             {
                                 if !(position.0
