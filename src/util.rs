@@ -1,3 +1,4 @@
+use crate::SAVE_DIR;
 use hex::{
     anyhow,
     assets::Texture,
@@ -8,7 +9,7 @@ use hex::{
     },
     math::Vec2d,
 };
-use std::io::Cursor;
+use std::{fs, io::Cursor, path::PathBuf};
 
 pub fn load_texture(display: &Display, p: &[u8]) -> anyhow::Result<Texture> {
     let mut img = image::io::Reader::new(Cursor::new(p));
@@ -28,6 +29,16 @@ pub fn load_texture(display: &Display, p: &[u8]) -> anyhow::Result<Texture> {
             ..Default::default()
         },
     )
+}
+
+pub fn setup_directories() -> anyhow::Result<()> {
+    fs::create_dir_all(&*SAVE_DIR)?;
+
+    let chunks_dir = PathBuf::from(SAVE_DIR).join("chunks");
+
+    fs::create_dir_all(&chunks_dir)?;
+
+    Ok(())
 }
 
 pub fn lerp(f1: f32, f2: f32, t: f32) -> f32 {

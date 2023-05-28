@@ -1,8 +1,12 @@
 pub mod player_manager;
+pub mod save_data;
+pub mod state;
 pub mod states;
 
 pub use hex_instance::Instance;
 pub use player_manager::PlayerManager;
+pub use save_data::SaveData;
+pub use state::State;
 pub use states::States;
 
 use crate::{util, Projectile, ASTEROID_LAYER, PLAYER_LAYER, PLAYER_MOVE_SPEED, PROJECTILE_LAYER};

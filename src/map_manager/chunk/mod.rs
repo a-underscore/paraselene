@@ -11,6 +11,7 @@ use hex::{
 };
 use std::rc::Rc;
 
+#[derive(Clone)]
 pub struct Chunk {
     pub grid: Vec<Vec<Option<Rc<String>>>>,
     pub active: bool,

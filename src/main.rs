@@ -1,11 +1,10 @@
-mod asteroid;
 mod game_ui_manager;
+mod map_manager;
 mod player;
 mod projectile;
 mod tag;
 mod util;
 
-use asteroid::AsteroidManager;
 use game_ui_manager::GameUiManager;
 use hex::{
     assets::Shape,
@@ -19,6 +18,7 @@ use hex::{
 use hex_instance::InstanceRenderer;
 use hex_physics::{Box2d, PhysicsManager};
 use hex_ui::{UiManager, UiRenderer};
+use map_manager::MapManager;
 use player::{Player, PlayerManager};
 use projectile::{Projectile, ProjectileManager};
 use std::{cell::Cell, time::Duration};
@@ -31,10 +31,10 @@ static WINDOW_DIMS_X: u32 = 1920;
 static WINDOW_DIMS_Y: u32 = 1080;
 static CAM_DIMS: f32 = 100.0 / 3.0;
 static TILE_SIZE: u32 = 32;
-static CHUNK_SIZE: u32 = 5;
-static CHUNK_DIST: f32 = 1.0;
+static CHUNK_SIZE: u32 = 4;
+static CHUNK_DIST: f32 = 0.75;
 static UNLOAD_BIAS: u32 = 5;
-static FRAME_LOAD_AMOUNT: u64 = 1;
+static FRAME_LOAD_AMOUNT: u64 = 5;
 static PHYSICS_CYCLES: u32 = 2;
 static PHYSICS_RATE: u32 = 3;
 static TREE_ITEM_COUNT: usize = 4;
@@ -48,6 +48,8 @@ thread_local! {
 }
 
 pub fn main() {
+    util::setup_directories().unwrap();
+
     let ev = EventLoop::new();
     let wb = WindowBuilder::new()
         .with_title("Parselene")
@@ -77,7 +79,7 @@ pub fn main() {
     system_manager.add(GameUiManager::new(&scene, (&mut em, &mut cm)).unwrap());
     system_manager.add(ProjectileManager::default());
     system_manager.add(UiManager::default());
-    system_manager.add(AsteroidManager::new(&scene).unwrap());
+    system_manager.add(MapManager::new(&scene).unwrap());
     system_manager.add(
         InstanceRenderer::new(
             &scene.display,
