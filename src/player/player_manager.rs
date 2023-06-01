@@ -251,7 +251,7 @@ impl<'a> System<'a> for PlayerManager {
                     );
                     cm.add(p, projectile, em);
                     cm.add(p, instance, em);
-                    cm.add(p, transform.clone(), em);
+                    cm.add(p, transform, em);
                 }
 
                 if let Some((t, ct)) = cm.get::<Transform>(self.player, em).cloned().and_then(|t| {

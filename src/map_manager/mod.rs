@@ -1,8 +1,10 @@
 pub mod chunk;
+pub mod construct;
 pub mod ore;
 
 pub use crate::player::State;
 pub use chunk::Chunk;
+pub use construct::Construct;
 pub use ore::Ore;
 
 use crate::{
@@ -204,7 +206,7 @@ impl<'a> System<'a> for MapManager {
                 let chunks: Vec<_> = (0..(FRAME_LOAD_AMOUNT * delta.as_secs_f32().ceil() as u64))
                     .map(|_| self.load_queue.pop())
                     .fuse()
-                    .filter_map(|c| c)
+                    .flatten()
                     .collect();
 
                 for c in chunks {

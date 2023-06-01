@@ -20,6 +20,7 @@ use hex::{
     math::Vec2d,
     once_cell::sync::OnceCell,
 };
+use hex_instance::Instance;
 use hex_ui::ScreenPos;
 use std::{collections::HashMap, f32};
 
@@ -113,80 +114,93 @@ impl GameUiManager {
         self.kp_cb.insert(i, Box::new(f));
     }
 
-    // This will be replaced with values loaded from a configuration file.
-    fn init_default_keybinds(&mut self, (em, cm): (&mut EntityManager, &mut ComponentManager)) {
-        if let Some(player) = *self
+    pub fn player(&mut self, (em, cm): (&mut EntityManager, &mut ComponentManager)) -> Option<Id> {
+        *self
             .player
             .get_or_init(|| Tag::new("player").find((em, cm)))
-        {
-            self.add_keybind(
-                Input::Keyboard(VirtualKeyCode::W),
-                move |state, _, (em, cm)| {
-                    if let Some(p) = cm.get_mut::<Player>(player, em) {
-                        p.states.forward = match state {
-                            ElementState::Pressed => true,
-                            ElementState::Released => false,
-                        };
-                    }
+    }
 
-                    Ok(())
-                },
-            );
-            self.add_keybind(
-                Input::Keyboard(VirtualKeyCode::S),
-                move |state, _, (em, cm)| {
-                    if let Some(p) = cm.get_mut::<Player>(player, em) {
-                        p.states.backward = match state {
-                            ElementState::Pressed => true,
-                            ElementState::Released => false,
-                        };
-                    }
-
-                    Ok(())
-                },
-            );
-            self.add_keybind(
-                Input::Keyboard(VirtualKeyCode::A),
-                move |state, _, (em, cm)| {
-                    if let Some(p) = cm.get_mut::<Player>(player, em) {
-                        p.states.left = match state {
-                            ElementState::Pressed => true,
-                            ElementState::Released => false,
-                        };
-                    }
-
-                    Ok(())
-                },
-            );
-            self.add_keybind(
-                Input::Keyboard(VirtualKeyCode::D),
-                move |state, _, (em, cm)| {
-                    if let Some(p) = cm.get_mut::<Player>(player, em) {
-                        p.states.right = match state {
-                            ElementState::Pressed => true,
-                            ElementState::Released => false,
-                        };
-                    }
-
-                    Ok(())
-                },
-            );
-            self.add_keybind(
-                Input::Mouse(MouseButton::Left),
-                move |state, _, (em, cm)| {
-                    let firing = match state {
+    // This will be replaced with values loaded from a configuration file.
+    fn init_default_keybinds(&mut self, player: Id) {
+        self.add_keybind(
+            Input::Keyboard(VirtualKeyCode::W),
+            move |state, _, (em, cm)| {
+                if let Some(p) = cm.get_mut::<Player>(player, em) {
+                    p.states.forward = match state {
                         ElementState::Pressed => true,
                         ElementState::Released => false,
                     };
+                }
 
+                Ok(())
+            },
+        );
+        self.add_keybind(
+            Input::Keyboard(VirtualKeyCode::S),
+            move |state, _, (em, cm)| {
+                if let Some(p) = cm.get_mut::<Player>(player, em) {
+                    p.states.backward = match state {
+                        ElementState::Pressed => true,
+                        ElementState::Released => false,
+                    };
+                }
+
+                Ok(())
+            },
+        );
+        self.add_keybind(
+            Input::Keyboard(VirtualKeyCode::A),
+            move |state, _, (em, cm)| {
+                if let Some(p) = cm.get_mut::<Player>(player, em) {
+                    p.states.left = match state {
+                        ElementState::Pressed => true,
+                        ElementState::Released => false,
+                    };
+                }
+
+                Ok(())
+            },
+        );
+        self.add_keybind(
+            Input::Keyboard(VirtualKeyCode::D),
+            move |state, _, (em, cm)| {
+                if let Some(p) = cm.get_mut::<Player>(player, em) {
+                    p.states.right = match state {
+                        ElementState::Pressed => true,
+                        ElementState::Released => false,
+                    };
+                }
+
+                Ok(())
+            },
+        );
+        self.add_keybind(
+            Input::Mouse(MouseButton::Left),
+            move |state, _, (em, cm)| {
+                let firing = match state {
+                    ElementState::Pressed => true,
+                    ElementState::Released => false,
+                };
+
+                if let Some(player) = cm.get_mut::<Player>(player, em) {
+                    player.states.firing = firing;
+                }
+
+                Ok(())
+            },
+        );
+        self.add_keybind(
+            Input::Keyboard(VirtualKeyCode::Tab),
+            move |state, _, (em, cm)| {
+                if let ElementState::Pressed = state {
                     if let Some(player) = cm.get_mut::<Player>(player, em) {
-                        player.states.firing = firing;
+                        player.states.mode = (player.states.mode + 1) % player.hotbar.len();
                     }
+                }
 
-                    Ok(())
-                },
-            );
-        }
+                Ok(())
+            },
+        );
     }
 }
 
@@ -196,7 +210,9 @@ impl<'a> System<'a> for GameUiManager {
         _: &mut Scene,
         (em, cm): (&mut EntityManager, &mut ComponentManager),
     ) -> anyhow::Result<()> {
-        self.init_default_keybinds((em, cm));
+        if let Some(player) = self.player((em, cm)) {
+            self.init_default_keybinds(player);
+        }
 
         Ok(())
     }
@@ -219,6 +235,20 @@ impl<'a> System<'a> for GameUiManager {
                     {
                         screen_pos.position = mouse_pos
                     }
+                }
+
+                if let Some(_player) = self.player((em, cm)) {
+                    if let Some((_m, _instance)) = cm
+                        .get::<Player>(self.crosshair, em)
+                        .map(|p| p.states.mode)
+                        .and_then(|m| {
+                            Some((
+                                m,
+                                cm.get_mut::<Instance>(self.crosshair, em)
+                                    .and_then(|s| s.active.then_some(s))?,
+                            ))
+                        })
+                    {}
                 }
             }
             Ev::Event(Control {

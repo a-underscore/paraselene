@@ -1,15 +1,18 @@
+pub mod button_states;
 pub mod player_manager;
 pub mod save_data;
 pub mod state;
-pub mod states;
 
+pub use button_states::ButtonStates;
 pub use hex_instance::Instance;
 pub use player_manager::PlayerManager;
 pub use save_data::SaveData;
 pub use state::State;
-pub use states::States;
 
-use crate::{util, Projectile, ASTEROID_LAYER, PLAYER_LAYER, PLAYER_MOVE_SPEED, PROJECTILE_LAYER};
+use crate::{
+    map_manager::Construct, util, Projectile, ASTEROID_LAYER, HOTBAR_SLOTS, PLAYER_LAYER,
+    PLAYER_MOVE_SPEED, PROJECTILE_LAYER,
+};
 use hex::{
     anyhow,
     ecs::{component_manager::Component, Id, Scene},
@@ -20,16 +23,17 @@ use hex_physics::Collider;
 use std::time::Instant;
 
 #[derive(Clone)]
-pub struct Player {
+pub struct Player<'a> {
     pub health: f32,
     pub fire_time: Instant,
     pub trail_time: Instant,
-    pub states: States,
+    pub states: ButtonStates,
     pub trail: (Projectile, Instance),
     pub projectile: (Collider, Projectile, Instance),
+    pub hotbar: Vec<Option<(Instance, Construct<'a>)>>,
 }
 
-impl Player {
+impl Player<'_> {
     pub fn new(scene: &Scene) -> anyhow::Result<Self> {
         Ok(Self {
             health: 25.0,
@@ -61,6 +65,7 @@ impl Player {
                     true,
                 ),
             ),
+            hotbar: vec![None; HOTBAR_SLOTS],
         })
     }
 
@@ -91,7 +96,7 @@ impl Player {
     }
 }
 
-impl Component for Player {
+impl Component for Player<'_> {
     fn id() -> Id {
         id!()
     }

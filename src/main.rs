@@ -41,6 +41,7 @@ static TREE_ITEM_COUNT: usize = 4;
 static PROJECTILE_LAYER: Id = 1;
 static PLAYER_LAYER: Id = 2;
 static ASTEROID_LAYER: Id = 3;
+static HOTBAR_SLOTS: usize = 10;
 
 thread_local! {
     pub static RESET: Cell<Option<usize>> = Default::default();

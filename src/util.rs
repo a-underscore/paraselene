@@ -32,11 +32,11 @@ pub fn load_texture(display: &Display, p: &[u8]) -> anyhow::Result<Texture> {
 }
 
 pub fn setup_directories() -> anyhow::Result<()> {
-    fs::create_dir_all(&*SAVE_DIR)?;
+    fs::create_dir_all(SAVE_DIR)?;
 
     let chunks_dir = PathBuf::from(SAVE_DIR).join("chunks");
 
-    fs::create_dir_all(&chunks_dir)?;
+    fs::create_dir_all(chunks_dir)?;
 
     Ok(())
 }
