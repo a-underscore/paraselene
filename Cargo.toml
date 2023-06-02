@@ -7,7 +7,7 @@ inherits = "release"
 debug = true
 
 [package]
-name = "parselene"
+name = "paraselene"
 version = "0.1.0"
 edition = "2021"
 
