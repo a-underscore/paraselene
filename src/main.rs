@@ -7,6 +7,7 @@ mod util;
 
 use game_ui_manager::GameUiManager;
 use hex::{
+    anyhow,
     assets::Shape,
     ecs::{ComponentManager, EntityManager, Id, Scene, SystemManager},
     glium::{
@@ -18,6 +19,7 @@ use hex::{
 use hex_instance::InstanceRenderer;
 use hex_physics::{Box2d, PhysicsManager};
 use hex_ui::{UiManager, UiRenderer};
+use map_manager::construct::ConstructManager;
 use map_manager::MapManager;
 use player::{Player, PlayerManager};
 use projectile::{Projectile, ProjectileManager};
@@ -49,7 +51,11 @@ thread_local! {
 }
 
 pub fn main() {
-    util::setup_directories().unwrap();
+    init().unwrap();
+}
+
+pub fn init() -> anyhow::Result<()> {
+    util::setup_directories()?;
 
     let ev = EventLoop::new();
     let wb = WindowBuilder::new()
@@ -59,7 +65,7 @@ pub fn main() {
         .with_srgb(true)
         .with_vsync(true)
         .with_multisampling(8);
-    let display = Display::new(wb, cb, &ev).unwrap();
+    let display = Display::new(wb, cb, &ev)?;
 
     display.gl_window().window().set_cursor_visible(false);
 
@@ -76,19 +82,19 @@ pub fn main() {
         Some(Duration::from_secs_f32(1.0 / 30.0)),
         (Box2d::new(Default::default(), f32::MAX), TREE_ITEM_COUNT),
     ));
-    system_manager.add(PlayerManager::new(&scene, (&mut em, &mut cm)).unwrap());
-    system_manager.add(GameUiManager::new(&scene, (&mut em, &mut cm)).unwrap());
+    system_manager.add(PlayerManager::new(&scene, (&mut em, &mut cm))?);
+    system_manager.add(GameUiManager::new(&scene, (&mut em, &mut cm))?);
     system_manager.add(ProjectileManager::default());
     system_manager.add(UiManager::default());
-    system_manager.add(MapManager::new(&scene).unwrap());
-    system_manager.add(
-        InstanceRenderer::new(
-            &scene.display,
-            Shape::rect(&scene.display, Vec2d([1.0; 2])).unwrap(),
-        )
-        .unwrap(),
-    );
-    system_manager.add(UiRenderer::new(&scene.display).unwrap());
+    system_manager.add(MapManager::new(&scene)?);
+    system_manager.add(ConstructManager);
+    system_manager.add(InstanceRenderer::new(
+        &scene.display,
+        Shape::rect(&scene.display, Vec2d([1.0; 2]))?,
+    )?);
+    system_manager.add(UiRenderer::new(&scene.display)?);
 
-    scene.init(ev, (em, cm), system_manager).unwrap();
+    scene.init(ev, (em, cm), system_manager)?;
+
+    Ok(())
 }
