@@ -51,7 +51,7 @@ impl<'a> Player<'a> {
     pub fn default_hotbar(scene: &Scene) -> anyhow::Result<Vec<Option<(Construct<'a>, Sprite)>>> {
         let mut hotbar = vec![None; HOTBAR_SLOTS];
 
-        hotbar[1] = Some(Construct::miner(&scene)?);
+        hotbar[1] = Some(Construct::miner(scene)?);
 
         Ok(hotbar)
     }
