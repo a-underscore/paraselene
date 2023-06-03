@@ -9,12 +9,10 @@ pub use player_manager::PlayerManager;
 pub use save_data::SaveData;
 pub use state::State;
 
-use crate::{
-    map_manager::Construct, util, Projectile, ASTEROID_LAYER, HOTBAR_SLOTS, PLAYER_LAYER,
-    PLAYER_MOVE_SPEED, PROJECTILE_LAYER,
-};
+use crate::{map_manager::Construct, Projectile, HOTBAR_SLOTS, PLAYER_MOVE_SPEED};
 use hex::{
     anyhow,
+    components::Sprite,
     ecs::{component_manager::Component, Id, Scene},
     id,
     math::Vec2d,
@@ -29,44 +27,33 @@ pub struct Player<'a> {
     pub trail_time: Instant,
     pub states: ButtonStates,
     pub trail: (Projectile, Instance),
-    pub projectile: (Collider, Projectile, Instance),
-    pub hotbar: Vec<Option<(Instance, Construct<'a>)>>,
+    pub projectile: (Projectile, Collider, Instance),
+    pub hotbar: Vec<Option<(Construct<'a>, Sprite)>>,
 }
 
-impl Player<'_> {
+impl<'a> Player<'a> {
     pub fn new(scene: &Scene) -> anyhow::Result<Self> {
         Ok(Self {
             health: 25.0,
             fire_time: Instant::now(),
             trail_time: Instant::now(),
             states: Default::default(),
-            trail: (
-                Projectile::player_trail(true),
-                Instance::new(
-                    util::load_texture(&scene.display, include_bytes!("player_trail.png"))?,
-                    [1.0; 4],
-                    -2.0,
-                    true,
-                ),
-            ),
-            projectile: (
-                Collider::rect(
-                    Vec2d([1.0 / 3.0; 2]),
-                    vec![PLAYER_LAYER, ASTEROID_LAYER, PROJECTILE_LAYER],
-                    vec![PROJECTILE_LAYER],
-                    false,
-                    true,
-                ),
-                Projectile::player_bullet(true),
-                Instance::new(
-                    util::load_texture(&scene.display, include_bytes!("player_projectile.png"))?,
-                    [1.0; 4],
-                    -1.0,
-                    true,
-                ),
-            ),
-            hotbar: vec![None; HOTBAR_SLOTS],
+            trail: Projectile::player_trail(scene, true)?,
+            projectile: Projectile::player_bullet(scene, true)?,
+            hotbar: Self::default_hotbar(scene)?,
         })
+    }
+
+    pub fn current_item(&self) -> Option<(Construct<'a>, Sprite)> {
+        self.hotbar.get(self.states.mode).cloned()?
+    }
+
+    pub fn default_hotbar(scene: &Scene) -> anyhow::Result<Vec<Option<(Construct<'a>, Sprite)>>> {
+        let mut hotbar = vec![None; HOTBAR_SLOTS];
+
+        hotbar[1] = Some(Construct::miner(&scene)?);
+
+        Ok(hotbar)
     }
 
     pub fn force(&self) -> Vec2d {

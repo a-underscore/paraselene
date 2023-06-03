@@ -105,12 +105,12 @@ impl<'a> System<'a> for PlayerManager {
 
                 self.frame = now;
 
-                if let Some(crosshair) = self
+                if let Some(crosshair) = *self
                     .crosshair
                     .get_or_init(|| Tag::new("crosshair").find((em, cm)))
                 {
                     if let Some((position, transform)) =
-                        cm.get::<ScreenPos>(*crosshair, em).cloned().and_then(|s| {
+                        cm.get::<ScreenPos>(crosshair, em).cloned().and_then(|s| {
                             Some((
                                 s.active.then_some(s.position)?,
                                 cm.get_mut::<Transform>(self.player, em)
@@ -168,10 +168,10 @@ impl<'a> System<'a> for PlayerManager {
                     ))
                 });
 
-                if let Some(((transform, physical), (collider, projectile, instance))) =
+                if let Some(((transform, physical), (projectile, collider, instance))) =
                     res.as_ref().and_then(|(transform, physical)| {
                         let player = cm.get_mut::<Player>(self.player, em)?;
-                        let ref p @ (_, ref projectile, _) = player.projectile.clone();
+                        let ref p @ (ref projectile, _, _) = player.projectile.clone();
 
                         if let Some(d) = (player.states.firing
                             && now.duration_since(player.fire_time) >= projectile.cooldown)

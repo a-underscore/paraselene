@@ -2,12 +2,16 @@ pub mod projectile_manager;
 
 pub use projectile_manager::ProjectileManager;
 
+use crate::{util, ASTEROID_LAYER, PLAYER_LAYER, PROJECTILE_LAYER};
 use hex::{
-    ecs::{component_manager::Component, Id},
+    anyhow,
+    ecs::{component_manager::Component, Id, Scene},
     id,
     math::Vec2d,
     once_cell::sync::OnceCell,
 };
+use hex_instance::Instance;
+use hex_physics::Collider;
 use std::time::{Duration, Instant};
 
 #[derive(Clone)]
@@ -22,28 +26,54 @@ pub struct Projectile {
 }
 
 impl Projectile {
-    pub fn player_bullet(active: bool) -> Self {
-        Self {
-            spawn_time: OnceCell::new(),
-            alive_time: Duration::from_secs_f32(1.0),
-            velocity: Vec2d::new(0.0, 30.0),
-            cooldown: Duration::from_millis(50),
-            trail_data: None,
-            dmg: 2.0,
-            active,
-        }
+    pub fn player_bullet(
+        scene: &Scene,
+        active: bool,
+    ) -> anyhow::Result<(Self, Collider, Instance)> {
+        Ok((
+            Self {
+                spawn_time: OnceCell::new(),
+                alive_time: Duration::from_secs_f32(1.0),
+                velocity: Vec2d::new(0.0, 30.0),
+                cooldown: Duration::from_millis(50),
+                trail_data: None,
+                dmg: 2.0,
+                active,
+            },
+            Collider::rect(
+                Vec2d([1.0 / 3.0; 2]),
+                vec![PLAYER_LAYER, ASTEROID_LAYER, PROJECTILE_LAYER],
+                vec![PROJECTILE_LAYER],
+                false,
+                true,
+            ),
+            Instance::new(
+                util::load_texture(&scene.display, include_bytes!("player_projectile.png"))?,
+                [1.0; 4],
+                -1.0,
+                true,
+            ),
+        ))
     }
 
-    pub fn player_trail(active: bool) -> Self {
-        Self {
-            spawn_time: OnceCell::new(),
-            alive_time: Duration::from_secs_f32(0.5),
-            velocity: Vec2d::new(0.0, 0.0),
-            cooldown: Duration::from_millis(10),
-            trail_data: Some(2.0),
-            dmg: 0.0,
-            active,
-        }
+    pub fn player_trail(scene: &Scene, active: bool) -> anyhow::Result<(Self, Instance)> {
+        Ok((
+            Self {
+                spawn_time: OnceCell::new(),
+                alive_time: Duration::from_secs_f32(0.5),
+                velocity: Vec2d::new(0.0, 0.0),
+                cooldown: Duration::from_millis(10),
+                trail_data: Some(2.0),
+                dmg: 0.0,
+                active,
+            },
+            Instance::new(
+                util::load_texture(&scene.display, include_bytes!("player_trail.png"))?,
+                [1.0; 4],
+                -2.0,
+                true,
+            ),
+        ))
     }
 }
 

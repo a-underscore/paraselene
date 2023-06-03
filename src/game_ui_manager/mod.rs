@@ -20,7 +20,6 @@ use hex::{
     math::Vec2d,
     once_cell::sync::OnceCell,
 };
-use hex_instance::Instance;
 use hex_ui::ScreenPos;
 use std::{collections::HashMap, f32};
 
@@ -35,13 +34,13 @@ pub type Binds = HashMap<
     >,
 >;
 
-#[derive(Default)]
 pub struct GameUiManager {
     pub mouse_pos: (f32, f32),
     pub window_dims: (u32, u32),
     pub crosshair: Id,
     pub player: OnceCell<Option<Id>>,
     pub kp_cb: Binds,
+    pub crosshair_sprite: Sprite,
 }
 
 impl GameUiManager {
@@ -60,22 +59,25 @@ impl GameUiManager {
             },
             em,
         );
-        cm.add(
-            crosshair,
-            Sprite::new(
-                Shape::rect(&scene.display, Vec2d([1.0; 2]))?,
-                util::load_texture(&scene.display, include_bytes!("crosshair.png"))?,
-                [1.0; 4],
-                0.0,
-                true,
-            ),
-            em,
+
+        let crosshair_sprite = Sprite::new(
+            Shape::rect(&scene.display, Vec2d([1.0; 2]))?,
+            util::load_texture(&scene.display, include_bytes!("crosshair.png"))?,
+            [1.0; 4],
+            0.0,
+            true,
         );
+
+        cm.add(crosshair, crosshair_sprite.clone(), em);
         cm.add(crosshair, Tag::new("crosshair"), em);
 
         Ok(Self {
             crosshair,
-            ..Default::default()
+            crosshair_sprite,
+            mouse_pos: Default::default(),
+            window_dims: Default::default(),
+            player: Default::default(),
+            kp_cb: Default::default(),
         })
     }
     pub fn mouse_position_world(
@@ -228,27 +230,44 @@ impl<'a> System<'a> for GameUiManager {
                 event: Event::MainEventsCleared,
                 flow: _,
             }) => {
-                if let Some(mouse_pos) = self.mouse_position_world((em, cm)) {
-                    if let Some(screen_pos) = cm
-                        .get_mut::<ScreenPos>(self.crosshair, em)
-                        .and_then(|s| s.active.then_some(s))
-                    {
-                        screen_pos.position = mouse_pos
-                    }
-                }
-
-                if let Some(_player) = self.player((em, cm)) {
-                    if let Some((_m, _instance)) = cm
-                        .get::<Player>(self.crosshair, em)
-                        .map(|p| p.states.mode)
-                        .and_then(|m| {
-                            Some((
-                                m,
-                                cm.get_mut::<Instance>(self.crosshair, em)
-                                    .and_then(|s| s.active.then_some(s))?,
-                            ))
+                if let Some(player) = self.player((em, cm)) {
+                    let c = if let Some(((c, s), sprite)) = cm
+                        .get::<Player>(player, em)
+                        .map(|p| {
+                            p.current_item()
+                                .map(|(c, s)| (Some(c), s))
+                                .unwrap_or((None, self.crosshair_sprite.clone()))
                         })
-                    {}
+                        .and_then(|s| Some((s, cm.get_mut::<Sprite>(self.crosshair, em)?)))
+                    {
+                        *sprite = s;
+
+                        c
+                    } else {
+                        None
+                    };
+
+                    if let Some(mouse_pos) = self.mouse_position_world((em, cm)) {
+                        if let Some(player_pos) =
+                            cm.get::<Transform>(player, em).map(|t| t.position())
+                        {
+                            if let Some(screen_pos) = cm
+                                .get_mut::<ScreenPos>(self.crosshair, em)
+                                .and_then(|s| s.active.then_some(s))
+                            {
+                                let mouse_pos = if c.is_some() {
+                                    Vec2d::new(mouse_pos.x().floor(), mouse_pos.y().floor())
+                                        - player_pos
+                                        + Vec2d::new(player_pos.x().floor(), player_pos.y().floor())
+                                        + Vec2d::new(0.5, 0.5)
+                                } else {
+                                    mouse_pos
+                                };
+
+                                screen_pos.position = mouse_pos;
+                            }
+                        }
+                    }
                 }
             }
             Ev::Event(Control {
