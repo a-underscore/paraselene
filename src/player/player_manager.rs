@@ -173,16 +173,14 @@ impl<'a> System<'a> for PlayerManager {
                         let player = cm.get_mut::<Player>(self.player, em)?;
                         let ref p @ (ref projectile, _, _) = player.projectile.clone();
 
-                        if let Some(d) = (player.states.firing
-                            && now.duration_since(player.fire_time) >= projectile.cooldown)
-                            .then(|| ((transform, physical), p.clone()))
-                        {
+                        (player.states.firing
+                            && now.duration_since(player.fire_time) >= projectile.cooldown
+                            && player.current_item().is_none())
+                        .then(|| {
                             player.fire_time = now;
 
-                            Some(d)
-                        } else {
-                            None
-                        }
+                            ((transform, physical), p.clone())
+                        })
                     })
                 {
                     let p = em.add();

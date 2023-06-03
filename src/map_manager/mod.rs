@@ -132,7 +132,7 @@ impl MapManager {
             },
         };
 
-        let mut chunk = Chunk::new(true);
+        let mut chunk = Chunk::new();
 
         for i in 0..chunk.grid.len() {
             for j in 0..chunk.grid[i].len() {
@@ -257,11 +257,7 @@ impl<'a> System<'a> for MapManager {
                         }
 
                         for e in em.entities.clone().into_keys() {
-                            if cm
-                                .get::<Chunk>(e, em)
-                                .and_then(|c| c.active.then_some(c))
-                                .is_some()
-                            {
+                            if cm.get::<Chunk>(e, em).is_some() {
                                 if let Some(position) = cm
                                     .get::<Transform>(e, em)
                                     .and_then(|t| t.active.then_some(Self::chunk_pos(t.position())))

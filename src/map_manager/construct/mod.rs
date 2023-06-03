@@ -22,7 +22,6 @@ pub type UpdateFn<'a> = dyn Fn(Id, (&'a EntityManager, &'a ComponentManager));
 #[derive(Clone)]
 pub struct Construct<'a> {
     pub update: Rc<UpdateFn<'a>>,
-    pub active: bool,
 }
 
 impl<'a> Construct<'a> {
@@ -30,7 +29,6 @@ impl<'a> Construct<'a> {
         Ok((
             Self {
                 update: Rc::new(|_, _| println!("miner test")),
-                active: true,
             },
             Sprite::new(
                 Shape::rect(&scene.display, Vec2d([1.0; 2]))?,

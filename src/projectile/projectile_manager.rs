@@ -44,9 +44,7 @@ impl<'a> System<'a> for ProjectileManager {
                 .keys()
                 .cloned()
                 .filter_map(|e| {
-                    let projectile = cm
-                        .get::<Projectile>(e, em)
-                        .and_then(|p| p.active.then_some(p))?;
+                    let projectile = cm.get::<Projectile>(e, em)?;
                     let spawn_time = *projectile.spawn_time.get_or_init(|| now);
 
                     Some((e, spawn_time, projectile.clone()))

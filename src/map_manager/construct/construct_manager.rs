@@ -21,10 +21,7 @@ impl System<'_> for ConstructManager {
         }) = ev
         {
             for e in em.entities.keys().cloned() {
-                if let Some(construct) = cm
-                    .get::<Construct>(e, em)
-                    .and_then(|c| c.active.then_some(c))
-                {
+                if let Some(construct) = cm.get::<Construct>(e, em) {
                     (*construct.update)(e, (em, cm))
                 }
             }

@@ -38,8 +38,8 @@ impl<'a> Player<'a> {
             fire_time: Instant::now(),
             trail_time: Instant::now(),
             states: Default::default(),
-            trail: Projectile::player_trail(scene, true)?,
-            projectile: Projectile::player_bullet(scene, true)?,
+            trail: Projectile::player_trail(scene)?,
+            projectile: Projectile::player_bullet(scene)?,
             hotbar: Self::default_hotbar(scene)?,
         })
     }

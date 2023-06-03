@@ -14,14 +14,12 @@ use std::rc::Rc;
 #[derive(Clone)]
 pub struct Chunk {
     pub grid: Vec<Vec<Option<Rc<String>>>>,
-    pub active: bool,
 }
 
 impl Chunk {
-    pub fn new(active: bool) -> Self {
+    pub fn new() -> Self {
         Self {
             grid: vec![vec![None; CHUNK_SIZE as usize]; CHUNK_SIZE as usize],
-            active,
         }
     }
 }

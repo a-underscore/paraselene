@@ -259,7 +259,7 @@ impl<'a> System<'a> for GameUiManager {
                                     Vec2d::new(mouse_pos.x().floor(), mouse_pos.y().floor())
                                         - player_pos
                                         + Vec2d::new(player_pos.x().floor(), player_pos.y().floor())
-                                        + Vec2d::new(0.5, 0.5)
+                                        + Vec2d([0.5; 2])
                                 } else {
                                     mouse_pos
                                 };

@@ -22,14 +22,10 @@ pub struct Projectile {
     pub cooldown: Duration,
     pub trail_data: Option<f32>,
     pub dmg: f32,
-    pub active: bool,
 }
 
 impl Projectile {
-    pub fn player_bullet(
-        scene: &Scene,
-        active: bool,
-    ) -> anyhow::Result<(Self, Collider, Instance)> {
+    pub fn player_bullet(scene: &Scene) -> anyhow::Result<(Self, Collider, Instance)> {
         Ok((
             Self {
                 spawn_time: OnceCell::new(),
@@ -38,7 +34,6 @@ impl Projectile {
                 cooldown: Duration::from_millis(50),
                 trail_data: None,
                 dmg: 2.0,
-                active,
             },
             Collider::rect(
                 Vec2d([1.0 / 3.0; 2]),
@@ -56,7 +51,7 @@ impl Projectile {
         ))
     }
 
-    pub fn player_trail(scene: &Scene, active: bool) -> anyhow::Result<(Self, Instance)> {
+    pub fn player_trail(scene: &Scene) -> anyhow::Result<(Self, Instance)> {
         Ok((
             Self {
                 spawn_time: OnceCell::new(),
@@ -65,7 +60,6 @@ impl Projectile {
                 cooldown: Duration::from_millis(10),
                 trail_data: Some(2.0),
                 dmg: 0.0,
-                active,
             },
             Instance::new(
                 util::load_texture(&scene.display, include_bytes!("player_trail.png"))?,
