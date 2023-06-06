@@ -86,7 +86,7 @@ pub fn init() -> anyhow::Result<()> {
     system_manager.add(GameUiManager::new(&scene, (&mut em, &mut cm))?);
     system_manager.add(ProjectileManager::default());
     system_manager.add(UiManager::default());
-    system_manager.add(MapManager::new(&scene)?);
+    system_manager.add(MapManager::new()?);
     system_manager.add(ConstructManager);
     system_manager.add(InstanceRenderer::new(
         &scene.display,

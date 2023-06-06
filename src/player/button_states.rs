@@ -5,5 +5,6 @@ pub struct ButtonStates {
     pub left: bool,
     pub right: bool,
     pub firing: bool,
+    pub removing: bool,
     pub mode: usize,
 }

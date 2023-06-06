@@ -10,7 +10,7 @@ use hex::{
         system_manager::System,
         ComponentManager, EntityManager, Id, Scene,
     },
-    glium::glutin::event::{Event, WindowEvent},
+    glium::glutin::event::Event,
     math::{Mat3d, Vec2d},
     once_cell::sync::OnceCell,
 };
@@ -32,7 +32,7 @@ impl PlayerManager {
         (em, cm): (&mut EntityManager, &mut ComponentManager),
     ) -> anyhow::Result<Self> {
         let player = em.add();
-        let state = State::load()?;
+        let state = State::load(scene)?;
 
         cm.add(
             player,
@@ -92,7 +92,7 @@ impl<'a> System<'a> for PlayerManager {
     fn update(
         &mut self,
         ev: &mut Ev,
-        scene: &mut Scene,
+        _: &mut Scene,
         (em, cm): (&mut EntityManager, &mut ComponentManager),
     ) -> anyhow::Result<()> {
         match ev {
@@ -260,24 +260,6 @@ impl<'a> System<'a> for PlayerManager {
                     ))
                 }) {
                     ct.set_position(t.position());
-                }
-            }
-            Ev::Event(Control {
-                event:
-                    Event::WindowEvent {
-                        window_id,
-                        event: WindowEvent::CloseRequested,
-                    },
-                flow: _,
-            }) if *window_id == scene.display.gl_window().window().id() => {
-                if let Some((p, state)) = cm
-                    .get::<Transform>(self.player, em)
-                    .map(|p| p.position())
-                    .and_then(|p| Some((p, cm.get_mut::<State>(self.player, em)?)))
-                {
-                    state.save_data.player_position = p.0;
-
-                    state.save()?;
                 }
             }
             _ => {}

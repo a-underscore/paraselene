@@ -1,25 +1,36 @@
 use super::SaveData;
-use crate::SAVE_DIR;
+use crate::{
+    map_manager::{Construct, Ore},
+    SAVE_DIR,
+};
 use hex::{
     anyhow,
+    assets::Texture,
+    components::Sprite,
+    ecs::Scene,
     ecs::{component_manager::Component, Id},
     id,
     once_cell::sync::Lazy,
 };
+use hex_instance::Instance;
 use noise::Perlin;
 use rand::prelude::*;
-use std::{fs, path::PathBuf};
+use std::{collections::HashMap, fs, path::PathBuf};
 
 pub static SAVE_PATH: Lazy<PathBuf> = Lazy::new(|| PathBuf::from(SAVE_DIR).join("map.json"));
 
-pub struct State {
+pub struct State<'a> {
     pub save_data: SaveData,
     pub rng: StdRng,
     pub perlin: Perlin,
+    pub ores: HashMap<String, Ore>,
+    pub constructs: HashMap<String, (Construct<'a>, Instance, Sprite)>,
+    pub space: Texture,
+    pub placed: HashMap<(u64, u64), (String, Id)>,
 }
 
-impl State {
-    pub fn load() -> anyhow::Result<Self> {
+impl State<'_> {
+    pub fn load(scene: &Scene) -> anyhow::Result<Self> {
         let (mut rng, save_data) = fs::read_to_string(&*SAVE_PATH)
             .ok()
             .map(|s| -> anyhow::Result<_> {
@@ -31,9 +42,6 @@ impl State {
                 let seed = thread_rng().gen_range(u64::MIN..u64::MAX);
                 let mut rng = StdRng::seed_from_u64(seed);
                 let data = SaveData::new(seed, &mut rng);
-                let content = serde_json::to_string(&data)?;
-
-                fs::write(&*SAVE_PATH, content)?;
 
                 Ok((rng, data))
             })?;
@@ -43,18 +51,33 @@ impl State {
             save_data,
             perlin,
             rng,
+            ores: vec![
+                Ore::asteroid_1(&scene)?,
+                Ore::asteroid_2(&scene)?,
+                Ore::metal(&scene)?,
+            ]
+            .into_iter()
+            .map(|o| (o.id.as_ref().clone(), o))
+            .collect(),
+            constructs: vec![Construct::miner(&scene)?]
+                .into_iter()
+                .map(|ref o @ (ref c, _, _)| (c.id.as_ref().clone(), o.clone()))
+                .collect(),
+            space: Ore::space(&scene)?,
+            placed: HashMap::new(),
         })
     }
 
     pub fn save(&self) -> anyhow::Result<()> {
         let content = serde_json::to_string(&self.save_data)?;
+
         fs::write(&*SAVE_PATH, content)?;
 
         Ok(())
     }
 }
 
-impl Component for State {
+impl Component for State<'_> {
     fn id() -> Id {
         id!()
     }

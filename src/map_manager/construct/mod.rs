@@ -1,5 +1,7 @@
+pub mod construct_data;
 pub mod construct_manager;
 
+pub use construct_data::ConstructData;
 pub use construct_manager::ConstructManager;
 
 use crate::util;
@@ -22,6 +24,7 @@ pub type UpdateFn<'a> = dyn Fn(Id, (&'a mut EntityManager, &'a mut ComponentMana
 
 #[derive(Clone)]
 pub struct Construct<'a> {
+    pub id: Rc<String>,
     pub update: Rc<UpdateFn<'a>>,
 }
 
@@ -31,6 +34,7 @@ impl<'a> Construct<'a> {
 
         Ok((
             Self {
+                id: Rc::new("miner".to_string()),
                 update: Rc::new(|_, _| {
                     println!("I am here, I am a construct, and my update method is being called")
                 }),

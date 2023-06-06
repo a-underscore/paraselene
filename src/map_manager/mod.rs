@@ -8,17 +8,18 @@ pub use construct::Construct;
 pub use ore::Ore;
 
 use crate::{
-    util, Tag, ASTEROID_UPDATE_TIME, CAM_DIMS, CHUNK_DIST, CHUNK_SIZE, FRAME_LOAD_AMOUNT, SAVE_DIR,
+    Tag, ASTEROID_UPDATE_TIME, CAM_DIMS, CHUNK_DIST, CHUNK_SIZE, FRAME_LOAD_AMOUNT, SAVE_DIR,
     TILE_SIZE, UNLOAD_BIAS,
 };
 use chunk::ChunkData;
+use construct::ConstructData;
 use hex::{
     anyhow,
     assets::Texture,
     components::Transform,
     ecs::{ev::Control, system_manager::System, ComponentManager, EntityManager, Ev, Id, Scene},
     glium::{
-        glutin::event::Event,
+        glutin::event::{Event, WindowEvent},
         texture::{MipmapsOption, Texture2d},
         uniforms::{MagnifySamplerFilter, SamplerBehavior},
         Rect,
@@ -41,24 +42,16 @@ pub struct MapManager {
     pub player: OnceCell<Option<Id>>,
     pub check: Instant,
     pub frame: Instant,
-    pub ores: Vec<Ore>,
-    pub space: Texture,
     pub load_queue: Vec<(u32, u32)>,
     pub loaded: HashMap<(u32, u32), Id>,
 }
 
 impl MapManager {
-    pub fn new(scene: &Scene) -> anyhow::Result<Self> {
+    pub fn new() -> anyhow::Result<Self> {
         Ok(Self {
             player: OnceCell::new(),
             check: Instant::now(),
             frame: Instant::now(),
-            ores: vec![
-                Ore::asteroid_1(&scene.display)?,
-                Ore::asteroid_2(&scene.display)?,
-                Ore::metal(&scene.display)?,
-            ],
-            space: util::load_texture(&scene.display, include_bytes!("space.png"))?,
             load_queue: Vec::new(),
             loaded: HashMap::new(),
         })
@@ -74,9 +67,9 @@ impl MapManager {
                 let x = pos.x() as f64 * CHUNK_SIZE as f64 + i as f64;
                 let y = pos.y() as f64 * CHUNK_SIZE as f64 + j as f64;
                 let val = state.perlin.get([x / 25.0, y / 25.0, 0.0]);
-                let ores: Vec<_> = self
+                let ores: Vec<_> = state
                     .ores
-                    .iter()
+                    .values()
                     .filter_map(|t| {
                         t.check(&mut state.rng, val)
                             .map(|(id, t)| (Some(id.clone()), t))
@@ -85,7 +78,7 @@ impl MapManager {
                 let (id, _) = ores
                     .choose(&mut state.rng)
                     .cloned()
-                    .unwrap_or((None, &self.space));
+                    .unwrap_or((None, &state.space));
 
                 data.grid[i][j] = id.as_ref().map(|s| s.as_ref().clone());
             }
@@ -136,19 +129,10 @@ impl MapManager {
 
         for i in 0..chunk.grid.len() {
             for j in 0..chunk.grid[i].len() {
-                let ores: Vec<_> = self
-                    .ores
-                    .iter()
-                    .filter_map(|t| {
-                        data.grid[i][j].as_ref().and_then(|id| {
-                            (*id == *t.id).then_some((Some(t.id.clone()), &t.texture))
-                        })
-                    })
-                    .collect();
-                let (id, t) = ores
-                    .choose(&mut state.rng)
-                    .cloned()
-                    .unwrap_or((None, &self.space));
+                let (id, t) = data.grid[i][j]
+                    .as_ref()
+                    .and_then(|t| state.ores.get(t).map(|t| (Some(t.id.clone()), &t.texture)))
+                    .unwrap_or((None, &state.space));
                 let data: Vec<_> = t.buffer.read();
                 let rect = Rect {
                     left: i as u32 * TILE_SIZE,
@@ -180,106 +164,204 @@ impl MapManager {
 
         (pos.x().ceil() as u32, pos.y().ceil() as u32)
     }
+
+    pub fn load_constructs(
+        &mut self,
+        player: Id,
+        (em, cm): (&mut EntityManager, &mut ComponentManager),
+    ) {
+        let mut constructs = Vec::new();
+
+        if let Some(state) = cm.get_mut::<State>(player, em) {
+            for ConstructData {
+                position: position @ (x, y),
+                id,
+            } in &state.save_data.constructs
+            {
+                if let Some((construct, instance, sprite)) = state.constructs.get(id).cloned() {
+                    let e = em.add();
+
+                    constructs.push((
+                        e,
+                        (
+                            construct,
+                            instance,
+                            sprite,
+                            Transform::new(
+                                Vec2d::new(*x as f32, *y as f32) + Vec2d([0.5; 2]),
+                                0.0,
+                                Vec2d([1.0; 2]),
+                                true,
+                            ),
+                        ),
+                    ));
+
+                    state.placed.insert(*position, ((*id).clone(), e));
+                }
+            }
+        }
+
+        for (e, (construct, instance, sprite, transform)) in constructs {
+            cm.add(e, construct, em);
+            cm.add(e, instance, em);
+            cm.add(e, sprite, em);
+            cm.add(e, transform, em);
+        }
+    }
 }
 
 impl<'a> System<'a> for MapManager {
+    fn init(
+        &mut self,
+        _: &mut Scene,
+        (em, cm): (&mut EntityManager, &mut ComponentManager),
+    ) -> anyhow::Result<()> {
+        if let Some(player) = *self
+            .player
+            .get_or_init(|| Tag::new("player").find((em, cm)))
+        {
+            self.load_constructs(player, (em, cm));
+        }
+
+        Ok(())
+    }
+
     fn update(
         &mut self,
         ev: &mut Ev,
         scene: &mut Scene,
         (em, cm): (&mut EntityManager, &mut ComponentManager),
     ) -> anyhow::Result<()> {
-        if let Ev::Event(Control {
-            event: Event::MainEventsCleared,
-            flow: _,
-        }) = ev
+        if let Some(player) = *self
+            .player
+            .get_or_init(|| Tag::new("player").find((em, cm)))
         {
-            if let Some(player) = *self
-                .player
-                .get_or_init(|| Tag::new("player").find((em, cm)))
-            {
-                let now = Instant::now();
-                let delta = now.duration_since(self.frame);
+            match ev {
+                Ev::Event(Control {
+                    event: Event::MainEventsCleared,
+                    flow: _,
+                }) => {
+                    let now = Instant::now();
+                    let delta = now.duration_since(self.frame);
 
-                self.frame = now;
+                    self.frame = now;
 
-                let chunks: Vec<_> = (0..(FRAME_LOAD_AMOUNT * delta.as_secs_f32().ceil() as u64))
-                    .map(|_| self.load_queue.pop())
-                    .fuse()
-                    .flatten()
-                    .collect();
+                    let chunks: Vec<_> = (0..(FRAME_LOAD_AMOUNT
+                        * delta.as_secs_f32().ceil() as u64))
+                        .map(|_| self.load_queue.pop())
+                        .fuse()
+                        .flatten()
+                        .collect();
 
-                for c in chunks {
-                    if let Some((chunk, instance, transform)) =
-                        if let Some(state) = cm.get_mut::<State>(player, em) {
-                            Some(self.load_chunk(c, scene, state)?)
-                        } else {
-                            None
+                    for c in chunks {
+                        if let Some((chunk, instance, transform)) =
+                            if let Some(state) = cm.get_mut::<State>(player, em) {
+                                Some(self.load_chunk(c, scene, state)?)
+                            } else {
+                                None
+                            }
+                        {
+                            let e = em.add();
+
+                            cm.add(e, chunk, em);
+                            cm.add(e, instance, em);
+                            cm.add(e, transform, em);
+
+                            self.loaded.insert(c, e);
                         }
-                    {
-                        let e = em.add();
-
-                        cm.add(e, chunk, em);
-                        cm.add(e, instance, em);
-                        cm.add(e, transform, em);
-
-                        self.loaded.insert(c, e);
                     }
-                }
 
-                if now.duration_since(self.check) >= ASTEROID_UPDATE_TIME {
-                    self.check = now;
+                    if now.duration_since(self.check) >= ASTEROID_UPDATE_TIME {
+                        self.check = now;
 
-                    if let Some(player_chunk) = cm
-                        .get::<Transform>(player, em)
-                        .and_then(|t| t.active.then_some(Self::chunk_pos(t.position())))
-                    {
-                        let offset = (CAM_DIMS / CHUNK_SIZE as f32 * CHUNK_DIST).ceil() as u32;
-                        let min = (
-                            player_chunk.0.checked_sub(offset).unwrap_or_default(),
-                            player_chunk.1.checked_sub(offset).unwrap_or_default(),
-                        );
-                        let max = (
-                            player_chunk.0.checked_add(offset).unwrap_or(u32::MAX),
-                            player_chunk.1.checked_add(offset).unwrap_or(u32::MAX),
-                        );
+                        if let Some(player_chunk) = cm
+                            .get::<Transform>(player, em)
+                            .and_then(|t| t.active.then_some(Self::chunk_pos(t.position())))
+                        {
+                            let offset = (CAM_DIMS / CHUNK_SIZE as f32 * CHUNK_DIST).ceil() as u32;
+                            let min = (
+                                player_chunk.0.checked_sub(offset).unwrap_or_default(),
+                                player_chunk.1.checked_sub(offset).unwrap_or_default(),
+                            );
+                            let max = (
+                                player_chunk.0.checked_add(offset).unwrap_or(u32::MAX),
+                                player_chunk.1.checked_add(offset).unwrap_or(u32::MAX),
+                            );
 
-                        for i in min.0..max.0 {
-                            for j in min.1..max.1 {
-                                let chunk = (i, j);
+                            for i in min.0..max.0 {
+                                for j in min.1..max.1 {
+                                    let chunk = (i, j);
 
-                                if !(self.load_queue.contains(&chunk)
-                                    || self.loaded.contains_key(&chunk))
-                                {
-                                    self.load_queue.push(chunk);
+                                    if !(self.load_queue.contains(&chunk)
+                                        || self.loaded.contains_key(&chunk))
+                                    {
+                                        self.load_queue.push(chunk);
+                                    }
                                 }
                             }
-                        }
 
-                        for e in em.entities.clone().into_keys() {
-                            if cm.get::<Chunk>(e, em).is_some() {
-                                if let Some(position) = cm
-                                    .get::<Transform>(e, em)
-                                    .and_then(|t| t.active.then_some(Self::chunk_pos(t.position())))
-                                {
-                                    if !(position.0
-                                        >= min.0.checked_sub(UNLOAD_BIAS).unwrap_or_default()
-                                        && position.0
-                                            <= max.0.checked_add(UNLOAD_BIAS).unwrap_or(u32::MAX)
-                                        && position.1
-                                            >= min.1.checked_sub(UNLOAD_BIAS).unwrap_or_default()
-                                        && position.1
-                                            <= max.1.checked_add(UNLOAD_BIAS).unwrap_or(u32::MAX))
+                            for e in em.entities.clone().into_keys() {
+                                if cm.get::<Chunk>(e, em).is_some() {
+                                    if let Some(position) =
+                                        cm.get::<Transform>(e, em).and_then(|t| {
+                                            t.active.then_some(Self::chunk_pos(t.position()))
+                                        })
                                     {
-                                        self.loaded.remove(&position);
+                                        if !(position.0
+                                            >= min.0.checked_sub(UNLOAD_BIAS).unwrap_or_default()
+                                            && position.0
+                                                <= max
+                                                    .0
+                                                    .checked_add(UNLOAD_BIAS)
+                                                    .unwrap_or(u32::MAX)
+                                            && position.1
+                                                >= min
+                                                    .1
+                                                    .checked_sub(UNLOAD_BIAS)
+                                                    .unwrap_or_default()
+                                            && position.1
+                                                <= max
+                                                    .1
+                                                    .checked_add(UNLOAD_BIAS)
+                                                    .unwrap_or(u32::MAX))
+                                        {
+                                            self.loaded.remove(&position);
 
-                                        em.rm(e, cm);
+                                            em.rm(e, cm);
+                                        }
                                     }
                                 }
                             }
                         }
                     }
                 }
+                Ev::Event(Control {
+                    event:
+                        Event::WindowEvent {
+                            window_id,
+                            event: WindowEvent::CloseRequested,
+                        },
+                    flow: _,
+                }) if *window_id == scene.display.gl_window().window().id() => {
+                    if let Some((p, state)) = cm
+                        .get::<Transform>(player, em)
+                        .map(|p| p.position())
+                        .and_then(|p| Some((p, cm.get_mut::<State>(player, em)?)))
+                    {
+                        state.save_data.player_position = p.0;
+                        state.save_data.constructs = state
+                            .placed
+                            .iter()
+                            .map(|(pos, (id, _))| ConstructData {
+                                position: *pos,
+                                id: id.clone(),
+                            })
+                            .collect();
+
+                        state.save()?;
+                    }
+                }
+                _ => {}
             }
         }
 

@@ -1,3 +1,4 @@
+use crate::map_manager::construct::ConstructData;
 use rand::prelude::*;
 use serde_derive::{Deserialize, Serialize};
 
@@ -5,16 +6,15 @@ use serde_derive::{Deserialize, Serialize};
 pub struct SaveData {
     pub seed: u64,
     pub player_position: [f32; 2],
+    pub constructs: Vec<ConstructData>,
 }
 
 impl SaveData {
     pub fn new(seed: u64, rng: &mut StdRng) -> Self {
-        let x = Self::gen_map_coord(rng);
-        let y = Self::gen_map_coord(rng);
-
         Self {
             seed,
-            player_position: [x, y],
+            player_position: [Self::gen_map_coord(rng), Self::gen_map_coord(rng)],
+            constructs: Vec::new(),
         }
     }
 
