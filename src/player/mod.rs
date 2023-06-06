@@ -28,7 +28,7 @@ pub struct Player<'a> {
     pub states: ButtonStates,
     pub trail: (Projectile, Instance),
     pub projectile: (Projectile, Collider, Instance),
-    pub hotbar: Vec<Option<(Construct<'a>, Sprite)>>,
+    pub hotbar: Vec<Option<(Construct<'a>, Instance, Sprite)>>,
 }
 
 impl<'a> Player<'a> {
@@ -44,11 +44,13 @@ impl<'a> Player<'a> {
         })
     }
 
-    pub fn current_item(&self) -> Option<(Construct<'a>, Sprite)> {
+    pub fn current_item(&self) -> Option<(Construct<'a>, Instance, Sprite)> {
         self.hotbar.get(self.states.mode).cloned()?
     }
 
-    pub fn default_hotbar(scene: &Scene) -> anyhow::Result<Vec<Option<(Construct<'a>, Sprite)>>> {
+    pub fn default_hotbar(
+        scene: &Scene,
+    ) -> anyhow::Result<Vec<Option<(Construct<'a>, Instance, Sprite)>>> {
         let mut hotbar = vec![None; HOTBAR_SLOTS];
 
         hotbar[1] = Some(Construct::miner(scene)?);

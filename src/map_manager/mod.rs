@@ -165,7 +165,7 @@ impl MapManager {
 
         Ok((
             chunk,
-            Instance::new(texture, [1.0; 4], -3.0, true),
+            Instance::new(texture, [1.0; 4], -4.0, true),
             Transform::new(
                 Vec2d(data.position) * CHUNK_SIZE as f32,
                 0.0,

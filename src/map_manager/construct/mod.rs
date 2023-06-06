@@ -15,9 +15,10 @@ use hex::{
     id,
     math::Vec2d,
 };
+use hex_instance::Instance;
 use std::rc::Rc;
 
-pub type UpdateFn<'a> = dyn Fn(Id, (&'a EntityManager, &'a ComponentManager));
+pub type UpdateFn<'a> = dyn Fn(Id, (&'a mut EntityManager, &'a mut ComponentManager));
 
 #[derive(Clone)]
 pub struct Construct<'a> {
@@ -25,16 +26,21 @@ pub struct Construct<'a> {
 }
 
 impl<'a> Construct<'a> {
-    pub fn miner(scene: &Scene) -> anyhow::Result<(Self, Sprite)> {
+    pub fn miner(scene: &Scene) -> anyhow::Result<(Self, Instance, Sprite)> {
+        let texture = util::load_texture(&scene.display, include_bytes!("miner.png"))?;
+
         Ok((
             Self {
-                update: Rc::new(|_, _| println!("miner test")),
+                update: Rc::new(|_, _| {
+                    println!("I am here, I am a construct, and my update method is being called")
+                }),
             },
+            Instance::new(texture.clone(), [1.0; 4], -3.0, true),
             Sprite::new(
                 Shape::rect(&scene.display, Vec2d([1.0; 2]))?,
-                util::load_texture(&scene.display, include_bytes!("miner.png"))?,
+                texture.clone(),
                 [1.0; 4],
-                -5.0,
+                0.0,
                 true,
             ),
         ))

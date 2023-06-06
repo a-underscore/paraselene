@@ -2,7 +2,7 @@ pub mod input;
 
 pub use input::Input;
 
-use crate::{util, Player, Tag};
+use crate::{map_manager::Construct, util, Player, Tag};
 use hex::{
     anyhow,
     assets::Shape,
@@ -231,40 +231,89 @@ impl<'a> System<'a> for GameUiManager {
                 flow: _,
             }) => {
                 if let Some(player) = self.player((em, cm)) {
-                    let c = if let Some(((c, s), sprite)) = cm
+                    let c = if let Some((ref c @ (_, ref s), sprite)) = cm
                         .get::<Player>(player, em)
                         .map(|p| {
                             p.current_item()
-                                .map(|(c, s)| (Some(c), s))
+                                .map(|(c, i, s)| (Some((c, i)), s))
                                 .unwrap_or((None, self.crosshair_sprite.clone()))
                         })
                         .and_then(|s| Some((s, cm.get_mut::<Sprite>(self.crosshair, em)?)))
                     {
-                        *sprite = s;
+                        *sprite = s.clone();
 
-                        c
+                        Some(c.clone())
                     } else {
                         None
                     };
 
                     if let Some(mouse_pos) = self.mouse_position_world((em, cm)) {
-                        if let Some(player_pos) =
-                            cm.get::<Transform>(player, em).map(|t| t.position())
+                        if let Some((player_pos, firing)) =
+                            cm.get::<Transform>(player, em).and_then(|t| {
+                                t.active.then_some((
+                                    t.position(),
+                                    cm.get::<Player>(player, em).map(|t| t.states.firing)?,
+                                ))
+                            })
                         {
-                            if let Some(screen_pos) = cm
+                            let res = if let Some(screen_pos) = cm
                                 .get_mut::<ScreenPos>(self.crosshair, em)
                                 .and_then(|s| s.active.then_some(s))
                             {
-                                let mouse_pos = if c.is_some() {
-                                    Vec2d::new(mouse_pos.x().floor(), mouse_pos.y().floor())
-                                        - player_pos
-                                        + Vec2d::new(player_pos.x().floor(), player_pos.y().floor())
-                                        + Vec2d([0.5; 2])
-                                } else {
-                                    mouse_pos
-                                };
+                                c.and_then(|(c, _)| {
+                                    c.and_then(|(c, i)| {
+                                        let sp = Vec2d::new(
+                                            mouse_pos.x().floor(),
+                                            mouse_pos.y().floor(),
+                                        ) - player_pos
+                                            + Vec2d::new(
+                                                player_pos.x().floor(),
+                                                player_pos.y().floor(),
+                                            )
+                                            + Vec2d([0.5; 2]);
 
-                                screen_pos.position = mouse_pos;
+                                        screen_pos.position = sp;
+
+                                        Some((c, i, screen_pos.position))
+                                    })
+                                })
+                                .or_else(|| {
+                                    screen_pos.position = mouse_pos;
+
+                                    None
+                                })
+                            } else {
+                                None
+                            };
+
+                            if firing {
+                                if let Some((c, i, sp)) = res {
+                                    let pos = sp + player_pos;
+
+                                    if !em
+                                        .entities
+                                        .keys()
+                                        .cloned()
+                                        .filter_map(|e| {
+                                            cm.get::<Construct>(e, em).is_some().then_some(
+                                                cm.get::<Transform>(e, em).and_then(|t| {
+                                                    t.active.then_some(t.position())
+                                                })?,
+                                            )
+                                        })
+                                        .any(|p| p == pos)
+                                    {
+                                        let construct = em.add();
+
+                                        cm.add(
+                                            construct,
+                                            Transform::new(pos, 0.0, Vec2d([1.0; 2]), true),
+                                            em,
+                                        );
+                                        cm.add(construct, c, em);
+                                        cm.add(construct, i, em);
+                                    }
+                                }
                             }
                         }
                     }

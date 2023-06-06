@@ -20,9 +20,9 @@ impl System<'_> for ConstructManager {
             flow: _,
         }) = ev
         {
-            for e in em.entities.keys().cloned() {
-                if let Some(construct) = cm.get::<Construct>(e, em) {
-                    (*construct.update)(e, (em, cm))
+            for e in em.entities.clone().into_keys() {
+                if let Some(update) = cm.get::<Construct>(e, em).map(|c| c.update.clone()) {
+                    (*update)(e, (em, cm));
                 }
             }
         }
