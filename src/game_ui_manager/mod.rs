@@ -261,7 +261,7 @@ impl<'a> System<'a> for GameUiManager {
                                 .and_then(|s| s.active.then_some(s))
                             {
                                 c.and_then(|(c, _)| {
-                                    c.and_then(|(c, i)| {
+                                    c.map(|(c, i)| {
                                         let sp = Vec2d::new(
                                             mouse_pos.x().floor(),
                                             mouse_pos.y().floor(),
@@ -274,7 +274,7 @@ impl<'a> System<'a> for GameUiManager {
 
                                         screen_pos.position = sp;
 
-                                        Some((c, i, screen_pos.position))
+                                        (c, i, screen_pos.position)
                                     })
                                 })
                                 .or_else(|| {

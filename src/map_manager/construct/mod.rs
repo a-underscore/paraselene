@@ -38,7 +38,7 @@ impl<'a> Construct<'a> {
             Instance::new(texture.clone(), [1.0; 4], -3.0, true),
             Sprite::new(
                 Shape::rect(&scene.display, Vec2d([1.0; 2]))?,
-                texture.clone(),
+                texture,
                 [1.0; 4],
                 0.0,
                 true,
