@@ -95,174 +95,169 @@ impl<'a> System<'a> for PlayerManager {
         _: &mut Scene,
         (em, cm): (&mut EntityManager, &mut ComponentManager),
     ) -> anyhow::Result<()> {
-        match ev {
-            Ev::Event(Control {
-                event: Event::MainEventsCleared,
-                flow: _,
-            }) => {
-                let now = Instant::now();
-                let delta = now.duration_since(self.frame);
+        if let Ev::Event(Control {
+            event: Event::MainEventsCleared,
+            flow: _,
+        }) = ev
+        {
+            let now = Instant::now();
+            let delta = now.duration_since(self.frame);
 
-                self.frame = now;
+            self.frame = now;
 
-                if let Some(crosshair) = *self
-                    .crosshair
-                    .get_or_init(|| Tag::new("crosshair").find((em, cm)))
-                {
-                    if let Some((position, transform)) =
-                        cm.get::<ScreenPos>(crosshair, em).cloned().and_then(|s| {
-                            Some((
-                                s.active.then_some(s.position)?,
-                                cm.get_mut::<Transform>(self.player, em)
-                                    .and_then(|t| t.active.then_some(t))?,
-                            ))
-                        })
-                    {
-                        transform.set_rotation(Vec2d::new(0.0, 1.0).angle(position));
-                    }
-                }
-
-                if let Some((player, transform)) =
-                    cm.get::<Player>(self.player, em).cloned().and_then(|p| {
+            if let Some(crosshair) = *self
+                .crosshair
+                .get_or_init(|| Tag::new("crosshair").find((em, cm)))
+            {
+                if let Some((position, transform)) =
+                    cm.get::<ScreenPos>(crosshair, em).cloned().and_then(|s| {
                         Some((
-                            p,
-                            cm.get::<Transform>(self.player, em)
-                                .and_then(|t| t.active.then_some(t))?
-                                .clone(),
+                            s.active.then_some(s.position)?,
+                            cm.get_mut::<Transform>(self.player, em)
+                                .and_then(|t| t.active.then_some(t))?,
                         ))
                     })
                 {
-                    let f = player.force();
-
-                    if let Some(p) = cm
-                        .get_mut::<Physical>(self.player, em)
-                        .and_then(|p| p.active.then_some(p))
-                    {
-                        let force = if f.magnitude() != 0.0 {
-                            p.force
-                                + (Mat3d::rotation(transform.rotation())
-                                    * (
-                                        util::lerp_vec2d(f, Vec2d::default(), delta.as_secs_f32()),
-                                        1.0,
-                                    ))
-                                    .0
-                        } else {
-                            p.force
-                                - util::lerp_vec2d(p.force, Vec2d::default(), delta.as_secs_f32())
-                        };
-
-                        p.force = if force.magnitude() != 0.0 {
-                            force.normal() * force.magnitude().min(PLAYER_MOVE_SPEED)
-                        } else {
-                            Vec2d::default()
-                        };
-                    }
-                }
-
-                let res = cm.get::<Transform>(self.player, em).cloned().and_then(|t| {
-                    Some((
-                        t.active.then_some(t)?,
-                        cm.get::<Physical>(self.player, em)
-                            .and_then(|p| p.active.then_some(p))?
-                            .clone(),
-                    ))
-                });
-
-                if let Some(((transform, physical), (projectile, collider, instance))) =
-                    res.as_ref().and_then(|(transform, physical)| {
-                        let player = cm.get_mut::<Player>(self.player, em)?;
-                        let ref p @ (ref projectile, _, _) = player.projectile.clone();
-
-                        (player.states.firing
-                            && now.duration_since(player.fire_time) >= projectile.cooldown
-                            && player.current_item().is_none())
-                        .then(|| {
-                            player.fire_time = now;
-
-                            ((transform, physical), p.clone())
-                        })
-                    })
-                {
-                    let p = em.add();
-
-                    cm.add(
-                        p,
-                        Physical::new(
-                            physical.velocity()
-                                + (Mat3d::rotation(transform.rotation())
-                                    * (projectile.velocity, 1.0))
-                                    .0,
-                            true,
-                        ),
-                        em,
-                    );
-                    cm.add(p, collider, em);
-                    cm.add(p, projectile, em);
-                    cm.add(p, instance, em);
-                    cm.add(p, transform.clone(), em);
-                }
-
-                if let Some(((transform, physical), (projectile, instance))) = res
-                    .as_ref()
-                    .and_then(|(transform, physical)| {
-                        let player = cm.get_mut::<Player>(self.player, em)?;
-
-                        (player.force().magnitude() != 0.0).then_some((transform, physical, player))
-                    })
-                    .and_then(|(transform, physical, player)| {
-                        let ref p @ (ref projectile, _) = player.trail.clone();
-                        let delta = now.duration_since(player.trail_time);
-
-                        if let Some(d) = (delta >= projectile.cooldown)
-                            .then(|| ((transform, physical), p.clone()))
-                        {
-                            player.trail_time = now;
-
-                            Some(d)
-                        } else {
-                            None
-                        }
-                    })
-                {
-                    let p = em.add();
-                    let transform = {
-                        let mut transform = transform.clone();
-
-                        transform.set_scale(Vec2d::new(
-                            transform.scale().x() * 5.0,
-                            transform.scale().y(),
-                        ));
-
-                        transform
-                    };
-
-                    cm.add(
-                        p,
-                        Physical::new(
-                            -physical.velocity()
-                                + (Mat3d::rotation(transform.rotation())
-                                    * (projectile.velocity, 1.0))
-                                    .0,
-                            true,
-                        ),
-                        em,
-                    );
-                    cm.add(p, projectile, em);
-                    cm.add(p, instance, em);
-                    cm.add(p, transform, em);
-                }
-
-                if let Some((t, ct)) = cm.get::<Transform>(self.player, em).cloned().and_then(|t| {
-                    Some((
-                        t.active.then_some(t)?,
-                        cm.get_mut::<Transform>(self.camera, em)
-                            .and_then(|t| t.active.then_some(t))?,
-                    ))
-                }) {
-                    ct.set_position(t.position());
+                    transform.set_rotation(Vec2d::new(0.0, 1.0).angle(position));
                 }
             }
-            _ => {}
+
+            if let Some((player, transform)) =
+                cm.get::<Player>(self.player, em).cloned().and_then(|p| {
+                    Some((
+                        p,
+                        cm.get::<Transform>(self.player, em)
+                            .and_then(|t| t.active.then_some(t))?
+                            .clone(),
+                    ))
+                })
+            {
+                let f = player.force();
+
+                if let Some(p) = cm
+                    .get_mut::<Physical>(self.player, em)
+                    .and_then(|p| p.active.then_some(p))
+                {
+                    let force = if f.magnitude() != 0.0 {
+                        p.force
+                            + (Mat3d::rotation(transform.rotation())
+                                * (
+                                    util::lerp_vec2d(f, Vec2d::default(), delta.as_secs_f32()),
+                                    1.0,
+                                ))
+                                .0
+                    } else {
+                        p.force - util::lerp_vec2d(p.force, Vec2d::default(), delta.as_secs_f32())
+                    };
+
+                    p.force = if force.magnitude() != 0.0 {
+                        force.normal() * force.magnitude().min(PLAYER_MOVE_SPEED)
+                    } else {
+                        Vec2d::default()
+                    };
+                }
+            }
+
+            let res = cm.get::<Transform>(self.player, em).cloned().and_then(|t| {
+                Some((
+                    t.active.then_some(t)?,
+                    cm.get::<Physical>(self.player, em)
+                        .and_then(|p| p.active.then_some(p))?
+                        .clone(),
+                ))
+            });
+
+            if let Some(((transform, physical), (projectile, collider, instance))) =
+                res.as_ref().and_then(|(transform, physical)| {
+                    let player = cm.get_mut::<Player>(self.player, em)?;
+                    let ref p @ (ref projectile, _, _) = player.projectile.clone();
+
+                    (player.states.firing
+                        && now.duration_since(player.fire_time) >= projectile.cooldown
+                        && player.current_item().is_none())
+                    .then(|| {
+                        player.fire_time = now;
+
+                        ((transform, physical), p.clone())
+                    })
+                })
+            {
+                let p = em.add();
+
+                cm.add(
+                    p,
+                    Physical::new(
+                        physical.velocity()
+                            + (Mat3d::rotation(transform.rotation()) * (projectile.velocity, 1.0))
+                                .0,
+                        true,
+                    ),
+                    em,
+                );
+                cm.add(p, collider, em);
+                cm.add(p, projectile, em);
+                cm.add(p, instance, em);
+                cm.add(p, transform.clone(), em);
+            }
+
+            if let Some(((transform, physical), (projectile, instance))) = res
+                .as_ref()
+                .and_then(|(transform, physical)| {
+                    let player = cm.get_mut::<Player>(self.player, em)?;
+
+                    (player.force().magnitude() != 0.0).then_some((transform, physical, player))
+                })
+                .and_then(|(transform, physical, player)| {
+                    let ref p @ (ref projectile, _) = player.trail.clone();
+                    let delta = now.duration_since(player.trail_time);
+
+                    if let Some(d) =
+                        (delta >= projectile.cooldown).then(|| ((transform, physical), p.clone()))
+                    {
+                        player.trail_time = now;
+
+                        Some(d)
+                    } else {
+                        None
+                    }
+                })
+            {
+                let p = em.add();
+                let transform = {
+                    let mut transform = transform.clone();
+
+                    transform.set_scale(Vec2d::new(
+                        transform.scale().x() * 5.0,
+                        transform.scale().y(),
+                    ));
+
+                    transform
+                };
+
+                cm.add(
+                    p,
+                    Physical::new(
+                        -physical.velocity()
+                            + (Mat3d::rotation(transform.rotation()) * (projectile.velocity, 1.0))
+                                .0,
+                        true,
+                    ),
+                    em,
+                );
+                cm.add(p, projectile, em);
+                cm.add(p, instance, em);
+                cm.add(p, transform, em);
+            }
+
+            if let Some((t, ct)) = cm.get::<Transform>(self.player, em).cloned().and_then(|t| {
+                Some((
+                    t.active.then_some(t)?,
+                    cm.get_mut::<Transform>(self.camera, em)
+                        .and_then(|t| t.active.then_some(t))?,
+                ))
+            }) {
+                ct.set_position(t.position());
+            }
         }
 
         Ok(())

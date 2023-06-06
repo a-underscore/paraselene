@@ -52,18 +52,18 @@ impl State<'_> {
             perlin,
             rng,
             ores: vec![
-                Ore::asteroid_1(&scene)?,
-                Ore::asteroid_2(&scene)?,
-                Ore::metal(&scene)?,
+                Ore::asteroid_1(scene)?,
+                Ore::asteroid_2(scene)?,
+                Ore::metal(scene)?,
             ]
             .into_iter()
             .map(|o| (o.id.as_ref().clone(), o))
             .collect(),
-            constructs: vec![Construct::miner(&scene)?]
+            constructs: vec![Construct::miner(scene)?]
                 .into_iter()
                 .map(|ref o @ (ref c, _, _)| (c.id.as_ref().clone(), o.clone()))
                 .collect(),
-            space: Ore::space(&scene)?,
+            space: Ore::space(scene)?,
             placed: HashMap::new(),
         })
     }
