@@ -1,4 +1,4 @@
-use crate::map_manager::construct::ConstructData;
+use crate::construct::ConstructData;
 use rand::prelude::*;
 use serde_derive::{Deserialize, Serialize};
 

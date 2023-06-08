@@ -9,7 +9,7 @@ pub use player_manager::PlayerManager;
 pub use save_data::SaveData;
 pub use state::State;
 
-use crate::{map_manager::Construct, Projectile, HOTBAR_SLOTS, PLAYER_MOVE_SPEED};
+use crate::{construct::Construct, projectile::Projectile, HOTBAR_SLOTS, PLAYER_MOVE_SPEED};
 use hex::{
     anyhow,
     components::Sprite,

@@ -1,18 +1,10 @@
-pub mod chunk;
-pub mod construct;
-pub mod ore;
-
-pub use crate::player::State;
-pub use chunk::Chunk;
-pub use construct::Construct;
-pub use ore::Ore;
-
 use crate::{
+    chunk::{Chunk, ChunkData},
+    construct::ConstructData,
+    player::State,
     Tag, ASTEROID_UPDATE_TIME, CAM_DIMS, CHUNK_DIST, CHUNK_SIZE, FRAME_LOAD_AMOUNT, SAVE_DIR,
     TILE_SIZE, UNLOAD_BIAS,
 };
-use chunk::ChunkData;
-use construct::ConstructData;
 use hex::{
     anyhow,
     assets::Texture,
@@ -38,7 +30,7 @@ use std::{
     time::Instant,
 };
 
-pub struct MapManager {
+pub struct ChunkManager {
     pub player: OnceCell<Option<Id>>,
     pub check: Instant,
     pub frame: Instant,
@@ -46,19 +38,19 @@ pub struct MapManager {
     pub loaded: HashMap<(u32, u32), Id>,
 }
 
-impl MapManager {
-    pub fn new() -> anyhow::Result<Self> {
-        Ok(Self {
+impl Default for ChunkManager {
+    fn default() -> Self {
+        Self {
             player: OnceCell::new(),
             check: Instant::now(),
             frame: Instant::now(),
             load_queue: Vec::new(),
             loaded: HashMap::new(),
-        })
+        }
     }
 }
 
-impl MapManager {
+impl ChunkManager {
     pub fn gen_chunk(&self, pos: Vec2d, state: &mut State) -> anyhow::Result<ChunkData> {
         let mut data = ChunkData::new(pos);
 
@@ -210,7 +202,7 @@ impl MapManager {
     }
 }
 
-impl<'a> System<'a> for MapManager {
+impl<'a> System<'a> for ChunkManager {
     fn init(
         &mut self,
         _: &mut Scene,

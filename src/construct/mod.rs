@@ -36,7 +36,7 @@ impl<'a> Construct<'a> {
             Self {
                 id: Rc::new("miner".to_string()),
                 update: Rc::new(|_, _| {
-                    println!("I am here, I am a construct, and my update method is being called")
+                    //println!("I am here, I am a construct, and my update method is being called")
                 }),
             },
             Instance::new(texture.clone(), [1.0; 4], -3.0, true),

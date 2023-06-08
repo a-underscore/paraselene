@@ -1,8 +1,5 @@
 use super::SaveData;
-use crate::{
-    map_manager::{Construct, Ore},
-    SAVE_DIR,
-};
+use crate::{chunk::Ore, construct::Construct, SAVE_DIR};
 use hex::{
     anyhow,
     assets::Texture,

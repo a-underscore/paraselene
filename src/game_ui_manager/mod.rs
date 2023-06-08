@@ -2,7 +2,7 @@ pub mod input;
 
 pub use input::Input;
 
-use crate::{player::State, util, Player, Tag};
+use crate::{player::Player, player::State, util, Tag};
 use hex::{
     anyhow,
     assets::Shape,

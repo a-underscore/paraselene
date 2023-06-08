@@ -1,10 +1,13 @@
+mod chunk;
+mod construct;
 mod game_ui_manager;
-mod map_manager;
 mod player;
 mod projectile;
 mod tag;
 mod util;
 
+use chunk::ChunkManager;
+use construct::ConstructManager;
 use game_ui_manager::GameUiManager;
 use hex::{
     anyhow,
@@ -17,12 +20,10 @@ use hex::{
     math::Vec2d,
 };
 use hex_instance::InstanceRenderer;
-use hex_physics::{Box2d, PhysicsManager};
+use hex_physics::{quad_tree::Box2d, PhysicsManager};
 use hex_ui::{UiManager, UiRenderer};
-use map_manager::construct::ConstructManager;
-use map_manager::MapManager;
-use player::{Player, PlayerManager};
-use projectile::{Projectile, ProjectileManager};
+use player::PlayerManager;
+use projectile::ProjectileManager;
 use std::{cell::Cell, time::Duration};
 use tag::Tag;
 
@@ -86,7 +87,7 @@ pub fn init() -> anyhow::Result<()> {
     system_manager.add(GameUiManager::new(&scene, (&mut em, &mut cm))?);
     system_manager.add(ProjectileManager::default());
     system_manager.add(UiManager::default());
-    system_manager.add(MapManager::new()?);
+    system_manager.add(ChunkManager::default());
     system_manager.add(ConstructManager);
     system_manager.add(InstanceRenderer::new(
         &scene.display,
