@@ -249,14 +249,31 @@ impl<'a> System<'a> for PlayerManager {
                 cm.add(p, transform, em);
             }
 
-            if let Some((t, ct)) = cm.get::<Transform>(self.player, em).cloned().and_then(|t| {
-                Some((
-                    t.active.then_some(t)?,
-                    cm.get_mut::<Transform>(self.camera, em)
-                        .and_then(|t| t.active.then_some(t))?,
-                ))
-            }) {
-                ct.set_position(t.position());
+            if let Some(pos) = if let Some(t) = cm
+                .get_mut::<Transform>(self.player, em)
+                .and_then(|t| t.active.then_some(t))
+            {
+                let position = t.position();
+
+                t.set_position(Vec2d::new(
+                    position.x().clamp(0.0, u32::MAX as f32),
+                    position.y().clamp(0.0, u32::MAX as f32),
+                ));
+
+                Some(t.position())
+            } else {
+                None
+            } {
+                if let Some(ct) = cm.get_mut::<Transform>(self.camera, em) {
+                    let position = Vec2d::new(
+                        pos.x()
+                            .clamp(CAM_DIMS / 2.0, u32::MAX as f32 - CAM_DIMS / 2.0),
+                        pos.y()
+                            .clamp(CAM_DIMS / 2.0, u32::MAX as f32 - CAM_DIMS / 2.0),
+                    );
+
+                    ct.set_position(position);
+                }
             }
         }
 

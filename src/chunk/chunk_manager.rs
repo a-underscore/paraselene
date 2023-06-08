@@ -272,12 +272,18 @@ impl<'a> System<'a> for ChunkManager {
                         {
                             let offset = (CAM_DIMS / CHUNK_SIZE as f32 * CHUNK_DIST).ceil() as u32;
                             let min = (
-                                player_chunk.0.checked_sub(offset).unwrap_or_default(),
-                                player_chunk.1.checked_sub(offset).unwrap_or_default(),
+                                player_chunk.0.checked_sub(offset).unwrap_or(CHUNK_SIZE),
+                                player_chunk.1.checked_sub(offset).unwrap_or(CHUNK_SIZE),
                             );
                             let max = (
-                                player_chunk.0.checked_add(offset).unwrap_or(u32::MAX),
-                                player_chunk.1.checked_add(offset).unwrap_or(u32::MAX),
+                                player_chunk
+                                    .0
+                                    .checked_add(offset)
+                                    .unwrap_or(u32::MAX - CHUNK_SIZE),
+                                player_chunk
+                                    .1
+                                    .checked_add(offset)
+                                    .unwrap_or(u32::MAX - CHUNK_SIZE),
                             );
 
                             for i in min.0..max.0 {

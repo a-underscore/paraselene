@@ -307,28 +307,34 @@ impl<'a> System<'a> for GameUiManager {
                                 let pos = sp + player_pos;
 
                                 if let Some(state) = cm.get_mut::<State>(player, em) {
-                                    if firing {
-                                        let entry =
-                                            state.placed.entry((pos.x() as u64, pos.y() as u64));
+                                    if pos.x() >= 0.0
+                                        && pos.x() <= u32::MAX as f32
+                                        && pos.y() >= 0.0
+                                        && pos.y() <= u32::MAX as f32
+                                    {
+                                        let x = pos.x() as u64;
+                                        let y = pos.y() as u64;
 
-                                        if let Entry::Vacant(_) = entry {
-                                            let construct = em.add();
+                                        if firing {
+                                            let entry = state.placed.entry((x, y));
 
-                                            entry.or_insert(((*c.id).clone(), construct));
+                                            if let Entry::Vacant(_) = entry {
+                                                let construct = em.add();
 
-                                            cm.add(
-                                                construct,
-                                                Transform::new(pos, 0.0, Vec2d([1.0; 2]), true),
-                                                em,
-                                            );
-                                            cm.add(construct, c, em);
-                                            cm.add(construct, i, em);
-                                        }
-                                    } else if removing {
-                                        if let Some((_, id)) =
-                                            state.placed.remove(&(pos.x() as u64, pos.y() as u64))
-                                        {
-                                            em.rm(id, cm);
+                                                entry.or_insert(((*c.id).clone(), construct));
+
+                                                cm.add(
+                                                    construct,
+                                                    Transform::new(pos, 0.0, Vec2d([1.0; 2]), true),
+                                                    em,
+                                                );
+                                                cm.add(construct, c, em);
+                                                cm.add(construct, i, em);
+                                            }
+                                        } else if removing {
+                                            if let Some((_, id)) = state.placed.remove(&(x, y)) {
+                                                em.rm(id, cm);
+                                            }
                                         }
                                     }
                                 }
