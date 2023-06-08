@@ -1,11 +1,11 @@
 use super::Construct;
-
 use hex::{
     anyhow,
     ecs::{ev::Control, system_manager::System, ComponentManager, EntityManager, Ev, Scene},
     glium::glutin::event::Event,
 };
 
+#[derive(Default)]
 pub struct ConstructManager;
 
 impl System<'_> for ConstructManager {
@@ -22,7 +22,7 @@ impl System<'_> for ConstructManager {
         {
             for e in em.entities.clone().into_keys() {
                 if let Some(update) = cm.get::<Construct>(e, em).map(|c| c.update.clone()) {
-                    (*update)(e, (em, cm));
+                    (*update)(e, (em, cm))?;
                 }
             }
         }

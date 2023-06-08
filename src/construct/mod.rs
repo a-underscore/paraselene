@@ -20,7 +20,8 @@ use hex::{
 use hex_instance::Instance;
 use std::rc::Rc;
 
-pub type UpdateFn<'a> = dyn Fn(Id, (&'a mut EntityManager, &'a mut ComponentManager));
+pub type UpdateFn<'a> =
+    dyn Fn(Id, (&'a mut EntityManager, &'a mut ComponentManager)) -> anyhow::Result<()>;
 
 #[derive(Clone)]
 pub struct Construct<'a> {
@@ -37,6 +38,8 @@ impl<'a> Construct<'a> {
                 id: Rc::new("miner".to_string()),
                 update: Rc::new(|_, _| {
                     //println!("I am here, I am a construct, and my update method is being called")
+
+                    Ok(())
                 }),
             },
             Instance::new(texture.clone(), [1.0; 4], -3.0, true),
