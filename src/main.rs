@@ -86,7 +86,7 @@ pub fn init() -> anyhow::Result<()> {
         (Box2d::new(Default::default(), f32::MAX), TREE_ITEM_COUNT),
     ));
     system_manager.add(PlayerManager::new(&scene, (&mut em, &mut cm))?);
-    system_manager.add(GameUiManager::new(&scene, (&mut em, &mut cm))?);
+    system_manager.add(GameUiManager::default());
     system_manager.add(ProjectileManager::default());
     system_manager.add(UiManager::default());
     system_manager.add(ChunkManager::default());

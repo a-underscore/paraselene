@@ -2,29 +2,21 @@ pub mod input;
 
 pub use input::Input;
 
-use crate::{player::Player, player::State, util, Tag};
+use crate::{player::Player, Tag};
 use hex::{
     anyhow,
-    assets::Shape,
-    components::{Camera, Sprite, Transform},
     ecs::{
         ev::{Control, Ev},
         system_manager::System,
         ComponentManager, EntityManager, Id, Scene,
     },
     glium::glutin::{
-        dpi::{PhysicalPosition, PhysicalSize},
         event::{ElementState, Event, KeyboardInput, MouseButton, VirtualKeyCode, WindowEvent},
         event_loop::ControlFlow,
     },
-    math::Vec2d,
     once_cell::sync::OnceCell,
 };
-use hex_ui::ScreenPos;
-use std::{
-    collections::{hash_map::Entry, HashMap},
-    f32,
-};
+use std::collections::HashMap;
 
 pub type Binds = HashMap<
     Input,
@@ -37,76 +29,14 @@ pub type Binds = HashMap<
     >,
 >;
 
+#[derive(Default)]
 pub struct GameUiManager {
-    pub mouse_pos: (f32, f32),
-    pub window_dims: (u32, u32),
-    pub crosshair: Id,
     pub player: OnceCell<Option<Id>>,
+    pub camera: OnceCell<Option<Id>>,
     pub kp_cb: Binds,
-    pub crosshair_sprite: Sprite,
 }
 
 impl GameUiManager {
-    pub fn new(
-        scene: &Scene,
-        (em, cm): (&mut EntityManager, &mut ComponentManager),
-    ) -> anyhow::Result<Self> {
-        let crosshair = em.add();
-
-        cm.add(
-            crosshair,
-            ScreenPos {
-                position: Default::default(),
-                scale: Vec2d::new(1.0, 1.0),
-                active: true,
-            },
-            em,
-        );
-
-        let crosshair_sprite = Sprite::new(
-            Shape::rect(&scene.display, Vec2d([1.0; 2]))?,
-            util::load_texture(&scene.display, include_bytes!("crosshair.png"))?,
-            [1.0; 4],
-            0.0,
-            true,
-        );
-
-        cm.add(crosshair, crosshair_sprite.clone(), em);
-        cm.add(crosshair, Tag::new("crosshair"), em);
-
-        Ok(Self {
-            crosshair,
-            crosshair_sprite,
-            mouse_pos: Default::default(),
-            window_dims: Default::default(),
-            player: Default::default(),
-            kp_cb: Default::default(),
-        })
-    }
-    pub fn mouse_position_world(
-        &self,
-        (em, cm): (&mut EntityManager, &mut ComponentManager),
-    ) -> Option<Vec2d> {
-        let (e, camera) = em.entities.keys().cloned().find_map(|e| {
-            cm.get::<Camera>(e, em)
-                .and_then(|c| c.active.then_some((e, c)))
-        })?;
-        let (x, y) = self.mouse_pos;
-        let camera_dimensions = camera.dimensions();
-        let camera_transform = cm
-            .get::<Transform>(e, em)
-            .and_then(|t| t.active.then_some(t))?
-            .clone();
-        let (width, height) = self.window_dims;
-
-        Some(Vec2d::new(
-            camera_transform.scale().x()
-                * (x / width as f32 * camera_dimensions.0.x() - camera_dimensions.0.x() / 2.0),
-            -camera_transform.scale().y()
-                * (y / height as f32 * camera_dimensions.0.y() - camera_dimensions.0.y() / 2.0),
-        ))
-    }
-
     pub fn add_keybind<F>(&mut self, i: Input, f: F)
     where
         F: FnMut(
@@ -241,132 +171,6 @@ impl<'a> System<'a> for GameUiManager {
         (em, cm): (&mut EntityManager, &mut ComponentManager),
     ) -> anyhow::Result<()> {
         match ev {
-            Ev::Event(Control {
-                event: Event::MainEventsCleared,
-                flow: _,
-            }) => {
-                if let Some(player) = *self
-                    .player
-                    .get_or_init(|| Tag::new("player").find((em, cm)))
-                {
-                    let c = if let Some((ref c @ (_, ref s), sprite)) = cm
-                        .get::<Player>(player, em)
-                        .map(|p| {
-                            p.current_item()
-                                .map(|(c, i, s)| (Some((c, i)), s))
-                                .unwrap_or((None, self.crosshair_sprite.clone()))
-                        })
-                        .and_then(|s| Some((s, cm.get_mut::<Sprite>(self.crosshair, em)?)))
-                    {
-                        *sprite = s.clone();
-
-                        Some(c.clone())
-                    } else {
-                        None
-                    };
-
-                    if let Some(mouse_pos) = self.mouse_position_world((em, cm)) {
-                        if let Some((player_pos, (firing, removing))) =
-                            cm.get::<Transform>(player, em).and_then(|t| {
-                                t.active.then_some((
-                                    t.position(),
-                                    cm.get::<Player>(player, em)
-                                        .map(|t| (t.states.firing, t.states.removing))?,
-                                ))
-                            })
-                        {
-                            let res = cm.get_mut::<ScreenPos>(self.crosshair, em).and_then(|s| {
-                                s.active.then_some(s).and_then(|screen_pos| {
-                                    if let Some(res) = c.and_then(|(c, _)| {
-                                        c.map(|(c, i)| {
-                                            let sp = Vec2d::new(
-                                                mouse_pos.x().floor(),
-                                                mouse_pos.y().floor(),
-                                            ) - player_pos
-                                                + Vec2d::new(
-                                                    player_pos.x().floor(),
-                                                    player_pos.y().floor(),
-                                                )
-                                                + Vec2d([0.5; 2]);
-
-                                            screen_pos.position = sp;
-
-                                            (c, i, screen_pos.position)
-                                        })
-                                    }) {
-                                        Some(res)
-                                    } else {
-                                        screen_pos.position = mouse_pos;
-
-                                        None
-                                    }
-                                })
-                            });
-
-                            if let Some((c, i, sp)) = res {
-                                let pos = sp + player_pos;
-
-                                if let Some(state) = cm.get_mut::<State>(player, em) {
-                                    if pos.x() >= 0.0
-                                        && pos.x() <= u32::MAX as f32
-                                        && pos.y() >= 0.0
-                                        && pos.y() <= u32::MAX as f32
-                                    {
-                                        let x = pos.x() as u64;
-                                        let y = pos.y() as u64;
-
-                                        if firing {
-                                            let entry = state.placed.entry((x, y));
-
-                                            if let Entry::Vacant(_) = entry {
-                                                let construct = em.add();
-
-                                                entry.or_insert(((*c.id).clone(), construct));
-
-                                                cm.add(
-                                                    construct,
-                                                    Transform::new(pos, 0.0, Vec2d([1.0; 2]), true),
-                                                    em,
-                                                );
-                                                cm.add(construct, c, em);
-                                                cm.add(construct, i, em);
-                                            }
-                                        } else if removing {
-                                            if let Some((_, id)) = state.placed.remove(&(x, y)) {
-                                                em.rm(id, cm);
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            Ev::Event(Control {
-                event:
-                    Event::WindowEvent {
-                        window_id,
-                        event: WindowEvent::Resized(PhysicalSize { width, height }),
-                    },
-                flow: _,
-            }) if *window_id == scene.display.gl_window().window().id() => {
-                self.window_dims = (*width, *height);
-            }
-            Ev::Event(Control {
-                event:
-                    Event::WindowEvent {
-                        window_id,
-                        event:
-                            WindowEvent::CursorMoved {
-                                position: PhysicalPosition { x, y },
-                                ..
-                            },
-                    },
-                flow: _,
-            }) if *window_id == scene.display.gl_window().window().id() => {
-                self.mouse_pos = (*x as f32, *y as f32);
-            }
             Ev::Event(Control {
                 flow,
                 event:

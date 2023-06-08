@@ -32,6 +32,7 @@ use std::{
 
 pub struct ChunkManager {
     pub player: OnceCell<Option<Id>>,
+    pub camera: OnceCell<Option<Id>>,
     pub check: Instant,
     pub frame: Instant,
     pub load_queue: Vec<(u32, u32)>,
@@ -42,6 +43,7 @@ impl Default for ChunkManager {
     fn default() -> Self {
         Self {
             player: OnceCell::new(),
+            camera: OnceCell::new(),
             check: Instant::now(),
             frame: Instant::now(),
             load_queue: Vec::new(),
@@ -224,10 +226,14 @@ impl<'a> System<'a> for ChunkManager {
         scene: &mut Scene,
         (em, cm): (&mut EntityManager, &mut ComponentManager),
     ) -> anyhow::Result<()> {
-        if let Some(player) = *self
-            .player
-            .get_or_init(|| Tag::new("player").find((em, cm)))
-        {
+        if let (Some(player), Some(camera)) = (
+            *self
+                .player
+                .get_or_init(|| Tag::new("player").find((em, cm))),
+            *self
+                .camera
+                .get_or_init(|| Tag::new("camera").find((em, cm))),
+        ) {
             match ev {
                 Ev::Event(Control {
                     event: Event::MainEventsCleared,
@@ -266,24 +272,18 @@ impl<'a> System<'a> for ChunkManager {
                     if now.duration_since(self.check) >= ASTEROID_UPDATE_TIME {
                         self.check = now;
 
-                        if let Some(player_chunk) = cm
-                            .get::<Transform>(player, em)
+                        if let Some(camera_chunk) = cm
+                            .get::<Transform>(camera, em)
                             .and_then(|t| t.active.then_some(Self::chunk_pos(t.position())))
                         {
                             let offset = (CAM_DIMS / CHUNK_SIZE as f32 * CHUNK_DIST).ceil() as u32;
                             let min = (
-                                player_chunk.0.checked_sub(offset).unwrap_or(CHUNK_SIZE),
-                                player_chunk.1.checked_sub(offset).unwrap_or(CHUNK_SIZE),
+                                camera_chunk.0.checked_sub(offset).unwrap_or_default(),
+                                camera_chunk.1.checked_sub(offset).unwrap_or_default(),
                             );
                             let max = (
-                                player_chunk
-                                    .0
-                                    .checked_add(offset)
-                                    .unwrap_or(u32::MAX - CHUNK_SIZE),
-                                player_chunk
-                                    .1
-                                    .checked_add(offset)
-                                    .unwrap_or(u32::MAX - CHUNK_SIZE),
+                                camera_chunk.0.checked_add(offset).unwrap_or(u32::MAX),
+                                camera_chunk.1.checked_add(offset).unwrap_or(u32::MAX),
                             );
 
                             for i in min.0..max.0 {

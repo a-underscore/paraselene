@@ -11,7 +11,7 @@ use hex_instance::Instance;
 
 #[derive(Default)]
 pub struct CullingManager {
-    pub player: OnceCell<Option<Id>>,
+    pub camera: OnceCell<Option<Id>>,
 }
 
 impl System<'_> for CullingManager {
@@ -26,9 +26,9 @@ impl System<'_> for CullingManager {
             flow: _,
         }) = ev
         {
-            if let Some(player_pos) = self
-                .player
-                .get_or_init(|| Tag::new("player").find((em, cm)))
+            if let Some(camera_pos) = self
+                .camera
+                .get_or_init(|| Tag::new("camera").find((em, cm)))
                 .and_then(|p| {
                     cm.get::<Transform>(p, em)
                         .and_then(|t| t.active.then_some(t.position()))
@@ -40,7 +40,7 @@ impl System<'_> for CullingManager {
                         .and_then(|t| t.active.then_some(t.position()))
                     {
                         if let Some(instance) = cm.get_mut::<Instance>(e, em) {
-                            instance.active = (pos - player_pos).magnitude()
+                            instance.active = (pos - camera_pos).magnitude()
                                 <= Vec2d([CAM_DIMS * 2.0; 2]).magnitude()
                         }
                     }
