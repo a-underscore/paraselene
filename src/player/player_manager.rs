@@ -149,45 +149,44 @@ impl PlayerManager {
         &mut self,
         (em, cm): (&mut EntityManager, &mut ComponentManager),
     ) -> anyhow::Result<()> {
-        let c = if let Some((ref c @ (_, ref s), sprite)) = cm
-            .get::<Player>(self.player, em)
-            .map(|p| {
-                p.current_item()
-                    .map(|(c, i, s)| (Some((c, i)), s))
-                    .unwrap_or((None, self.crosshair_sprite.clone()))
-            })
-            .and_then(|s| Some((s, cm.get_mut::<Sprite>(self.crosshair, em)?)))
-        {
-            *sprite = s.clone();
-
-            Some(c.clone())
-        } else {
-            None
-        };
-
         if let Some(mouse_pos) = self.mouse_pos_world((em, cm)) {
-            if let Some((player_pos, (firing, removing))) =
-                cm.get::<Transform>(self.camera, em).and_then(|t| {
-                    t.active.then_some((
-                        t.position(),
-                        cm.get::<Player>(self.player, em)
-                            .map(|t| (t.states.firing, t.states.removing))?,
+            if let Some((((c, _), firing, removing), player_pos)) = cm
+                .get::<Player>(self.player, em)
+                .map(|t| {
+                    (
+                        t.current_item()
+                            .map(|(c, i, s)| (Some((c, i)), s))
+                            .unwrap_or((None, self.crosshair_sprite.clone())),
+                        t.states.firing,
+                        t.states.removing,
+                    )
+                })
+                .and_then(|ref c @ ((_, ref s), _, _)| {
+                    Some((
+                        cm.get_mut::<Sprite>(self.crosshair, em)
+                            .and_then(|sprite| {
+                                s.active.then(|| {
+                                    *sprite = s.clone();
+
+                                    c.clone()
+                                })
+                            })?,
+                        cm.get::<Transform>(self.camera, em)
+                            .and_then(|t| t.active.then_some(t.position()))?,
                     ))
                 })
             {
                 let res = cm.get_mut::<ScreenPos>(self.crosshair, em).and_then(|s| {
                     s.active.then_some(s).and_then(|screen_pos| {
-                        if let Some(res) = c.and_then(|(c, _)| {
-                            c.map(|(c, i)| {
-                                let sp = Vec2d::new(mouse_pos.x().floor(), mouse_pos.y().floor())
-                                    - player_pos
-                                    + Vec2d::new(player_pos.x().floor(), player_pos.y().floor())
-                                    + Vec2d([0.5; 2]);
+                        if let Some(res) = c.map(|(c, i)| {
+                            let sp = Vec2d::new(mouse_pos.x().floor(), mouse_pos.y().floor())
+                                - player_pos
+                                + Vec2d::new(player_pos.x().floor(), player_pos.y().floor())
+                                + Vec2d([0.5; 2]);
 
-                                screen_pos.position = sp;
+                            screen_pos.position = sp;
 
-                                (c, i, screen_pos.position)
-                            })
+                            (c, i, screen_pos.position)
                         }) {
                             Some(res)
                         } else {
