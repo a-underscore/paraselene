@@ -19,7 +19,7 @@ use hex::{
 };
 use hex_instance::Instance;
 use hex_physics::{Collider, Physical};
-use hex_ui::ScreenPos;
+use hex_ui::ScreenTransform;
 use std::{collections::hash_map::Entry, time::Instant};
 
 pub struct PlayerManager {
@@ -90,11 +90,7 @@ impl PlayerManager {
 
         cm.add(
             crosshair,
-            ScreenPos {
-                position: Default::default(),
-                scale: Vec2d::new(1.0, 1.0),
-                active: true,
-            },
+            ScreenTransform::new(Default::default(), 0.0, Vec2d::new(1.0, 1.0), true),
             em,
         );
 
@@ -176,26 +172,28 @@ impl PlayerManager {
                     ))
                 })
             {
-                let res = cm.get_mut::<ScreenPos>(self.crosshair, em).and_then(|s| {
-                    s.active.then_some(s).and_then(|screen_pos| {
-                        if let Some(res) = c.map(|(c, i)| {
-                            let sp = Vec2d::new(mouse_pos.x().floor(), mouse_pos.y().floor())
-                                - player_pos
-                                + Vec2d::new(player_pos.x().floor(), player_pos.y().floor())
-                                + Vec2d([0.5; 2]);
+                let res = cm
+                    .get_mut::<ScreenTransform>(self.crosshair, em)
+                    .and_then(|s| {
+                        s.active.then_some(s).and_then(|screen_pos| {
+                            if let Some(res) = c.map(|(c, i)| {
+                                let sp = Vec2d::new(mouse_pos.x().floor(), mouse_pos.y().floor())
+                                    - player_pos
+                                    + Vec2d::new(player_pos.x().floor(), player_pos.y().floor())
+                                    + Vec2d([0.5; 2]);
 
-                            screen_pos.position = sp;
+                                screen_pos.position = sp;
 
-                            (c, i, screen_pos.position)
-                        }) {
-                            Some(res)
-                        } else {
-                            screen_pos.position = mouse_pos;
+                                (c, i, screen_pos.position)
+                            }) {
+                                Some(res)
+                            } else {
+                                screen_pos.position = mouse_pos;
 
-                            None
-                        }
-                    })
-                });
+                                None
+                            }
+                        })
+                    });
 
                 if let Some((c, i, sp)) = res {
                     let pos = sp + player_pos;
@@ -258,7 +256,7 @@ impl<'a> System<'a> for PlayerManager {
                 self.frame = now;
 
                 if let Some((position, camera_pos, transform)) = cm
-                    .get::<ScreenPos>(self.crosshair, em)
+                    .get::<ScreenTransform>(self.crosshair, em)
                     .cloned()
                     .and_then(|s| {
                         Some((
