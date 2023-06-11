@@ -26,7 +26,7 @@ use hex_physics::{quad_tree::Box2d, PhysicsManager};
 use hex_ui::{UiManager, UiRenderer};
 use player::PlayerManager;
 use projectile::ProjectileManager;
-use std::{cell::Cell, time::Duration};
+use std::time::Duration;
 use tag::Tag;
 
 static SAVE_DIR: &str = "save";
