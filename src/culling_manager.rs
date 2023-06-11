@@ -41,7 +41,7 @@ impl System<'_> for CullingManager {
                     {
                         if let Some(instance) = cm.get_mut::<Instance>(e, em) {
                             instance.active = (pos - camera_pos).magnitude()
-                                <= Vec2d([CAM_DIMS * 2.0; 2]).magnitude()
+                                <= Vec2d([CAM_DIMS * 2.0; 2]).magnitude();
                         }
                     }
                 }
