@@ -35,6 +35,7 @@ static PLAYER_MOVE_SPEED: f32 = 10.0;
 static WINDOW_DIMS_X: u32 = 1920;
 static WINDOW_DIMS_Y: u32 = 1080;
 static CAM_DIMS: f32 = 50.0 / 3.0;
+static ZOOM: f32 = 5.0;
 static TILE_SIZE: u32 = 32;
 static CHUNK_SIZE: u32 = 4;
 static CHUNK_DIST: f32 = 0.75;

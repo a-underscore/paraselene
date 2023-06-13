@@ -62,19 +62,19 @@ impl<'a> Player<'a> {
         let mut force = Vec2d::default();
 
         if self.states.forward {
-            *force.y_mut() += 1.0;
+            force.set_y(force.y() + 1.0);
         }
 
         if self.states.backward {
-            *force.y_mut() -= 1.0;
+            force.set_y(force.y() - 1.0);
         }
 
         if self.states.left {
-            *force.x_mut() -= 1.0;
+            force.set_x(force.x() + 1.0);
         }
 
         if self.states.right {
-            *force.x_mut() += 1.0;
+            force.set_y(force.y() - 1.0);
         }
 
         if force.magnitude() > 0.0 {

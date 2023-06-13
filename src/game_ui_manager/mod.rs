@@ -2,18 +2,24 @@ pub mod input;
 
 pub use input::Input;
 
-use crate::{player::Player, Tag};
+use crate::{player::Player, Tag, CAM_DIMS, ZOOM};
 use hex::{
     anyhow,
+    components::Camera,
     ecs::{
         ev::{Control, Ev},
         system_manager::System,
         ComponentManager, EntityManager, Id, Scene,
     },
     glium::glutin::{
-        event::{ElementState, Event, KeyboardInput, MouseButton, VirtualKeyCode, WindowEvent},
+        dpi::PhysicalPosition,
+        event::{
+            ElementState, Event, KeyboardInput, MouseButton, MouseScrollDelta, VirtualKeyCode,
+            WindowEvent,
+        },
         event_loop::ControlFlow,
     },
+    math::Vec2d,
     once_cell::sync::OnceCell,
 };
 use hex_ui::ScreenTransform;
@@ -34,6 +40,7 @@ pub type Binds = HashMap<
 pub struct GameUiManager {
     pub player: OnceCell<Option<Id>>,
     pub crosshair: OnceCell<Option<Id>>,
+    pub camera: OnceCell<Option<Id>>,
     pub kp_cb: Binds,
 }
 
@@ -231,6 +238,41 @@ impl<'a> System<'a> for GameUiManager {
             }) if *window_id == scene.display.gl_window().window().id() => {
                 if let Some(key) = self.kp_cb.get_mut(&Input::Mouse(*button)) {
                     key(*state, scene, (em, cm))?;
+                }
+            }
+            Ev::Event(Control {
+                event:
+                    Event::WindowEvent {
+                        window_id,
+                        event: WindowEvent::MouseWheel { delta, .. },
+                        ..
+                    },
+                flow: _,
+            }) if *window_id == scene.display.gl_window().window().id() => {
+                if let Some(camera) = *self
+                    .camera
+                    .get_or_init(|| Tag::new("camera").find((em, cm)))
+                {
+                    let (_, y) = match delta {
+                        MouseScrollDelta::LineDelta(x, y) => (*x, *y),
+                        MouseScrollDelta::PixelDelta(PhysicalPosition { x, y }) => {
+                            (*x as f32, *y as f32)
+                        }
+                    };
+
+                    if let Some(camera) = cm.get_mut::<Camera>(camera, em) {
+                        let (dimensions, z) = {
+                            let (dimensions, z) = camera.dimensions();
+                            let mut dimensions = dimensions - Vec2d([y; 2]);
+
+                            dimensions.set_x(dimensions.x().clamp(f32::MIN, ZOOM * CAM_DIMS));
+                            dimensions.set_y(dimensions.y().clamp(f32::MIN, ZOOM * CAM_DIMS));
+
+                            (dimensions, z)
+                        };
+
+                        camera.set_dimensions((dimensions, z));
+                    }
                 }
             }
             _ => {}
