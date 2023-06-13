@@ -159,7 +159,7 @@ impl GameUiManager {
                 move |state, _, (em, cm)| {
                     if let ElementState::Pressed = state {
                         if let Some(transform) = cm.get_mut::<ScreenTransform>(crosshair, em) {
-                            transform.rotation = transform.rotation + PI / 2.0 % (2.0 * PI);
+                            transform.rotation += PI / 2.0 % (2.0 * PI);
                         }
                     }
 
