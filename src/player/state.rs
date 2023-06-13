@@ -16,6 +16,7 @@ use std::{collections::HashMap, fs, path::PathBuf};
 
 pub static SAVE_PATH: Lazy<PathBuf> = Lazy::new(|| PathBuf::from(SAVE_DIR).join("map.json"));
 
+#[derive(Clone)]
 pub struct State<'a> {
     pub save_data: SaveData,
     pub rng: StdRng,
@@ -23,7 +24,7 @@ pub struct State<'a> {
     pub ores: HashMap<String, Ore>,
     pub constructs: HashMap<String, (Construct<'a>, Instance, Sprite)>,
     pub space: Texture,
-    pub placed: HashMap<(u64, u64), (String, Id)>,
+    pub placed: HashMap<(u64, u64), Id>,
 }
 
 impl State<'_> {

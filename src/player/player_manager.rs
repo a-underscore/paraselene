@@ -213,7 +213,7 @@ impl PlayerManager {
                                 if let Entry::Vacant(_) = entry {
                                     let construct = em.add();
 
-                                    entry.or_insert(((*c.id).clone(), construct));
+                                    entry.or_insert(construct);
 
                                     cm.add(
                                         construct,
@@ -224,7 +224,7 @@ impl PlayerManager {
                                     cm.add(construct, i, em);
                                 }
                             } else if removing {
-                                if let Some((_, id)) = state.placed.remove(&(x, y)) {
+                                if let Some(id) = state.placed.remove(&(x, y)) {
                                     em.rm(id, cm);
                                 }
                             }

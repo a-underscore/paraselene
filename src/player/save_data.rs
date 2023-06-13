@@ -2,7 +2,7 @@ use crate::construct::ConstructData;
 use rand::prelude::*;
 use serde_derive::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct SaveData {
     pub seed: u64,
     pub player_position: [f32; 2],

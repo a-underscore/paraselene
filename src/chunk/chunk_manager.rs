@@ -1,6 +1,6 @@
 use crate::{
     chunk::{Chunk, ChunkData},
-    construct::ConstructData,
+    construct::{Construct, ConstructData},
     player::State,
     Tag, ASTEROID_UPDATE_TIME, CAM_DIMS, CHUNK_DIST, CHUNK_SIZE, FRAME_LOAD_AMOUNT, SAVE_DIR,
     TILE_SIZE, UNLOAD_BIAS,
@@ -190,7 +190,7 @@ impl ChunkManager {
                         ),
                     ));
 
-                    state.placed.insert(*position, ((*id).clone(), e));
+                    state.placed.insert(*position, e);
                 }
             }
         }
@@ -341,18 +341,22 @@ impl<'a> System<'a> for ChunkManager {
                         },
                     flow: _,
                 }) if *window_id == scene.display.gl_window().window().id() => {
-                    if let Some((p, state)) = cm
+                    if let Some((p, mut state)) = cm
                         .get::<Transform>(player, em)
                         .map(|p| p.position())
-                        .and_then(|p| Some((p, cm.get_mut::<State>(player, em)?)))
+                        .and_then(|p| Some((p, cm.get_mut::<State>(player, em).cloned()?)))
                     {
                         state.save_data.player_position = p.0;
                         state.save_data.constructs = state
                             .placed
                             .iter()
-                            .map(|(pos, (id, _))| ConstructData {
-                                position: *pos,
-                                id: id.clone(),
+                            .filter_map(|(pos, e)| {
+                                Some(ConstructData {
+                                    position: *pos,
+                                    id: cm
+                                        .get::<Construct>(*e, em)
+                                        .map(|c| c.id.as_ref().clone())?,
+                                })
                             })
                             .collect();
 
