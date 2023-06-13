@@ -184,7 +184,7 @@ impl PlayerManager {
 
                                 screen_pos.position = sp;
 
-                                (c, i, screen_pos.position)
+                                (c, i, screen_pos.clone())
                             }) {
                                 Some(res)
                             } else {
@@ -196,7 +196,7 @@ impl PlayerManager {
                     });
 
                 if let Some((c, i, sp)) = res {
-                    let pos = sp + player_pos;
+                    let pos = sp.position + player_pos;
 
                     if let Some(state) = cm.get_mut::<State>(self.player, em) {
                         if pos.x() >= 0.0
@@ -217,7 +217,7 @@ impl PlayerManager {
 
                                     cm.add(
                                         construct,
-                                        Transform::new(pos, 0.0, Vec2d([1.0; 2]), true),
+                                        Transform::new(pos, sp.rotation, Vec2d([1.0; 2]), true),
                                         em,
                                     );
                                     cm.add(construct, c, em);
