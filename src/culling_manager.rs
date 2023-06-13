@@ -1,10 +1,9 @@
-use crate::{tag::Tag, CAM_DIMS};
+use crate::tag::Tag;
 use hex::{
     anyhow,
-    components::Transform,
+    components::{Camera, Transform},
     ecs::{ev::Control, system_manager::System, ComponentManager, EntityManager, Ev, Id, Scene},
     glium::glutin::event::Event,
-    math::Vec2d,
     once_cell::sync::OnceCell,
 };
 use hex_instance::Instance;
@@ -26,12 +25,16 @@ impl System<'_> for CullingManager {
             flow: _,
         }) = ev
         {
-            if let Some(camera_pos) = self
+            if let Some((camera_pos, (dimensions, _))) = self
                 .camera
                 .get_or_init(|| Tag::new("camera").find((em, cm)))
                 .and_then(|p| {
-                    cm.get::<Transform>(p, em)
-                        .and_then(|t| t.active.then_some(t.position()))
+                    Some((
+                        cm.get::<Transform>(p, em)
+                            .and_then(|t| t.active.then_some(t.position()))?,
+                        cm.get::<Camera>(p, em)
+                            .and_then(|t| t.active.then_some(t.dimensions()))?,
+                    ))
                 })
             {
                 for e in em.entities.keys().cloned() {
@@ -40,8 +43,8 @@ impl System<'_> for CullingManager {
                         .and_then(|t| t.active.then_some(t.position()))
                     {
                         if let Some(instance) = cm.get_mut::<Instance>(e, em) {
-                            instance.active = (pos - camera_pos).magnitude()
-                                <= Vec2d([CAM_DIMS * 2.0; 2]).magnitude();
+                            instance.active =
+                                (pos - camera_pos).magnitude() <= dimensions.magnitude();
                         }
                     }
                 }

@@ -2,13 +2,13 @@ use crate::{
     chunk::{Chunk, ChunkData},
     construct::{Construct, ConstructData},
     player::State,
-    Tag, ASTEROID_UPDATE_TIME, CAM_DIMS, CHUNK_DIST, CHUNK_SIZE, FRAME_LOAD_AMOUNT, SAVE_DIR,
-    TILE_SIZE, UNLOAD_BIAS,
+    Tag, ASTEROID_UPDATE_TIME, CHUNK_DIST, CHUNK_SIZE, FRAME_LOAD_AMOUNT, SAVE_DIR, TILE_SIZE,
+    UNLOAD_BIAS,
 };
 use hex::{
     anyhow,
     assets::Texture,
-    components::Transform,
+    components::{Camera, Transform},
     ecs::{ev::Control, system_manager::System, ComponentManager, EntityManager, Ev, Id, Scene},
     glium::{
         glutin::event::{Event, WindowEvent},
@@ -239,93 +239,105 @@ impl<'a> System<'a> for ChunkManager {
                     event: Event::MainEventsCleared,
                     flow: _,
                 }) => {
-                    let now = Instant::now();
-                    let delta = now.duration_since(self.frame);
+                    if let Some((cam_dims, _)) =
+                        cm.get::<Camera>(camera, em).map(|c| c.dimensions())
+                    {
+                        let now = Instant::now();
+                        let delta = now.duration_since(self.frame);
 
-                    self.frame = now;
+                        self.frame = now;
 
-                    let chunks: Vec<_> = (0..(FRAME_LOAD_AMOUNT
-                        * delta.as_secs_f32().ceil() as u64))
-                        .map(|_| self.load_queue.pop())
-                        .fuse()
-                        .flatten()
-                        .collect();
+                        let chunks: Vec<_> = (0..(FRAME_LOAD_AMOUNT
+                            * delta.as_secs_f32().ceil() as u64))
+                            .map(|_| self.load_queue.pop())
+                            .fuse()
+                            .flatten()
+                            .collect();
 
-                    for c in chunks {
-                        if let Some((chunk, instance, transform)) =
-                            if let Some(state) = cm.get_mut::<State>(player, em) {
-                                Some(self.load_chunk(c, scene, state)?)
-                            } else {
-                                None
+                        for c in chunks {
+                            if let Some((chunk, instance, transform)) =
+                                if let Some(state) = cm.get_mut::<State>(player, em) {
+                                    Some(self.load_chunk(c, scene, state)?)
+                                } else {
+                                    None
+                                }
+                            {
+                                let e = em.add();
+
+                                cm.add(e, chunk, em);
+                                cm.add(e, instance, em);
+                                cm.add(e, transform, em);
+
+                                self.loaded.insert(c, e);
                             }
-                        {
-                            let e = em.add();
-
-                            cm.add(e, chunk, em);
-                            cm.add(e, instance, em);
-                            cm.add(e, transform, em);
-
-                            self.loaded.insert(c, e);
                         }
-                    }
 
-                    if now.duration_since(self.check) >= ASTEROID_UPDATE_TIME {
-                        self.check = now;
+                        if now.duration_since(self.check) >= ASTEROID_UPDATE_TIME {
+                            self.check = now;
 
-                        if let Some(camera_chunk) = cm
-                            .get::<Transform>(camera, em)
-                            .and_then(|t| t.active.then_some(Self::chunk_pos(t.position())))
-                        {
-                            let offset = (CAM_DIMS / CHUNK_SIZE as f32 * CHUNK_DIST).ceil() as u32;
-                            let min = (
-                                camera_chunk.0.checked_sub(offset).unwrap_or_default(),
-                                camera_chunk.1.checked_sub(offset).unwrap_or_default(),
-                            );
-                            let max = (
-                                camera_chunk.0.checked_add(offset).unwrap_or(u32::MAX),
-                                camera_chunk.1.checked_add(offset).unwrap_or(u32::MAX),
-                            );
+                            if let Some(camera_chunk) = cm
+                                .get::<Transform>(camera, em)
+                                .and_then(|t| t.active.then_some(Self::chunk_pos(t.position())))
+                            {
+                                let offset_x = (cam_dims.x().ceil() / CHUNK_SIZE as f32
+                                    * CHUNK_DIST)
+                                    .ceil() as u32;
+                                let offset_y = (cam_dims.y().ceil() / CHUNK_SIZE as f32
+                                    * CHUNK_DIST)
+                                    .ceil() as u32;
+                                let min = (
+                                    camera_chunk.0.checked_sub(offset_x).unwrap_or_default(),
+                                    camera_chunk.1.checked_sub(offset_y).unwrap_or_default(),
+                                );
+                                let max = (
+                                    camera_chunk.0.checked_add(offset_x).unwrap_or(u32::MAX),
+                                    camera_chunk.1.checked_add(offset_y).unwrap_or(u32::MAX),
+                                );
 
-                            for i in min.0..max.0 {
-                                for j in min.1..max.1 {
-                                    let chunk = (i, j);
+                                for i in min.0..max.0 {
+                                    for j in min.1..max.1 {
+                                        let chunk = (i, j);
 
-                                    if !(self.load_queue.contains(&chunk)
-                                        || self.loaded.contains_key(&chunk))
-                                    {
-                                        self.load_queue.push(chunk);
+                                        if !(self.load_queue.contains(&chunk)
+                                            || self.loaded.contains_key(&chunk))
+                                        {
+                                            self.load_queue.push(chunk);
+                                        }
                                     }
                                 }
-                            }
 
-                            for e in em.entities.clone().into_keys() {
-                                if cm.get::<Chunk>(e, em).is_some() {
-                                    if let Some(position) =
-                                        cm.get::<Transform>(e, em).and_then(|t| {
-                                            t.active.then_some(Self::chunk_pos(t.position()))
-                                        })
-                                    {
-                                        if !(position.0
-                                            >= min.0.checked_sub(UNLOAD_BIAS).unwrap_or_default()
-                                            && position.0
-                                                <= max
-                                                    .0
-                                                    .checked_add(UNLOAD_BIAS)
-                                                    .unwrap_or(u32::MAX)
-                                            && position.1
+                                for e in em.entities.clone().into_keys() {
+                                    if cm.get::<Chunk>(e, em).is_some() {
+                                        if let Some(position) =
+                                            cm.get::<Transform>(e, em).and_then(|t| {
+                                                t.active.then_some(Self::chunk_pos(t.position()))
+                                            })
+                                        {
+                                            if !(position.0
                                                 >= min
-                                                    .1
+                                                    .0
                                                     .checked_sub(UNLOAD_BIAS)
                                                     .unwrap_or_default()
-                                            && position.1
-                                                <= max
-                                                    .1
-                                                    .checked_add(UNLOAD_BIAS)
-                                                    .unwrap_or(u32::MAX))
-                                        {
-                                            self.loaded.remove(&position);
+                                                && position.0
+                                                    <= max
+                                                        .0
+                                                        .checked_add(UNLOAD_BIAS)
+                                                        .unwrap_or(u32::MAX)
+                                                && position.1
+                                                    >= min
+                                                        .1
+                                                        .checked_sub(UNLOAD_BIAS)
+                                                        .unwrap_or_default()
+                                                && position.1
+                                                    <= max
+                                                        .1
+                                                        .checked_add(UNLOAD_BIAS)
+                                                        .unwrap_or(u32::MAX))
+                                            {
+                                                self.loaded.remove(&position);
 
-                                            em.rm(e, cm);
+                                                em.rm(e, cm);
+                                            }
                                         }
                                     }
                                 }

@@ -265,8 +265,8 @@ impl<'a> System<'a> for GameUiManager {
                             let (dimensions, z) = camera.dimensions();
                             let mut dimensions = dimensions - Vec2d([y; 2]);
 
-                            dimensions.set_x(dimensions.x().clamp(f32::MIN, ZOOM * CAM_DIMS));
-                            dimensions.set_y(dimensions.y().clamp(f32::MIN, ZOOM * CAM_DIMS));
+                            dimensions.set_x(dimensions.x().clamp(1.0, ZOOM * CAM_DIMS));
+                            dimensions.set_y(dimensions.y().clamp(1.0, ZOOM * CAM_DIMS));
 
                             (dimensions, z)
                         };
