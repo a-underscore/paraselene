@@ -184,7 +184,7 @@ impl ChunkManager {
                             sprite,
                             Transform::new(
                                 Vec2d::new(*x as f32, *y as f32) + Vec2d([0.5; 2]),
-                                *rotation as f32,
+                                *rotation,
                                 Vec2d([1.0; 2]),
                                 true,
                             ),
