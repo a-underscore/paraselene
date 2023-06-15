@@ -168,8 +168,9 @@ impl ChunkManager {
 
         if let Some(state) = cm.get_mut::<State>(player, em) {
             for ConstructData {
-                position: position @ (x, y),
                 id,
+                position: position @ (x, y),
+                rotation,
             } in &state.save_data.constructs
             {
                 if let Some((construct, instance, sprite)) = state.constructs.get(id).cloned() {
@@ -183,7 +184,7 @@ impl ChunkManager {
                             sprite,
                             Transform::new(
                                 Vec2d::new(*x as f32, *y as f32) + Vec2d([0.5; 2]),
-                                0.0,
+                                *rotation as f32,
                                 Vec2d([1.0; 2]),
                                 true,
                             ),
@@ -355,19 +356,22 @@ impl<'a> System<'a> for ChunkManager {
                 }) if *window_id == scene.display.gl_window().window().id() => {
                     if let Some((p, mut state)) = cm
                         .get::<Transform>(player, em)
-                        .map(|p| p.position())
-                        .and_then(|p| Some((p, cm.get_mut::<State>(player, em).cloned()?)))
+                        .map(|t| t.position())
+                        .and_then(|pr| Some((pr, cm.get_mut::<State>(player, em).cloned()?)))
                     {
                         state.save_data.player_position = p.0;
                         state.save_data.constructs = state
                             .placed
                             .iter()
                             .filter_map(|(pos, e)| {
+                                let transform = cm.get::<Transform>(*e, em)?;
+
                                 Some(ConstructData {
                                     position: *pos,
                                     id: cm
                                         .get::<Construct>(*e, em)
                                         .map(|c| c.id.as_ref().clone())?,
+                                    rotation: transform.rotation(),
                                 })
                             })
                             .collect();
