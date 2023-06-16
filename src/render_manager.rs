@@ -40,7 +40,7 @@ impl System<'_> for RenderManager {
                     {
                         if let Some(instance) = cm.get_mut::<Instance>(e, em) {
                             instance.active = (pos - camera_pos).magnitude()
-                                <= Vec2d([cam_dims * 2.0; 2]).magnitude();
+                                <= cam_dims.magnitude();
                         }
                     }
                 }
