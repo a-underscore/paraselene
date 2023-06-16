@@ -133,11 +133,9 @@ impl PlayerManager {
 
         Some(Vec2d::new(
             camera_transform.scale().x()
-                * ((x / width as f64) as f32 * cam_dims.0.x()
-                    - cam_dims.0.x() / 2.0),
+                * ((x / width as f64) as f32 * cam_dims.0.x() - cam_dims.0.x() / 2.0),
             -camera_transform.scale().y()
-                * ((y / height as f64) as f32 * cam_dims.0.y()
-                    - cam_dims.0.y() / 2.0),
+                * ((y / height as f64) as f32 * cam_dims.0.y() - cam_dims.0.y() / 2.0),
         ))
     }
 
@@ -418,7 +416,9 @@ impl<'a> System<'a> for PlayerManager {
                 } else {
                     None
                 } {
-                    if let Some(cam_dims) = cm.get::<Camera>(self.camera, em).map(|c| c.dimensions().0) {
+                    if let Some(cam_dims) =
+                        cm.get::<Camera>(self.camera, em).map(|c| c.dimensions().0)
+                    {
                         if let Some(ct) = cm.get_mut::<Transform>(self.camera, em) {
                             let position = Vec2d::new(
                                 pos.x().clamp(
