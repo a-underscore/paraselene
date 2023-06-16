@@ -124,7 +124,7 @@ impl PlayerManager {
             .get::<Camera>(self.camera, em)
             .and_then(|c| c.active.then_some(c))?;
         let (x, y) = self.mouse_pos;
-        let camera_dimensions = c.dimensions();
+        let cam_dims = c.dimensions();
         let camera_transform = cm
             .get::<Transform>(self.player, em)
             .and_then(|t| t.active.then_some(t))
@@ -133,11 +133,11 @@ impl PlayerManager {
 
         Some(Vec2d::new(
             camera_transform.scale().x()
-                * ((x / width as f64) as f32 * camera_dimensions.0.x()
-                    - camera_dimensions.0.x() / 2.0),
+                * ((x / width as f64) as f32 * cam_dims.0.x()
+                    - cam_dims.0.x() / 2.0),
             -camera_transform.scale().y()
-                * ((y / height as f64) as f32 * camera_dimensions.0.y()
-                    - camera_dimensions.0.y() / 2.0),
+                * ((y / height as f64) as f32 * cam_dims.0.y()
+                    - cam_dims.0.y() / 2.0),
         ))
     }
 
@@ -418,15 +418,21 @@ impl<'a> System<'a> for PlayerManager {
                 } else {
                     None
                 } {
-                    if let Some(ct) = cm.get_mut::<Transform>(self.camera, em) {
-                        let position = Vec2d::new(
-                            pos.x()
-                                .clamp(CAM_DIMS / 2.0, u32::MAX as f32 - CAM_DIMS / 2.0),
-                            pos.y()
-                                .clamp(CAM_DIMS / 2.0, u32::MAX as f32 - CAM_DIMS / 2.0),
-                        );
+                    if let Some(cam_dims) = cm.get::<Camera>(self.camera, em).map(|c| c.dimensions().0) {
+                        if let Some(ct) = cm.get_mut::<Transform>(self.camera, em) {
+                            let position = Vec2d::new(
+                                pos.x().clamp(
+                                    cam_dims.x() / 2.0,
+                                    u32::MAX as f32 - cam_dims.x() / 2.0,
+                                ),
+                                pos.y().clamp(
+                                    cam_dims.y() / 2.0,
+                                    u32::MAX as f32 - cam_dims.y() / 2.0,
+                                ),
+                            );
 
-                        ct.set_position(position);
+                            ct.set_position(position);
+                        }
                     }
                 }
 

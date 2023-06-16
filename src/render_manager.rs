@@ -24,12 +24,13 @@ impl System<'_> for RenderManager {
         if let Ev::Draw((_, target)) = ev {
             target.clear_depth(1.0);
 
-            if let Some(camera_pos) = self
+            if let Some((cam_dims, camera_pos)) = self
                 .camera
                 .get_or_init(|| Tag::new("camera").find((em, cm)))
                 .and_then(|p| {
+                    Some((cm.get::<Camera>()?.dimensions().0,
                     cm.get::<Transform>(p, em)
-                        .and_then(|t| t.active.then_some(t.position()))
+                        .and_then(|t| t.active.then_some(t.position()))))
                 })
             {
                 for e in em.entities.keys().cloned() {
@@ -39,7 +40,7 @@ impl System<'_> for RenderManager {
                     {
                         if let Some(instance) = cm.get_mut::<Instance>(e, em) {
                             instance.active = (pos - camera_pos).magnitude()
-                                <= Vec2d([CAM_DIMS * 2.0; 2]).magnitude();
+                                <= Vec2d([cam_dims * 2.0; 2]).magnitude();
                         }
                     }
                 }
