@@ -43,8 +43,13 @@ impl System<'_> for CullingManager {
                         .and_then(|t| t.active.then_some(t.position()))
                     {
                         if let Some(instance) = cm.get_mut::<Instance>(e, em) {
-                            instance.active =
-                                (pos - camera_pos).magnitude() <= dimensions.magnitude();
+                            let diff = pos - camera_pos;
+                            let dimensions = dimensions / 2.0;
+
+                            instance.active = -dimensions.x() <= diff.x()
+                                || dimensions.x() >= diff.x()
+                                || -dimensions.y() <= diff.y()
+                                || dimensions.y() >= diff.y();
                         }
                     }
                 }

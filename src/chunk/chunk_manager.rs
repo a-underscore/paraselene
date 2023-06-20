@@ -314,26 +314,26 @@ impl<'a> System<'a> for ChunkManager {
                                                 t.active.then_some(Self::chunk_pos(t.position()))
                                             })
                                         {
-                                            if !(position.0
-                                                >= min
+                                            if position.0
+                                                <= min
                                                     .0
                                                     .checked_sub(UNLOAD_BIAS)
                                                     .unwrap_or_default()
-                                                && position.0
-                                                    <= max
+                                                || position.0
+                                                    >= max
                                                         .0
                                                         .checked_add(UNLOAD_BIAS)
                                                         .unwrap_or(u32::MAX)
-                                                && position.1
-                                                    >= min
+                                                || position.1
+                                                    <= min
                                                         .1
                                                         .checked_sub(UNLOAD_BIAS)
                                                         .unwrap_or_default()
-                                                && position.1
-                                                    <= max
+                                                || position.1
+                                                    >= max
                                                         .1
                                                         .checked_add(UNLOAD_BIAS)
-                                                        .unwrap_or(u32::MAX))
+                                                        .unwrap_or(u32::MAX)
                                             {
                                                 self.loaded.remove(&position);
 
