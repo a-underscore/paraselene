@@ -374,16 +374,6 @@ impl<'a> System<'a> for PlayerManager {
                     })
                 {
                     let p = em.add();
-                    let transform = {
-                        let mut transform = transform.clone();
-
-                        transform.set_scale(Vec2d::new(
-                            transform.scale().x() * 5.0,
-                            transform.scale().y(),
-                        ));
-
-                        transform
-                    };
 
                     cm.add(
                         p,
@@ -398,7 +388,7 @@ impl<'a> System<'a> for PlayerManager {
                     );
                     cm.add(p, projectile, em);
                     cm.add(p, instance, em);
-                    cm.add(p, transform, em);
+                    cm.add(p, transform.clone(), em);
                 }
 
                 if let Some(pos) = if let Some(t) = cm
