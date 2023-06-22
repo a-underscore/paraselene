@@ -50,25 +50,6 @@ impl Projectile {
             ),
         ))
     }
-
-    pub fn player_trail(scene: &Scene) -> anyhow::Result<(Self, Instance)> {
-        Ok((
-            Self {
-                spawn_time: OnceCell::new(),
-                alive_time: Duration::from_secs_f32(0.5),
-                velocity: Vec2d::new(0.0, 0.0),
-                cooldown: Duration::from_millis(10),
-                trail_data: Some(2.0),
-                dmg: 0.0,
-            },
-            Instance::new(
-                util::load_texture(&scene.display, include_bytes!("player_trail.png"))?,
-                [1.0; 4],
-                -2.0,
-                true,
-            ),
-        ))
-    }
 }
 
 impl Component for Projectile {

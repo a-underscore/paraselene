@@ -26,7 +26,6 @@ pub struct Player<'a> {
     pub fire_time: Instant,
     pub trail_time: Instant,
     pub states: ButtonStates,
-    pub trail: (Projectile, Instance),
     pub projectile: (Projectile, Collider, Instance),
     pub hotbar: Vec<Option<(Construct<'a>, Instance, Sprite)>>,
 }
@@ -38,7 +37,6 @@ impl<'a> Player<'a> {
             fire_time: Instant::now(),
             trail_time: Instant::now(),
             states: Default::default(),
-            trail: Projectile::player_trail(scene)?,
             projectile: Projectile::player_bullet(scene)?,
             hotbar: Self::default_hotbar(scene)?,
         })
