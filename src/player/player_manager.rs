@@ -351,46 +351,6 @@ impl<'a> System<'a> for PlayerManager {
                     cm.add(p, transform.clone(), em);
                 }
 
-                if let Some(((transform, physical), (projectile, instance))) = res
-                    .as_ref()
-                    .and_then(|(transform, physical)| {
-                        let player = cm.get_mut::<Player>(self.player, em)?;
-
-                        (player.force().magnitude() != 0.0).then_some((transform, physical, player))
-                    })
-                    .and_then(|(transform, physical, player)| {
-                        let ref p @ (ref projectile, _) = player.trail.clone();
-                        let delta = now.duration_since(player.trail_time);
-
-                        if let Some(d) = (delta >= projectile.cooldown)
-                            .then(|| ((transform, physical), p.clone()))
-                        {
-                            player.trail_time = now;
-
-                            Some(d)
-                        } else {
-                            None
-                        }
-                    })
-                {
-                    let p = em.add();
-
-                    cm.add(
-                        p,
-                        Physical::new(
-                            -physical.velocity()
-                                + (Mat3d::rotation(transform.rotation())
-                                    * (projectile.velocity, 1.0))
-                                    .0,
-                            true,
-                        ),
-                        em,
-                    );
-                    cm.add(p, projectile, em);
-                    cm.add(p, instance, em);
-                    cm.add(p, transform.clone(), em);
-                }
-
                 if let Some(pos) = if let Some(t) = cm
                     .get_mut::<Transform>(self.player, em)
                     .and_then(|t| t.active.then_some(t))
