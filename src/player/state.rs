@@ -3,7 +3,6 @@ use crate::{chunk::Ore, construct::Construct, SAVE_DIR};
 use hex::{
     anyhow,
     assets::Texture,
-    components::Sprite,
     ecs::Scene,
     ecs::{component_manager::Component, Id},
     id,
@@ -22,7 +21,7 @@ pub struct State<'a> {
     pub rng: StdRng,
     pub perlin: Perlin,
     pub ores: HashMap<String, Ore>,
-    pub constructs: HashMap<String, (Construct<'a>, Instance, Sprite)>,
+    pub constructs: HashMap<String, (Construct<'a>, Instance)>,
     pub space: Texture,
     pub placed: HashMap<(u64, u64), Id>,
 }
@@ -59,7 +58,7 @@ impl State<'_> {
             .collect(),
             constructs: vec![Construct::miner(scene)?]
                 .into_iter()
-                .map(|ref o @ (ref c, _, _)| (c.id.as_ref().clone(), o.clone()))
+                .map(|ref o @ (ref c, _)| (c.id.as_ref().clone(), o.clone()))
                 .collect(),
             space: Ore::space(scene)?,
             placed: HashMap::new(),

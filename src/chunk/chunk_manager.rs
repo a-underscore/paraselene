@@ -173,7 +173,7 @@ impl ChunkManager {
                 rotation,
             } in &state.save_data.constructs
             {
-                if let Some((construct, instance, sprite)) = state.constructs.get(id).cloned() {
+                if let Some((construct, instance)) = state.constructs.get(id).cloned() {
                     let e = em.add();
 
                     constructs.push((
@@ -181,7 +181,6 @@ impl ChunkManager {
                         (
                             construct,
                             instance,
-                            sprite,
                             Transform::new(
                                 Vec2d::new(*x as f32, *y as f32) + Vec2d([0.5; 2]),
                                 *rotation,
@@ -196,10 +195,9 @@ impl ChunkManager {
             }
         }
 
-        for (e, (construct, instance, sprite, transform)) in constructs {
+        for (e, (construct, instance, transform)) in constructs {
             cm.add(e, construct, em);
             cm.add(e, instance, em);
-            cm.add(e, sprite, em);
             cm.add(e, transform, em);
         }
     }

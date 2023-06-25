@@ -12,7 +12,6 @@ pub use state::State;
 use crate::{construct::Construct, projectile::Projectile, HOTBAR_SLOTS, PLAYER_MOVE_SPEED};
 use hex::{
     anyhow,
-    components::Sprite,
     ecs::{component_manager::Component, Id, Scene},
     id,
     math::Vec2d,
@@ -27,7 +26,7 @@ pub struct Player<'a> {
     pub trail_time: Instant,
     pub states: ButtonStates,
     pub projectile: (Projectile, Collider, Instance),
-    pub hotbar: Vec<Option<(Construct<'a>, Instance, Sprite)>>,
+    pub hotbar: Vec<Option<(Construct<'a>, Instance)>>,
 }
 
 impl<'a> Player<'a> {
@@ -42,13 +41,11 @@ impl<'a> Player<'a> {
         })
     }
 
-    pub fn current_item(&self) -> Option<(Construct<'a>, Instance, Sprite)> {
-        self.hotbar.get(self.states.mode).cloned()?
+    pub fn current_item(&self) -> Option<(Construct<'a>, Instance)> {
+        self.hotbar.get(self.states.mode).cloned().flatten()
     }
 
-    pub fn default_hotbar(
-        scene: &Scene,
-    ) -> anyhow::Result<Vec<Option<(Construct<'a>, Instance, Sprite)>>> {
+    pub fn default_hotbar(scene: &Scene) -> anyhow::Result<Vec<Option<(Construct<'a>, Instance)>>> {
         let mut hotbar = vec![None; HOTBAR_SLOTS];
 
         hotbar[1] = Some(Construct::miner(scene)?);
