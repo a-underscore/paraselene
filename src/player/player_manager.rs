@@ -181,10 +181,10 @@ impl PlayerManager {
                 {
                     let res = cm.get_mut::<ScreenTransform>(self.crosshair, em).and_then(
                         |screen_transform| {
-                            if let Some(res) = c.and_then(|(c, i)| {
+                            if let Some(res) = c.map(|(c, i)| {
                                 screen_transform.position = screen_pos;
 
-                                Some((c, i, screen_transform.rotation))
+                                (c, i, screen_transform.rotation)
                             }) {
                                 Some(res)
                             } else {
