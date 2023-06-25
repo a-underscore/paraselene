@@ -19,7 +19,7 @@ use hex::{
         glutin::{dpi::Size, event_loop::EventLoop, window::WindowBuilder, ContextBuilder},
         Display,
     },
-    math::Vec2d,
+    math::{Ortho, Vec2d},
 };
 use hex_instance::InstanceRenderer;
 use hex_physics::{quad_tree::Box2d, PhysicsManager};
@@ -35,6 +35,7 @@ static PLAYER_MOVE_SPEED: f32 = 10.0;
 static WINDOW_DIMS_X: u32 = 1920;
 static WINDOW_DIMS_Y: u32 = 1080;
 static CAM_DIMS: f32 = 50.0 / 3.0;
+static UI_CAM_DIMS: f32 = 10.0;
 static ZOOM: f32 = 5.0;
 static TILE_SIZE: u32 = 32;
 static CHUNK_SIZE: u32 = 4;
@@ -92,7 +93,17 @@ pub fn init() -> anyhow::Result<()> {
         &scene.display,
         Shape::rect(&scene.display, Vec2d([1.0; 2]))?,
     )?);
-    system_manager.add(UiRenderer::new(&scene.display)?);
+    system_manager.add(UiRenderer::new(
+        &scene.display,
+        Ortho::new(
+            -UI_CAM_DIMS,
+            UI_CAM_DIMS,
+            -UI_CAM_DIMS,
+            UI_CAM_DIMS,
+            -UI_CAM_DIMS,
+            UI_CAM_DIMS,
+        ),
+    )?);
 
     scene.init(ev, (em, cm), system_manager)?;
 

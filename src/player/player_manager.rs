@@ -1,6 +1,7 @@
 use super::{Player, State};
 use crate::{
     util, Tag, ASTEROID_LAYER, CAM_DIMS, PLAYER_LAYER, PLAYER_MOVE_SPEED, PROJECTILE_LAYER,
+    UI_CAM_DIMS,
 };
 use hex::{
     anyhow,
@@ -129,13 +130,10 @@ impl PlayerManager {
 
     pub fn mouse_pos_world(
         &self,
+        dims: Vec2d,
         (em, cm): (&mut EntityManager, &mut ComponentManager),
     ) -> Option<Vec2d> {
-        let c = cm
-            .get::<Camera>(self.camera, em)
-            .and_then(|c| c.active.then_some(c))?;
         let (x, y) = self.mouse_pos;
-        let cam_dims = c.dimensions();
         let camera_transform = cm
             .get::<Transform>(self.player, em)
             .and_then(|t| t.active.then_some(t))
@@ -143,18 +141,27 @@ impl PlayerManager {
         let (width, height) = self.window_dims;
 
         Some(Vec2d::new(
-            camera_transform.scale().x()
-                * ((x / width as f64) as f32 * cam_dims.0.x() - cam_dims.0.x() / 2.0),
+            camera_transform.scale().x() * ((x / width as f64) as f32 * dims.x() - dims.x() / 2.0),
             -camera_transform.scale().y()
-                * ((y / height as f64) as f32 * cam_dims.0.y() - cam_dims.0.y() / 2.0),
+                * ((y / height as f64) as f32 * dims.y() - dims.y() / 2.0),
         ))
+    }
+
+    pub fn tile_pos(mouse_pos: Vec2d, player_pos: Vec2d) -> Vec2d {
+        Vec2d::new(mouse_pos.x().floor(), mouse_pos.y().floor()) - player_pos
+            + Vec2d::new(player_pos.x().floor(), player_pos.y().floor())
+            + Vec2d([0.5; 2])
     }
 
     pub fn update_hotbar(
         &mut self,
         (em, cm): (&mut EntityManager, &mut ComponentManager),
     ) -> anyhow::Result<()> {
-        if let Some(mouse_pos) = self.mouse_pos_world((em, cm)) {
+        if let Some(mouse_pos) = cm
+            .get::<Camera>(self.camera, em)
+            .map(|camera| camera.dimensions().0)
+            .and_then(|p| self.mouse_pos_world(p, (em, cm)))
+        {
             if let Some(((c, firing, removing), player_pos)) =
                 cm.get::<Player>(self.player, em).and_then(|t| {
                     Some((
@@ -169,62 +176,62 @@ impl PlayerManager {
                     cm.rm::<Instance>(self.prefab, em);
                 }
 
-                let res =
-                    cm.get_mut::<ScreenTransform>(self.crosshair, em)
-                        .and_then(|screen_pos| {
-                            if let Some(res) = c.map(|(c, i)| {
-                                let sp = Vec2d::new(mouse_pos.x().floor(), mouse_pos.y().floor())
-                                    - player_pos
-                                    + Vec2d::new(player_pos.x().floor(), player_pos.y().floor())
-                                    + Vec2d([0.5; 2]);
+                if let Some(screen_pos) =
+                    self.mouse_pos_world(Vec2d::new(UI_CAM_DIMS * 2.0, UI_CAM_DIMS * 2.0), (em, cm))
+                {
+                    let res = cm.get_mut::<ScreenTransform>(self.crosshair, em).and_then(
+                        |screen_transform| {
+                            if let Some(res) = c.and_then(|(c, i)| {
+                                screen_transform.position = screen_pos;
 
-                                screen_pos.position = sp;
-
-                                (c, i, screen_pos.clone())
+                                Some((c, i, screen_transform.rotation))
                             }) {
                                 Some(res)
                             } else {
-                                screen_pos.position = mouse_pos;
+                                screen_transform.position = screen_pos;
 
                                 None
                             }
-                        });
+                        },
+                    );
 
-                if let Some((c, i, sp)) = res {
-                    let pos = sp.position + player_pos;
+                    if let Some((c, i, rotation)) = res {
+                        let position = Self::tile_pos(mouse_pos, player_pos);
+                        let pos = position + player_pos;
 
-                    if pos.x() >= 0.0
-                        && pos.x() <= u32::MAX as f32
-                        && pos.y() >= 0.0
-                        && pos.y() <= u32::MAX as f32
-                    {
-                        let x = pos.x() as u64;
-                        let y = pos.y() as u64;
+                        if pos.x() >= 0.0
+                            && pos.x() <= u32::MAX as f32
+                            && pos.y() >= 0.0
+                            && pos.y() <= u32::MAX as f32
+                        {
+                            let x = pos.x() as u64;
+                            let y = pos.y() as u64;
 
-                        if let Some(transform) = cm.get_mut::<Transform>(self.prefab, em) {
-                            transform.set_position(pos);
-                        }
+                            if let Some(transform) = cm.get_mut::<Transform>(self.prefab, em) {
+                                transform.set_position(pos);
+                            }
 
-                        if let Some(state) = cm.get_mut::<State>(self.player, em) {
-                            if firing {
-                                let entry = state.placed.entry((x, y));
+                            if let Some(state) = cm.get_mut::<State>(self.player, em) {
+                                if firing {
+                                    let entry = state.placed.entry((x, y));
 
-                                if let Entry::Vacant(_) = entry {
-                                    let construct = em.add();
+                                    if let Entry::Vacant(_) = entry {
+                                        let construct = em.add();
 
-                                    entry.or_insert(construct);
+                                        entry.or_insert(construct);
 
-                                    cm.add(
-                                        construct,
-                                        Transform::new(pos, sp.rotation, Vec2d([1.0; 2]), true),
-                                        em,
-                                    );
-                                    cm.add(construct, c, em);
-                                    cm.add(construct, i, em);
-                                }
-                            } else if removing {
-                                if let Some(id) = state.placed.remove(&(x, y)) {
-                                    em.rm(id, cm);
+                                        cm.add(
+                                            construct,
+                                            Transform::new(pos, rotation, Vec2d([1.0; 2]), true),
+                                            em,
+                                        );
+                                        cm.add(construct, c, em);
+                                        cm.add(construct, i, em);
+                                    }
+                                } else if removing {
+                                    if let Some(id) = state.placed.remove(&(x, y)) {
+                                        em.rm(id, cm);
+                                    }
                                 }
                             }
                         }

@@ -65,11 +65,11 @@ impl<'a> Player<'a> {
         }
 
         if self.states.left {
-            force.set_x(force.x() + 1.0);
+            force.set_x(force.x() - 1.0);
         }
 
         if self.states.right {
-            force.set_y(force.y() - 1.0);
+            force.set_x(force.x() + 1.0);
         }
 
         if force.magnitude() > 0.0 {
