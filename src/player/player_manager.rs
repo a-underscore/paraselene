@@ -188,10 +188,10 @@ impl PlayerManager {
                     let res = cm
                         .get_mut::<Transform>(self.prefab, em)
                         .and_then(|transform| {
-                            if let Some(res) = c.and_then(|(c, i)| {
+                            if let Some(res) = c.map(|(c, i)| {
                                 transform.set_position(screen_pos);
 
-                                Some((c, i, transform.rotation()))
+                                (c, i, transform.rotation())
                             }) {
                                 Some(res)
                             } else {
