@@ -5,7 +5,7 @@ pub use input::Input;
 use crate::{player::Player, Tag, CAM_DIMS, ZOOM};
 use hex::{
     anyhow,
-    components::Camera,
+    components::{Camera, Transform},
     ecs::{
         ev::{Control, Ev},
         system_manager::System,
@@ -22,7 +22,6 @@ use hex::{
     math::Vec2d,
     once_cell::sync::OnceCell,
 };
-use hex_ui::ScreenTransform;
 use std::{collections::HashMap, f32::consts::PI};
 
 pub type Binds = HashMap<
@@ -39,7 +38,7 @@ pub type Binds = HashMap<
 #[derive(Default)]
 pub struct GameUiManager {
     pub player: OnceCell<Option<Id>>,
-    pub crosshair: OnceCell<Option<Id>>,
+    pub prefab: OnceCell<Option<Id>>,
     pub camera: OnceCell<Option<Id>>,
     pub kp_cb: Binds,
 }
@@ -59,13 +58,13 @@ impl GameUiManager {
 
     // This will be replaced with values loaded from a configuration file.
     fn init_default_keybinds(&mut self, (em, cm): (&mut EntityManager, &mut ComponentManager)) {
-        if let (Some(player), Some(crosshair)) = (
+        if let (Some(player), Some(prefab)) = (
             *self
                 .player
                 .get_or_init(|| Tag::new("player").find((em, cm))),
             *self
-                .crosshair
-                .get_or_init(|| Tag::new("crosshair").find((em, cm))),
+                .prefab
+                .get_or_init(|| Tag::new("prefab").find((em, cm))),
         ) {
             self.add_keybind(
                 Input::Keyboard(VirtualKeyCode::W),
@@ -165,8 +164,8 @@ impl GameUiManager {
                 Input::Keyboard(VirtualKeyCode::R),
                 move |state, _, (em, cm)| {
                     if let ElementState::Pressed = state {
-                        if let Some(transform) = cm.get_mut::<ScreenTransform>(crosshair, em) {
-                            transform.rotation += PI / 2.0 % (2.0 * PI);
+                        if let Some(transform) = cm.get_mut::<Transform>(prefab, em) {
+                            transform.set_rotation(transform.rotation() + PI / 2.0 % (2.0 * PI));
                         }
                     }
 

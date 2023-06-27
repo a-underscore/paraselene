@@ -148,8 +148,8 @@ impl PlayerManager {
     }
 
     pub fn tile_pos(mouse_pos: Vec2d, player_pos: Vec2d) -> Vec2d {
-        Vec2d::new(mouse_pos.x().floor(), mouse_pos.y().floor()) - player_pos
-            + Vec2d::new(player_pos.x().floor(), player_pos.y().floor())
+        Vec2d::new(mouse_pos.x().round(), mouse_pos.y().round()) - player_pos
+            + Vec2d::new(player_pos.x().round(), player_pos.y().round())
             + Vec2d([0.5; 2])
     }
 
@@ -179,21 +179,27 @@ impl PlayerManager {
                 if let Some(screen_pos) =
                     self.mouse_pos_world(Vec2d::new(UI_CAM_DIMS * 2.0, UI_CAM_DIMS * 2.0), (em, cm))
                 {
-                    let res = cm.get_mut::<ScreenTransform>(self.crosshair, em).and_then(
-                        |screen_transform| {
-                            if let Some(res) = c.map(|(c, i)| {
-                                screen_transform.position = screen_pos;
+                    if let Some(screen_transform) =
+                        cm.get_mut::<ScreenTransform>(self.crosshair, em)
+                    {
+                        screen_transform.position = screen_pos;
+                    }
 
-                                (c, i, screen_transform.rotation)
+                    let res = cm
+                        .get_mut::<Transform>(self.prefab, em)
+                        .and_then(|transform| {
+                            if let Some(res) = c.and_then(|(c, i)| {
+                                transform.set_position(screen_pos);
+
+                                Some((c, i, transform.rotation()))
                             }) {
                                 Some(res)
                             } else {
-                                screen_transform.position = screen_pos;
+                                transform.set_position(screen_pos);
 
                                 None
                             }
-                        },
-                    );
+                        });
 
                     if let Some((c, i, rotation)) = res {
                         let position = Self::tile_pos(mouse_pos, player_pos);
