@@ -385,17 +385,13 @@ impl<'a> System<'a> for PlayerManager {
                 } else {
                     None
                 } {
-                    if let Some(cam_dims) =
-                        cm.get::<Camera>(self.camera, em).map(|c| c.dimensions().0)
-                    {
-                        if let Some(ct) = cm.get_mut::<Transform>(self.camera, em) {
-                            let position = Vec2d::new(
-                                pos.x().clamp(0.0, u32::MAX as f32 - cam_dims.x() / 2.0),
-                                pos.y().clamp(0.0, u32::MAX as f32 - cam_dims.y() / 2.0),
-                            );
+                    if let Some(ct) = cm.get_mut::<Transform>(self.camera, em) {
+                        let position = Vec2d::new(
+                            pos.x().clamp(0.0, u32::MAX as f32),
+                            pos.y().clamp(0.0, u32::MAX as f32),
+                        );
 
-                            ct.set_position(position);
-                        }
+                        ct.set_position(position);
                     }
                 }
 

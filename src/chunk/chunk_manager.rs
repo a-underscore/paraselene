@@ -313,22 +313,19 @@ impl<'a> System<'a> for ChunkManager {
                                             })
                                         {
                                             if position.0
-                                                <= min
-                                                    .0
-                                                    .checked_sub(UNLOAD_BIAS)
-                                                    .unwrap_or_default()
+                                                < min.0.checked_sub(UNLOAD_BIAS).unwrap_or_default()
                                                 || position.0
-                                                    >= max
+                                                    > max
                                                         .0
                                                         .checked_add(UNLOAD_BIAS)
                                                         .unwrap_or(u32::MAX)
                                                 || position.1
-                                                    <= min
+                                                    < min
                                                         .1
                                                         .checked_sub(UNLOAD_BIAS)
                                                         .unwrap_or_default()
                                                 || position.1
-                                                    >= max
+                                                    > max
                                                         .1
                                                         .checked_add(UNLOAD_BIAS)
                                                         .unwrap_or(u32::MAX)
