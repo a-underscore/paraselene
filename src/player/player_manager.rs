@@ -148,7 +148,7 @@ impl PlayerManager {
     }
 
     pub fn tile_pos(mouse_pos: Vec2d, player_pos: Vec2d) -> Vec2d {
-        Vec2d::new(mouse_pos.x().round(), mouse_pos.y().round()) - player_pos
+        Vec2d::new(mouse_pos.x().floor(), mouse_pos.y().floor()) - player_pos
             + Vec2d::new(player_pos.x().round(), player_pos.y().round())
             + Vec2d([0.5; 2])
     }
@@ -183,60 +183,65 @@ impl PlayerManager {
                         cm.get_mut::<ScreenTransform>(self.crosshair, em)
                     {
                         screen_transform.position = screen_pos;
-                    }
 
-                    let res = cm
-                        .get_mut::<Transform>(self.prefab, em)
-                        .and_then(|transform| {
-                            if let Some(res) = c.map(|(c, i)| {
-                                transform.set_position(screen_pos);
+                        let res = cm
+                            .get_mut::<Transform>(self.prefab, em)
+                            .and_then(|transform| {
+                                if let Some(res) = c.map(|(c, i)| {
+                                    transform.set_position(screen_pos);
 
-                                (c, i, transform.rotation())
-                            }) {
-                                Some(res)
-                            } else {
-                                transform.set_position(screen_pos);
+                                    (c, i, transform.rotation())
+                                }) {
+                                    Some(res)
+                                } else {
+                                    transform.set_position(screen_pos);
 
-                                None
-                            }
-                        });
+                                    None
+                                }
+                            });
 
-                    if let Some((c, i, rotation)) = res {
-                        let position = Self::tile_pos(mouse_pos, player_pos);
-                        let pos = position + player_pos;
+                        if let Some((c, i, rotation)) = res {
+                            let position = Self::tile_pos(mouse_pos, player_pos);
+                            let pos = position + player_pos;
 
-                        if pos.x() >= 0.0
-                            && pos.x() <= u32::MAX as f32
-                            && pos.y() >= 0.0
-                            && pos.y() <= u32::MAX as f32
-                        {
-                            let x = pos.x() as u64;
-                            let y = pos.y() as u64;
+                            if pos.x() >= 0.0
+                                && pos.x() <= u32::MAX as f32
+                                && pos.y() >= 0.0
+                                && pos.y() <= u32::MAX as f32
+                            {
+                                let x = pos.x() as u64;
+                                let y = pos.y() as u64;
 
-                            if let Some(transform) = cm.get_mut::<Transform>(self.prefab, em) {
-                                transform.set_position(pos);
-                            }
+                                if let Some(transform) = cm.get_mut::<Transform>(self.prefab, em) {
+                                    transform.set_position(pos);
+                                }
 
-                            if let Some(state) = cm.get_mut::<State>(self.player, em) {
-                                if firing {
-                                    let entry = state.placed.entry((x, y));
+                                if let Some(state) = cm.get_mut::<State>(self.player, em) {
+                                    if firing {
+                                        let entry = state.placed.entry((x, y));
 
-                                    if let Entry::Vacant(_) = entry {
-                                        let construct = em.add();
+                                        if let Entry::Vacant(_) = entry {
+                                            let construct = em.add();
 
-                                        entry.or_insert(construct);
+                                            entry.or_insert(construct);
 
-                                        cm.add(
-                                            construct,
-                                            Transform::new(pos, rotation, Vec2d([1.0; 2]), true),
-                                            em,
-                                        );
-                                        cm.add(construct, c, em);
-                                        cm.add(construct, i, em);
-                                    }
-                                } else if removing {
-                                    if let Some(id) = state.placed.remove(&(x, y)) {
-                                        em.rm(id, cm);
+                                            cm.add(
+                                                construct,
+                                                Transform::new(
+                                                    pos,
+                                                    rotation,
+                                                    Vec2d([1.0; 2]),
+                                                    true,
+                                                ),
+                                                em,
+                                            );
+                                            cm.add(construct, c, em);
+                                            cm.add(construct, i, em);
+                                        }
+                                    } else if removing {
+                                        if let Some(id) = state.placed.remove(&(x, y)) {
+                                            em.rm(id, cm);
+                                        }
                                     }
                                 }
                             }
