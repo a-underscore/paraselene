@@ -390,14 +390,8 @@ impl<'a> System<'a> for PlayerManager {
                     {
                         if let Some(ct) = cm.get_mut::<Transform>(self.camera, em) {
                             let position = Vec2d::new(
-                                pos.x().clamp(
-                                    0.0,
-                                    u32::MAX as f32 - cam_dims.x() / 2.0,
-                                ),
-                                pos.y().clamp(
-                                    0.0,
-                                    u32::MAX as f32 - cam_dims.y() / 2.0,
-                                ),
+                                pos.x().clamp(0.0, u32::MAX as f32 - cam_dims.x() / 2.0),
+                                pos.y().clamp(0.0, u32::MAX as f32 - cam_dims.y() / 2.0),
                             );
 
                             ct.set_position(position);
