@@ -136,14 +136,12 @@ impl PlayerManager {
         let (x, y) = self.mouse_pos;
         let camera_transform = cm
             .get::<Transform>(self.player, em)
-            .and_then(|t| t.active.then_some(t))
-            .cloned()?;
+            .and_then(|t| t.active.then_some(t.scale()))?;
         let (width, height) = self.window_dims;
 
         Some(Vec2d::new(
-            camera_transform.scale().x() * ((x / width as f64) as f32 * dims.x() - dims.x() / 2.0),
-            -camera_transform.scale().y()
-                * ((y / height as f64) as f32 * dims.y() - dims.y() / 2.0),
+            camera_transform.x() * ((x / width as f64) as f32 * dims.x() - dims.x() / 2.0),
+            -camera_transform.y() * ((y / height as f64) as f32 * dims.y() - dims.y() / 2.0),
         ))
     }
 
@@ -272,22 +270,18 @@ impl<'a> System<'a> for PlayerManager {
 
                 self.frame = now;
 
-                if let Some((position, camera_pos, transform)) = cm
+                if let Some((position, transform)) = cm
                     .get::<ScreenTransform>(self.crosshair, em)
                     .cloned()
                     .and_then(|s| {
                         Some((
                             s.active.then_some(s.position)?,
-                            cm.get::<Transform>(self.camera, em)
-                                .and_then(|t| t.active.then_some(t.position()))?,
                             cm.get_mut::<Transform>(self.player, em)
                                 .and_then(|t| t.active.then_some(t))?,
                         ))
                     })
                 {
-                    transform.set_rotation(
-                        Vec2d::new(0.0, 1.0).angle(camera_pos - transform.position() + position),
-                    );
+                    transform.set_rotation(Vec2d::new(0.0, 1.0).angle(position));
                 }
 
                 if let Some((player, transform)) =
