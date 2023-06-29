@@ -1,3 +1,4 @@
+use super::Map;
 use crate::{
     chunk::{Chunk, ChunkData},
     construct::{Construct, ConstructData},
@@ -23,7 +24,6 @@ use hex_instance::Instance;
 use noise::NoiseFn;
 use rand::prelude::*;
 use std::{
-    collections::HashMap,
     fs,
     path::{Path, PathBuf},
     rc::Rc,
@@ -35,24 +35,25 @@ pub struct ChunkManager {
     pub camera: OnceCell<Option<Id>>,
     pub check: Instant,
     pub frame: Instant,
-    pub load_queue: Vec<(u32, u32)>,
-    pub loaded: HashMap<(u32, u32), Id>,
+    pub map: Id,
 }
 
-impl Default for ChunkManager {
-    fn default() -> Self {
+impl ChunkManager {
+    pub fn new((em, cm): (&mut EntityManager, &mut ComponentManager)) -> Self {
+        let map = em.add();
+
+        cm.add(map, Map::default(), em);
+        cm.add(map, Tag::new("map"), em);
+
         Self {
             player: OnceCell::new(),
             camera: OnceCell::new(),
             check: Instant::now(),
             frame: Instant::now(),
-            load_queue: Vec::new(),
-            loaded: HashMap::new(),
+            map,
         }
     }
-}
 
-impl ChunkManager {
     pub fn gen_chunk(&self, pos: Vec2d, state: &mut State) -> anyhow::Result<ChunkData> {
         let mut data = ChunkData::new(pos);
 
@@ -248,9 +249,7 @@ impl<'a> System<'a> for ChunkManager {
 
                         let chunks: Vec<_> = (0..(FRAME_LOAD_AMOUNT
                             * delta.as_secs_f32().ceil() as u64))
-                            .map(|_| self.load_queue.pop())
-                            .fuse()
-                            .flatten()
+                            .filter_map(|_| cm.get_mut::<Map>(self.map, em)?.load_queue.pop())
                             .collect();
 
                         for c in chunks {
@@ -267,7 +266,9 @@ impl<'a> System<'a> for ChunkManager {
                                 cm.add(e, instance, em);
                                 cm.add(e, transform, em);
 
-                                self.loaded.insert(c, e);
+                                if let Some(map) = cm.get_mut::<Map>(self.map, em) {
+                                    map.loaded.insert(c, e);
+                                }
                             }
                         }
 
@@ -297,10 +298,12 @@ impl<'a> System<'a> for ChunkManager {
                                     for j in min.1..max.1 {
                                         let chunk = (i, j);
 
-                                        if !(self.load_queue.contains(&chunk)
-                                            || self.loaded.contains_key(&chunk))
-                                        {
-                                            self.load_queue.push(chunk);
+                                        if let Some(map) = cm.get_mut::<Map>(self.map, em) {
+                                            if !(map.load_queue.contains(&chunk)
+                                                || map.loaded.contains_key(&chunk))
+                                            {
+                                                map.load_queue.push(chunk);
+                                            }
                                         }
                                     }
                                 }
@@ -330,9 +333,11 @@ impl<'a> System<'a> for ChunkManager {
                                                         .checked_add(UNLOAD_BIAS)
                                                         .unwrap_or(u32::MAX)
                                             {
-                                                self.loaded.remove(&position);
+                                                if let Some(map) = cm.get_mut::<Map>(self.map, em) {
+                                                    map.loaded.remove(&position);
 
-                                                em.rm(e, cm);
+                                                    em.rm(e, cm);
+                                                }
                                             }
                                         }
                                     }
