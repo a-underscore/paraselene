@@ -82,11 +82,11 @@ pub fn init() -> anyhow::Result<()> {
         Some(Duration::from_secs_f32(1.0 / 30.0)),
         (Box2d::new(Default::default(), f32::MAX), TREE_ITEM_COUNT),
     ));
+    system_manager.add(ChunkManager::new((&mut em, &mut cm)));
     system_manager.add(PlayerManager::new(&scene, (&mut em, &mut cm))?);
     system_manager.add(GameUiManager::default());
     system_manager.add(ProjectileManager::default());
     system_manager.add(UiManager::default());
-    system_manager.add(ChunkManager::new((&mut em, &mut cm)));
     system_manager.add(ConstructManager::default());
     system_manager.add(CullingManager::default());
     system_manager.add(InstanceRenderer::new(

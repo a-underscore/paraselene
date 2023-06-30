@@ -252,7 +252,7 @@ impl<'a> System<'a> for ChunkManager {
                             .filter_map(|_| cm.get_mut::<Map>(self.map, em)?.load_queue.pop())
                             .collect();
 
-                        for (c, b) in chunks {
+                        for c in chunks {
                             if let Some((chunk, instance, transform)) =
                                 if let Some(state) = cm.get_mut::<State>(player, em) {
                                     Some(self.load_chunk(c, scene, state)?)
@@ -267,7 +267,7 @@ impl<'a> System<'a> for ChunkManager {
                                 cm.add(e, transform, em);
 
                                 if let Some(map) = cm.get_mut::<Map>(self.map, em) {
-                                    map.loaded.insert(c, (b, e));
+                                    map.loaded.insert(c, e);
                                 }
                             }
                         }
@@ -275,8 +275,19 @@ impl<'a> System<'a> for ChunkManager {
                         if now.duration_since(self.check) >= ASTEROID_UPDATE_TIME {
                             self.check = now;
 
-                            if let Some(camera_chunk) = cm
-                                .get::<Transform>(camera, em)
+                            for e in em.entities.keys().cloned() {
+                                if let Some(p) = cm
+                                    .get::<Construct>(e, em)
+                                    .and_then(|_| cm.get::<Transform>(e, em).map(|t| t.position()))
+                                {
+                                    if let Some(map) = cm.get_mut::<Map>(self.map, em) {
+                                        map.queue_load(Self::chunk_pos(p));
+                                    }
+                                }
+                            }
+
+                            if let Some(player_chunk) = cm
+                                .get::<Transform>(player, em)
                                 .and_then(|t| t.active.then_some(Self::chunk_pos(t.position())))
                             {
                                 let offset_x = (cam_dims.x().ceil() / CHUNK_SIZE as f32
@@ -286,12 +297,12 @@ impl<'a> System<'a> for ChunkManager {
                                     * CHUNK_DIST)
                                     .ceil() as u32;
                                 let min = (
-                                    camera_chunk.0.checked_sub(offset_x).unwrap_or_default(),
-                                    camera_chunk.1.checked_sub(offset_y).unwrap_or_default(),
+                                    player_chunk.0.checked_sub(offset_x).unwrap_or_default(),
+                                    player_chunk.1.checked_sub(offset_y).unwrap_or_default(),
                                 );
                                 let max = (
-                                    camera_chunk.0.checked_add(offset_x).unwrap_or(u32::MAX),
-                                    camera_chunk.1.checked_add(offset_y).unwrap_or(u32::MAX),
+                                    player_chunk.0.checked_add(offset_x).unwrap_or(u32::MAX),
+                                    player_chunk.1.checked_add(offset_y).unwrap_or(u32::MAX),
                                 );
 
                                 for i in min.0..max.0 {
@@ -299,7 +310,7 @@ impl<'a> System<'a> for ChunkManager {
                                         let chunk = (i, j);
 
                                         if let Some(map) = cm.get_mut::<Map>(self.map, em) {
-                                            map.queue_load((chunk, false));
+                                            map.queue_load(chunk);
                                         }
                                     }
                                 }

@@ -47,17 +47,31 @@ impl Construct<'_> {
                             let pos = ChunkManager::chunk_pos(transform.position());
 
                             if let Some(id) = if let Some(map) = cm.get_mut::<Map>(map, em) {
-                                map.queue_load((pos, true));
-
-                                map.loaded.get(&pos).map(|(_, c)| *c)
+                                map.loaded.get(&pos).cloned()
                             } else {
                                 None
                             } {
                                 if let Some(chunk) = cm.get::<Chunk>(id, em) {
-                                    let _ = &chunk.grid[pos.0 as usize
-                                        + transform.position().x().floor() as usize]
-                                        [pos.1 as usize
-                                            + transform.position().y().floor() as usize];
+                                    let tile = &chunk
+                                        .grid
+                                        .get(
+                                            pos.0 as usize
+                                                + ((transform.position().x() * 4.0).floor() / 4.0)
+                                                    as usize,
+                                        )
+                                        .and_then(|c| {
+                                            c.get(
+                                                pos.1 as usize
+                                                    + ((transform.position().y() * 4.0).floor()
+                                                        / 4.0)
+                                                        as usize,
+                                            )?
+                                            .clone()
+                                        });
+
+                                    if let Some(tile) = tile {
+                                        println!("{}", tile);
+                                    }
                                 }
                             }
                         }
