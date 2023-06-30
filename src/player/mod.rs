@@ -12,7 +12,11 @@ pub use state::State;
 use crate::{construct::Construct, projectile::Projectile, HOTBAR_SLOTS, PLAYER_MOVE_SPEED};
 use hex::{
     anyhow,
-    ecs::{component_manager::Component, Id, Scene},
+    ecs::{
+        component_manager::{Component, ComponentManager},
+        entity_manager::EntityManager,
+        Id, Scene,
+    },
     id,
     math::Vec2d,
 };
@@ -30,14 +34,17 @@ pub struct Player<'a> {
 }
 
 impl<'a> Player<'a> {
-    pub fn new(scene: &Scene) -> anyhow::Result<Self> {
+    pub fn new(
+        scene: &Scene,
+        (em, cm): (&mut EntityManager, &mut ComponentManager),
+    ) -> anyhow::Result<Self> {
         Ok(Self {
             health: 25.0,
             fire_time: Instant::now(),
             trail_time: Instant::now(),
             states: Default::default(),
             projectile: Projectile::player_bullet(scene)?,
-            hotbar: Self::default_hotbar(scene)?,
+            hotbar: Self::default_hotbar(scene, (em, cm))?,
         })
     }
 
@@ -45,10 +52,13 @@ impl<'a> Player<'a> {
         self.hotbar.get(self.states.mode).cloned().flatten()
     }
 
-    pub fn default_hotbar(scene: &Scene) -> anyhow::Result<Vec<Option<(Construct<'a>, Instance)>>> {
+    pub fn default_hotbar(
+        scene: &Scene,
+        (em, cm): (&mut EntityManager, &mut ComponentManager),
+    ) -> anyhow::Result<Vec<Option<(Construct<'a>, Instance)>>> {
         let mut hotbar = vec![None; HOTBAR_SLOTS];
 
-        hotbar[1] = Some(Construct::miner(scene)?);
+        hotbar[1] = Construct::miner(scene, (em, cm))?;
 
         Ok(hotbar)
     }

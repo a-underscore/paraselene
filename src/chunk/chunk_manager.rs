@@ -252,7 +252,7 @@ impl<'a> System<'a> for ChunkManager {
                             .filter_map(|_| cm.get_mut::<Map>(self.map, em)?.load_queue.pop())
                             .collect();
 
-                        for c in chunks {
+                        for (c, b) in chunks {
                             if let Some((chunk, instance, transform)) =
                                 if let Some(state) = cm.get_mut::<State>(player, em) {
                                     Some(self.load_chunk(c, scene, state)?)
@@ -267,7 +267,7 @@ impl<'a> System<'a> for ChunkManager {
                                 cm.add(e, transform, em);
 
                                 if let Some(map) = cm.get_mut::<Map>(self.map, em) {
-                                    map.loaded.insert(c, e);
+                                    map.loaded.insert(c, (b, e));
                                 }
                             }
                         }
@@ -299,11 +299,7 @@ impl<'a> System<'a> for ChunkManager {
                                         let chunk = (i, j);
 
                                         if let Some(map) = cm.get_mut::<Map>(self.map, em) {
-                                            if !(map.load_queue.contains(&chunk)
-                                                || map.loaded.contains_key(&chunk))
-                                            {
-                                                map.load_queue.push(chunk);
-                                            }
+                                            map.queue_load((chunk, false));
                                         }
                                     }
                                 }

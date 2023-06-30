@@ -40,7 +40,7 @@ impl PlayerManager {
         (em, cm): (&mut EntityManager, &mut ComponentManager),
     ) -> anyhow::Result<Self> {
         let player = em.add();
-        let state = State::load(scene)?;
+        let state = State::load(scene, (em, cm))?;
 
         cm.add(
             player,
@@ -53,7 +53,10 @@ impl PlayerManager {
             em,
         );
         cm.add(player, state, em);
-        cm.add(player, Player::new(scene)?, em);
+
+        let p = Player::new(scene, (em, cm))?;
+
+        cm.add(player, p, em);
         cm.add(
             player,
             Instance::new(

@@ -3,8 +3,11 @@ use crate::{chunk::Ore, construct::Construct, SAVE_DIR};
 use hex::{
     anyhow,
     assets::Texture,
-    ecs::Scene,
-    ecs::{component_manager::Component, Id},
+    ecs::{
+        component_manager::{Component, ComponentManager},
+        entity_manager::EntityManager,
+        Id, Scene,
+    },
     id,
     once_cell::sync::Lazy,
 };
@@ -27,7 +30,10 @@ pub struct State<'a> {
 }
 
 impl State<'_> {
-    pub fn load(scene: &Scene) -> anyhow::Result<Self> {
+    pub fn load(
+        scene: &Scene,
+        (em, cm): (&mut EntityManager, &mut ComponentManager),
+    ) -> anyhow::Result<Self> {
         let (mut rng, save_data) = fs::read_to_string(&*SAVE_PATH)
             .ok()
             .map(|s| -> anyhow::Result<_> {
@@ -56,8 +62,9 @@ impl State<'_> {
             .into_iter()
             .map(|o| (o.id.as_ref().clone(), o))
             .collect(),
-            constructs: vec![Construct::miner(scene)?]
+            constructs: vec![Construct::miner(scene, (em, cm))?]
                 .into_iter()
+                .filter_map(|o| o)
                 .map(|ref o @ (ref c, _)| (c.id.as_ref().clone(), o.clone()))
                 .collect(),
             space: Ore::space(scene)?,
