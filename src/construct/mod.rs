@@ -7,7 +7,7 @@ pub use construct_manager::ConstructManager;
 use crate::{
     chunk::{Chunk, ChunkManager, Map},
     tag::Tag,
-    util,
+    util, CHUNK_SIZE,
 };
 use hex::{
     anyhow,
@@ -55,15 +55,19 @@ impl Construct<'_> {
                                     let tile = &chunk
                                         .grid
                                         .get(
-                                            pos.0 as usize
-                                                + ((transform.position().x() * 4.0).floor() / 4.0)
+                                            transform.position().x().floor() as usize
+                                                - ((transform.position().x() / CHUNK_SIZE as f32)
+                                                    .floor()
+                                                    * CHUNK_SIZE as f32)
                                                     as usize,
                                         )
                                         .and_then(|c| {
                                             c.get(
-                                                pos.1 as usize
-                                                    + ((transform.position().y() * 4.0).floor()
-                                                        / 4.0)
+                                                transform.position().y().floor() as usize
+                                                    - ((transform.position().y()
+                                                        / CHUNK_SIZE as f32)
+                                                        .floor()
+                                                        * CHUNK_SIZE as f32)
                                                         as usize,
                                             )?
                                             .clone()
