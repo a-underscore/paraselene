@@ -56,19 +56,20 @@ impl Construct<'_> {
                                         .grid
                                         .get(
                                             transform.position().x().floor() as usize
-                                                - ((transform.position().x() / CHUNK_SIZE as f32)
+                                                - (transform.position().x().floor()
+                                                    / CHUNK_SIZE as f32)
                                                     .floor()
-                                                    * CHUNK_SIZE as f32)
-                                                    as usize,
+                                                    as usize
+                                                    * CHUNK_SIZE as usize,
                                         )
                                         .and_then(|c| {
                                             c.get(
                                                 transform.position().y().floor() as usize
-                                                    - ((transform.position().y()
+                                                    - (transform.position().y().floor()
                                                         / CHUNK_SIZE as f32)
                                                         .floor()
-                                                        * CHUNK_SIZE as f32)
-                                                        as usize,
+                                                        as usize
+                                                        * CHUNK_SIZE as usize,
                                             )?
                                             .clone()
                                         });
