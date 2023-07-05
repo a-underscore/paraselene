@@ -64,7 +64,7 @@ impl State<'_> {
             .collect(),
             constructs: vec![Construct::miner(scene, (em, cm))?]
                 .into_iter()
-                .filter_map(|o| o)
+                .flatten()
                 .map(|ref o @ (ref c, _)| (c.id.as_ref().clone(), o.clone()))
                 .collect(),
             space: Ore::space(scene)?,

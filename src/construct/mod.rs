@@ -38,8 +38,8 @@ impl Construct<'_> {
     ) -> anyhow::Result<Option<(Self, Instance)>> {
         let texture = util::load_texture(&scene.display, include_bytes!("miner.png"))?;
 
-        Ok(if let Some(map) = Tag::new("map").find((em, cm)) {
-            Some((
+        Ok(Tag::new("map").find((em, cm)).map(|map| {
+            (
                 Self {
                     id: Rc::new("miner".to_string()),
                     update: Rc::new(move |e, (em, cm)| {
@@ -85,10 +85,8 @@ impl Construct<'_> {
                     }),
                 },
                 Instance::new(texture, [1.0; 4], -3.0, true),
-            ))
-        } else {
-            None
-        })
+            )
+        }))
     }
 }
 
