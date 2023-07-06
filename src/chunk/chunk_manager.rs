@@ -146,7 +146,7 @@ impl ChunkManager {
             chunk,
             Instance::new(texture, [1.0; 4], -4.0, true),
             Transform::new(
-                Vec2d(data.position) * CHUNK_SIZE as f32,
+                Vec2d(data.position) * CHUNK_SIZE as f32 - Vec2d([CHUNK_SIZE as f32 / 2.0; 2]),
                 0.0,
                 Vec2d([CHUNK_SIZE as f32; 2]),
                 true,

@@ -52,27 +52,13 @@ impl Construct<'_> {
                                 None
                             } {
                                 if let Some(chunk) = cm.get::<Chunk>(id, em) {
-                                    let tile = &chunk
-                                        .grid
-                                        .get(
-                                            transform.position().x().floor() as usize
-                                                - ((transform.position().x().floor()
-                                                    / CHUNK_SIZE as f32)
-                                                    * CHUNK_SIZE as f32)
-                                                    .floor()
-                                                    as usize,
-                                        )
-                                        .and_then(|c| {
-                                            c.get(
-                                                transform.position().y().floor() as usize
-                                                    - ((transform.position().y().floor()
-                                                        / CHUNK_SIZE as f32)
-                                                        * CHUNK_SIZE as f32)
-                                                        .floor()
-                                                        as usize,
-                                            )?
-                                            .clone()
-                                        });
+                                    let x = CHUNK_SIZE as usize
+                                        - ((pos.0 * CHUNK_SIZE) as usize
+                                            - transform.position().x().floor() as usize);
+                                    let y = CHUNK_SIZE as usize
+                                        - ((pos.1 * CHUNK_SIZE) as usize
+                                            - transform.position().y().floor() as usize);
+                                    let tile = &chunk.grid.get(x).and_then(|c| c.get(y)?.clone());
 
                                     if let Some(tile) = tile {
                                         println!("{}", tile);
