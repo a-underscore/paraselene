@@ -3,8 +3,8 @@ use crate::{
     chunk::{Chunk, ChunkData},
     construct::{Construct, ConstructData},
     player::State,
-    Tag, ASTEROID_UPDATE_TIME, CHUNK_DIST, CHUNK_SIZE, FRAME_LOAD_AMOUNT, SAVE_DIR, TILE_SIZE,
-    UNLOAD_BIAS,
+    Tag, ASTEROID_UPDATE_TIME, CHUNK_DIST, CHUNK_SIZE, FRAME_LOAD_AMOUNT, MAX_MAP_SIZE, SAVE_DIR,
+    TILE_SIZE, UNLOAD_BIAS,
 };
 use hex::{
     anyhow,
@@ -301,8 +301,8 @@ impl<'a> System<'a> for ChunkManager {
                                     player_chunk.1.checked_sub(offset_y).unwrap_or_default(),
                                 );
                                 let max = (
-                                    player_chunk.0.checked_add(offset_x).unwrap_or(u32::MAX),
-                                    player_chunk.1.checked_add(offset_y).unwrap_or(u32::MAX),
+                                    player_chunk.0.checked_add(offset_x).unwrap_or(MAX_MAP_SIZE),
+                                    player_chunk.1.checked_add(offset_y).unwrap_or(MAX_MAP_SIZE),
                                 );
 
                                 for i in min.0..max.0 {
@@ -328,7 +328,7 @@ impl<'a> System<'a> for ChunkManager {
                                                     > max
                                                         .0
                                                         .checked_add(UNLOAD_BIAS)
-                                                        .unwrap_or(u32::MAX)
+                                                        .unwrap_or(MAX_MAP_SIZE)
                                                 || position.1
                                                     < min
                                                         .1
@@ -338,7 +338,7 @@ impl<'a> System<'a> for ChunkManager {
                                                     > max
                                                         .1
                                                         .checked_add(UNLOAD_BIAS)
-                                                        .unwrap_or(u32::MAX)
+                                                        .unwrap_or(MAX_MAP_SIZE)
                                             {
                                                 if let Some(map) = cm.get_mut::<Map>(self.map, em) {
                                                     map.loaded.remove(&position);

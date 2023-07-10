@@ -49,6 +49,7 @@ static PROJECTILE_LAYER: Id = 1;
 static PLAYER_LAYER: Id = 2;
 static ASTEROID_LAYER: Id = 3;
 static HOTBAR_SLOTS: usize = 10;
+static MAX_MAP_SIZE: u32 = 10000;
 
 pub fn main() {
     init().unwrap();

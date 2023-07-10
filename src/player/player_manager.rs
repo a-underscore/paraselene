@@ -1,7 +1,7 @@
 use super::{Player, State};
 use crate::{
-    util, Tag, ASTEROID_LAYER, CAM_DIMS, PLAYER_LAYER, PLAYER_MOVE_SPEED, PROJECTILE_LAYER,
-    UI_CAM_DIMS,
+    util, Tag, ASTEROID_LAYER, CAM_DIMS, CHUNK_SIZE, MAX_MAP_SIZE, PLAYER_LAYER, PLAYER_MOVE_SPEED,
+    PROJECTILE_LAYER, UI_CAM_DIMS,
 };
 use hex::{
     anyhow,
@@ -206,9 +206,9 @@ impl PlayerManager {
                             let pos = position + player_pos;
 
                             if pos.x() >= 0.0
-                                && pos.x() <= u32::MAX as f32
+                                && pos.x() <= MAX_MAP_SIZE as f32
                                 && pos.y() >= 0.0
-                                && pos.y() <= u32::MAX as f32
+                                && pos.y() <= MAX_MAP_SIZE as f32
                             {
                                 let x = pos.x() as u64;
                                 let y = pos.y() as u64;
@@ -374,8 +374,8 @@ impl<'a> System<'a> for PlayerManager {
                     let position = t.position();
 
                     t.set_position(Vec2d::new(
-                        position.x().clamp(0.0, u32::MAX as f32),
-                        position.y().clamp(0.0, u32::MAX as f32),
+                        position.x().clamp(0.0, MAX_MAP_SIZE as f32),
+                        position.y().clamp(0.0, MAX_MAP_SIZE as f32),
                     ));
 
                     Some(t.position())
@@ -384,8 +384,10 @@ impl<'a> System<'a> for PlayerManager {
                 } {
                     if let Some(ct) = cm.get_mut::<Transform>(self.camera, em) {
                         let position = Vec2d::new(
-                            pos.x().clamp(0.0, u32::MAX as f32),
-                            pos.y().clamp(0.0, u32::MAX as f32),
+                            pos.x()
+                                .clamp(CHUNK_SIZE as f32, MAX_MAP_SIZE as f32 - CHUNK_SIZE as f32),
+                            pos.y()
+                                .clamp(CHUNK_SIZE as f32, MAX_MAP_SIZE as f32 - CHUNK_SIZE as f32),
                         );
 
                         ct.set_position(position);
