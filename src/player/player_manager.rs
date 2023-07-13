@@ -374,8 +374,12 @@ impl<'a> System<'a> for PlayerManager {
                     let position = t.position();
 
                     t.set_position(Vec2d::new(
-                        position.x().clamp(0.0, MAX_MAP_SIZE as f32),
-                        position.y().clamp(0.0, MAX_MAP_SIZE as f32),
+                        position
+                            .x()
+                            .clamp(CHUNK_SIZE as f32, MAX_MAP_SIZE as f32 - CHUNK_SIZE as f32),
+                        position
+                            .y()
+                            .clamp(CHUNK_SIZE as f32, MAX_MAP_SIZE as f32 - CHUNK_SIZE as f32),
                     ));
 
                     Some(t.position())
