@@ -3,8 +3,8 @@ use crate::{
     chunk::{Chunk, ChunkData},
     construct::{Construct, ConstructData},
     player::State,
-    Tag, ASTEROID_UPDATE_TIME, CHUNK_DIST, CHUNK_SIZE, FRAME_LOAD_AMOUNT, MAX_MAP_SIZE, SAVE_DIR,
-    TILE_SIZE, UNLOAD_BIAS,
+    Tag, ASTEROID_UPDATE_TIME, CHUNK_DIST, CHUNK_SIZE, FRAME_LOAD_AMOUNT, MAX_CHUNK, MAX_MAP_SIZE,
+    MIN_CHUNK, SAVE_DIR, TILE_SIZE, UNLOAD_BIAS,
 };
 use hex::{
     anyhow,
@@ -297,12 +297,20 @@ impl<'a> System<'a> for ChunkManager {
                                     * CHUNK_DIST)
                                     .ceil() as u32;
                                 let min = (
-                                    player_chunk.0.checked_sub(offset_x).unwrap_or_default(),
-                                    player_chunk.1.checked_sub(offset_y).unwrap_or_default(),
+                                    player_chunk
+                                        .0
+                                        .checked_sub(offset_x)
+                                        .unwrap_or_default()
+                                        .max(MIN_CHUNK),
+                                    player_chunk
+                                        .1
+                                        .checked_sub(offset_y)
+                                        .unwrap_or_default()
+                                        .max(MIN_CHUNK),
                                 );
                                 let max = (
-                                    player_chunk.0.checked_add(offset_x).unwrap_or(MAX_MAP_SIZE),
-                                    player_chunk.1.checked_add(offset_y).unwrap_or(MAX_MAP_SIZE),
+                                    (player_chunk.0 + offset_x).min(MAX_CHUNK),
+                                    (player_chunk.1 + offset_y).min(MAX_CHUNK),
                                 );
 
                                 for i in min.0..max.0 {
