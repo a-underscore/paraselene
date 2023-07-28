@@ -20,7 +20,10 @@ use hex::{
     id,
 };
 use hex_instance::Instance;
-use std::rc::Rc;
+use std::{
+    rc::Rc,
+    time::{Duration, Instant},
+};
 
 pub type UpdateFn<'a> =
     dyn Fn(Id, (&'a mut EntityManager, &'a mut ComponentManager)) -> anyhow::Result<()>;
@@ -29,6 +32,8 @@ pub type UpdateFn<'a> =
 pub struct Construct<'a> {
     pub id: Rc<String>,
     pub update: Rc<UpdateFn<'a>>,
+    pub time: Instant,
+    pub update_duration: Duration,
 }
 
 impl Construct<'_> {
@@ -69,6 +74,8 @@ impl Construct<'_> {
 
                         Ok(())
                     }),
+                    time: Instant::now(),
+                    update_duration: Duration::from_millis(1),
                 },
                 Instance::new(texture, [1.0; 4], -3.0, true),
             )
