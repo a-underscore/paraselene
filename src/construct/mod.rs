@@ -86,6 +86,9 @@ impl Construct<'_> {
 
                                             cm.add(entity, ore.clone(), em);
                                             cm.add(entity, transform.clone(), em);
+
+                                            println!("{}", transform.rotation());
+
                                             cm.add(
                                                 entity,
                                                 Physical::new(
