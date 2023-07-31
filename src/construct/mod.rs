@@ -5,7 +5,7 @@ pub use construct_data::ConstructData;
 pub use construct_manager::ConstructManager;
 
 use crate::{
-    chunk::{Chunk, ChunkManager, Map},
+    chunk::{ore::METAL, Chunk, ChunkManager, Map},
     tag::Tag,
     util, CHUNK_SIZE,
 };
@@ -18,8 +18,10 @@ use hex::{
         Id, Scene,
     },
     id,
+    math::Vec2d,
 };
 use hex_instance::Instance;
+use hex_physics::Physical;
 use std::{
     rc::Rc,
     time::{Duration, Instant},
@@ -28,12 +30,15 @@ use std::{
 pub type UpdateFn<'a> =
     dyn Fn(Id, (&'a mut EntityManager, &'a mut ComponentManager)) -> anyhow::Result<()>;
 
+pub const MINER: &str = "miner";
+
 #[derive(Clone)]
 pub struct Construct<'a> {
     pub id: Rc<String>,
     pub update: Rc<UpdateFn<'a>>,
     pub time: Instant,
     pub update_duration: Duration,
+    pub eject_speed: f32,
 }
 
 impl Construct<'_> {
@@ -42,13 +47,23 @@ impl Construct<'_> {
         (em, cm): (&mut EntityManager, &mut ComponentManager),
     ) -> anyhow::Result<Option<(Self, Instance)>> {
         let texture = util::load_texture(&scene.display, include_bytes!("miner.png"))?;
+        let ore = Instance::new(
+            util::load_texture(&scene.display, include_bytes!("ore.png"))?,
+            [1.0; 4],
+            -3.5,
+            true,
+        );
 
         Ok(Tag::new("map").find((em, cm)).map(|map| {
             (
                 Self {
-                    id: Rc::new("miner".to_string()),
+                    id: Rc::new(MINER.to_string()),
                     update: Rc::new(move |e, (em, cm)| {
-                        if let Some(transform) = cm.get::<Transform>(e, em).cloned() {
+                        if let Some((transform, construct)) = cm
+                            .get::<Transform>(e, em)
+                            .cloned()
+                            .and_then(|t| Some((t, cm.get::<Construct>(e, em).cloned()?)))
+                        {
                             let pos = ChunkManager::chunk_pos(transform.position());
 
                             if let Some(id) = if let Some(map) = cm.get_mut::<Map>(map, em) {
@@ -56,7 +71,7 @@ impl Construct<'_> {
                             } else {
                                 None
                             } {
-                                if let Some(chunk) = cm.get::<Chunk>(id, em) {
+                                if let Some(chunk) = cm.get::<Chunk>(id, em).cloned() {
                                     let x = CHUNK_SIZE as usize
                                         - ((pos.0 * CHUNK_SIZE) as usize
                                             - transform.position().x().floor() as usize);
@@ -66,7 +81,22 @@ impl Construct<'_> {
                                     let tile = &chunk.grid.get(x).and_then(|c| c.get(y)?.clone());
 
                                     if let Some(tile) = tile {
-                                        println!("{}", tile);
+                                        if **tile == METAL {
+                                            let entity = em.add();
+
+                                            cm.add(entity, ore.clone(), em);
+                                            cm.add(entity, transform.clone(), em);
+                                            cm.add(
+                                                entity,
+                                                Physical::new(
+                                                    Vec2d::new(0.0, construct.eject_speed),
+                                                    true,
+                                                ),
+                                                em,
+                                            );
+
+                                            println!("{}", tile);
+                                        }
                                     }
                                 }
                             }
@@ -75,7 +105,8 @@ impl Construct<'_> {
                         Ok(())
                     }),
                     time: Instant::now(),
-                    update_duration: Duration::from_millis(500),
+                    update_duration: Duration::from_millis(1000),
+                    eject_speed: 1.0,
                 },
                 Instance::new(texture, [1.0; 4], -3.0, true),
             )

@@ -3,6 +3,10 @@ use hex::{anyhow, assets::Texture, ecs::Scene};
 use rand::prelude::*;
 use std::rc::Rc;
 
+pub const METAL: &str = "metal";
+pub const ASTEROID_1: &str = "asteroid_1";
+pub const ASTEROID_2: &str = "asteroid_2";
+
 #[derive(Clone)]
 pub struct Ore {
     pub max: f64,
@@ -19,7 +23,7 @@ impl Ore {
             min: 0.25,
             rand: 1.0,
             texture: util::load_texture(&scene.display, include_bytes!("asteroid.png"))?,
-            id: Rc::new("asteroid_1".to_string()),
+            id: Rc::new(ASTEROID_1.to_string()),
         })
     }
 
@@ -29,7 +33,7 @@ impl Ore {
             min: 0.25,
             rand: 1.0,
             texture: util::load_texture(&scene.display, include_bytes!("asteroid2.png"))?,
-            id: Rc::new("asteroid_2".to_string()),
+            id: Rc::new(ASTEROID_2.to_string()),
         })
     }
 
@@ -39,7 +43,7 @@ impl Ore {
             min: 2.0 / 3.0,
             rand: 2.0 / 3.0,
             texture: util::load_texture(&scene.display, include_bytes!("metal.png"))?,
-            id: Rc::new("metal".to_string()),
+            id: Rc::new(METAL.to_string()),
         })
     }
 
