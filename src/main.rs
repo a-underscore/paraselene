@@ -29,7 +29,7 @@ use projectile::ProjectileManager;
 use std::time::Duration;
 use tag::Tag;
 
-static SAVE_DIR: &str = "save";
+pub const SAVE_DIR: &str = "save";
 pub const WINDOW_DIMS_X: u32 = 1920;
 pub const WINDOW_DIMS_Y: u32 = 1080;
 pub const UI_CAM_DIMS: f32 = 10.0;
