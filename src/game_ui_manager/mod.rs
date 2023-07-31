@@ -2,7 +2,10 @@ pub mod input;
 
 pub use input::Input;
 
-use crate::{player::Player, Tag, CAM_DIMS, ZOOM};
+use crate::{
+    player::{player_manager::CAM_DIMS, Player},
+    Tag,
+};
 use hex::{
     anyhow,
     components::{Camera, Transform},
@@ -23,6 +26,8 @@ use hex::{
     once_cell::sync::OnceCell,
 };
 use std::{collections::HashMap, f32::consts::PI};
+
+pub const ZOOM: f32 = 5.0;
 
 pub type Binds = HashMap<
     Input,

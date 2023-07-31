@@ -5,9 +5,9 @@ pub use construct_data::ConstructData;
 pub use construct_manager::ConstructManager;
 
 use crate::{
-    chunk::{ore::METAL, Chunk, ChunkManager, Map},
+    chunk::{ore::METAL, Chunk, ChunkManager, Map, CHUNK_SIZE},
     tag::Tag,
-    util, CHUNK_SIZE,
+    util,
 };
 use hex::{
     anyhow,

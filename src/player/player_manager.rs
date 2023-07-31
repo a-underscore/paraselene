@@ -1,7 +1,8 @@
 use super::{Player, State};
 use crate::{
-    util, Tag, ASTEROID_LAYER, CAM_DIMS, CHUNK_SIZE, MAX_MAP_SIZE, PLAYER_LAYER, PLAYER_MOVE_SPEED,
-    PROJECTILE_LAYER, UI_CAM_DIMS,
+    chunk::{chunk_manager::MAX_MAP_SIZE, CHUNK_SIZE},
+    player::PLAYER_MOVE_SPEED,
+    util, Tag, ASTEROID_LAYER, PLAYER_LAYER, PROJECTILE_LAYER, UI_CAM_DIMS,
 };
 use hex::{
     anyhow,
@@ -22,6 +23,8 @@ use hex_instance::Instance;
 use hex_physics::{Collider, Physical};
 use hex_ui::ScreenTransform;
 use std::{collections::hash_map::Entry, time::Instant};
+
+pub const CAM_DIMS: f32 = 50.0 / 3.0;
 
 pub struct PlayerManager {
     pub player: Id,

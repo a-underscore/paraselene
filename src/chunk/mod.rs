@@ -11,12 +11,13 @@ pub use map::Map;
 pub use ore::Ore;
 pub use tile_data::TileData;
 
-use crate::CHUNK_SIZE;
 use hex::{
     ecs::{component_manager::Component, Id},
     id,
 };
 use std::rc::Rc;
+
+pub const CHUNK_SIZE: u32 = 4;
 
 #[derive(Clone)]
 pub struct Chunk {

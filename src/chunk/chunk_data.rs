@@ -1,4 +1,4 @@
-use crate::CHUNK_SIZE;
+use super::CHUNK_SIZE;
 use hex::math::Vec2d;
 use serde_derive::{Deserialize, Serialize};
 

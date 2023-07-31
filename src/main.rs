@@ -30,28 +30,15 @@ use std::time::Duration;
 use tag::Tag;
 
 static SAVE_DIR: &str = "save";
-static ASTEROID_UPDATE_TIME: Duration = Duration::from_millis(250);
-static PLAYER_MOVE_SPEED: f32 = 10.0;
-static WINDOW_DIMS_X: u32 = 1920;
-static WINDOW_DIMS_Y: u32 = 1080;
-static CAM_DIMS: f32 = 50.0 / 3.0;
-static UI_CAM_DIMS: f32 = 10.0;
-static ZOOM: f32 = 5.0;
-static TILE_SIZE: u32 = 32;
-static CHUNK_SIZE: u32 = 4;
-static CHUNK_DIST: f32 = 0.75;
-static UNLOAD_BIAS: u32 = 5;
-static FRAME_LOAD_AMOUNT: u64 = 5;
-static PHYSICS_CYCLES: u32 = 2;
-static PHYSICS_RATE: u32 = 3;
-static TREE_ITEM_COUNT: usize = 4;
-static PROJECTILE_LAYER: Id = 1;
-static PLAYER_LAYER: Id = 2;
-static ASTEROID_LAYER: Id = 3;
-static HOTBAR_SLOTS: usize = 10;
-static MAX_MAP_SIZE: u32 = 10000;
-static MAX_CHUNK: u32 = MAX_MAP_SIZE / CHUNK_SIZE;
-static MIN_CHUNK: u32 = 2;
+pub const WINDOW_DIMS_X: u32 = 1920;
+pub const WINDOW_DIMS_Y: u32 = 1080;
+pub const UI_CAM_DIMS: f32 = 10.0;
+pub const PHYSICS_CYCLES: u32 = 2;
+pub const PHYSICS_RATE: u32 = 3;
+pub const TREE_ITEM_COUNT: usize = 4;
+pub const PROJECTILE_LAYER: Id = 1;
+pub const PLAYER_LAYER: Id = 2;
+pub const ASTEROID_LAYER: Id = 3;
 
 pub fn main() {
     init().unwrap();

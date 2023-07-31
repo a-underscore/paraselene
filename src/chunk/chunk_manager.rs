@@ -1,10 +1,9 @@
-use super::Map;
+use super::{Map, CHUNK_SIZE};
 use crate::{
     chunk::{Chunk, ChunkData},
     construct::{Construct, ConstructData},
     player::State,
-    Tag, ASTEROID_UPDATE_TIME, CHUNK_DIST, CHUNK_SIZE, FRAME_LOAD_AMOUNT, MAX_CHUNK, MAX_MAP_SIZE,
-    MIN_CHUNK, SAVE_DIR, TILE_SIZE, UNLOAD_BIAS,
+    Tag, SAVE_DIR,
 };
 use hex::{
     anyhow,
@@ -27,8 +26,17 @@ use std::{
     fs,
     path::{Path, PathBuf},
     rc::Rc,
-    time::Instant,
+    time::{Duration, Instant},
 };
+
+pub const MAX_MAP_SIZE: u32 = 10000;
+pub const TILE_SIZE: u32 = 32;
+pub const CHUNK_DIST: f32 = 0.75;
+pub const MAX_CHUNK: u32 = MAX_MAP_SIZE / CHUNK_SIZE;
+pub const MIN_CHUNK: u32 = 2;
+pub const UNLOAD_BIAS: u32 = 5;
+pub const FRAME_LOAD_AMOUNT: u64 = 5;
+pub const ASTEROID_UPDATE_TIME: Duration = Duration::from_millis(250);
 
 pub struct ChunkManager {
     pub player: OnceCell<Option<Id>>,

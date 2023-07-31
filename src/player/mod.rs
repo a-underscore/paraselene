@@ -9,7 +9,7 @@ pub use player_manager::PlayerManager;
 pub use save_data::SaveData;
 pub use state::State;
 
-use crate::{construct::Construct, projectile::Projectile, HOTBAR_SLOTS, PLAYER_MOVE_SPEED};
+use crate::{construct::Construct, projectile::Projectile};
 use hex::{
     anyhow,
     ecs::{
@@ -22,6 +22,9 @@ use hex::{
 };
 use hex_physics::Collider;
 use std::time::Instant;
+
+pub const HOTBAR_SLOTS: usize = 10;
+pub const PLAYER_MOVE_SPEED: f32 = 10.0;
 
 #[derive(Clone)]
 pub struct Player<'a> {
