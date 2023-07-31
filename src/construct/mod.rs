@@ -75,7 +75,7 @@ impl Construct<'_> {
                         Ok(())
                     }),
                     time: Instant::now(),
-                    update_duration: Duration::from_millis(1),
+                    update_duration: Duration::from_millis(500),
                 },
                 Instance::new(texture, [1.0; 4], -3.0, true),
             )
