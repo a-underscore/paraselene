@@ -170,7 +170,7 @@ impl GameUiManager {
                 move |state, _, (em, cm)| {
                     if let ElementState::Pressed = state {
                         if let Some(transform) = cm.get_mut::<Transform>(prefab, em) {
-                            transform.set_rotation(transform.rotation() + PI / 2.0 % (2.0 * PI));
+                            transform.set_rotation(transform.rotation() % (2.0 * PI) + (PI / 2.0));
                         }
                     }
 

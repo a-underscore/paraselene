@@ -18,7 +18,7 @@ use hex::{
         Id, Scene,
     },
     id,
-    math::Vec2d,
+    math::{Mat3d, Vec2d},
 };
 use hex_instance::Instance;
 use hex_physics::Physical;
@@ -87,18 +87,19 @@ impl Construct<'_> {
                                             cm.add(entity, ore.clone(), em);
                                             cm.add(entity, transform.clone(), em);
 
-                                            println!("{}", transform.rotation());
-
                                             cm.add(
                                                 entity,
                                                 Physical::new(
-                                                    Vec2d::new(0.0, construct.eject_speed),
+                                                    (Mat3d::rotation(transform.rotation())
+                                                        * (
+                                                            Vec2d::new(0.0, construct.eject_speed),
+                                                            1.0,
+                                                        ))
+                                                        .0,
                                                     true,
                                                 ),
                                                 em,
                                             );
-
-                                            println!("{}", tile);
                                         }
                                     }
                                 }
