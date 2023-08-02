@@ -239,8 +239,6 @@ impl PlayerManager {
                                             .unwrap_or(false)
                                 });
 
-                                println!("{space:?}");
-
                                 if let Some(e) = space {
                                     if removing {
                                         em.rm(e, cm);
