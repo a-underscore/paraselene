@@ -228,20 +228,15 @@ impl PlayerManager {
                                     transform.set_position(pos);
                                 }
 
-                                let space = em.entities.keys().cloned().find_map(|e| {
-                                    if cm.get::<Construct>(e, em).is_some()
+                                let space = em.entities.keys().cloned().find(|e| {
+                                    cm.get::<Construct>(*e, em).is_some()
                                         && cm
-                                            .get::<Transform>(e, em)
+                                            .get::<Transform>(*e, em)
                                             .map(|t| {
                                                 t.position().x().floor() as u64 == x
                                                     && t.position().y().floor() as u64 == y
                                             })
                                             .unwrap_or(false)
-                                    {
-                                        Some(e)
-                                    } else {
-                                        None
-                                    }
                                 });
 
                                 println!("{space:?}");
@@ -250,18 +245,16 @@ impl PlayerManager {
                                     if removing {
                                         em.rm(e, cm);
                                     }
-                                } else {
-                                    if firing {
-                                        let construct = em.add();
+                                } else if firing {
+                                    let construct = em.add();
 
-                                        cm.add(
-                                            construct,
-                                            Transform::new(pos, rotation, Vec2d([1.0; 2]), true),
-                                            em,
-                                        );
-                                        cm.add(construct, c.clone(), em);
-                                        cm.add(construct, i.clone(), em);
-                                    }
+                                    cm.add(
+                                        construct,
+                                        Transform::new(pos, rotation, Vec2d([1.0; 2]), true),
+                                        em,
+                                    );
+                                    cm.add(construct, c.clone(), em);
+                                    cm.add(construct, i.clone(), em);
                                 }
                             }
                         }
