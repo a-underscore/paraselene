@@ -1,4 +1,4 @@
-use crate::construct::ConstructData;
+use crate::construct::{ConstructData, ItemData};
 use rand::prelude::*;
 use serde_derive::{Deserialize, Serialize};
 
@@ -7,6 +7,7 @@ pub struct SaveData {
     pub seed: u64,
     pub player_position: [f32; 2],
     pub constructs: Vec<ConstructData>,
+    pub items: Vec<ItemData>,
 }
 
 impl SaveData {
@@ -15,6 +16,7 @@ impl SaveData {
             seed,
             player_position: [Self::gen_map_coord(rng), Self::gen_map_coord(rng)],
             constructs: Vec::new(),
+            items: Vec::new(),
         }
     }
 

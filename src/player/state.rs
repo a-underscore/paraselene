@@ -9,7 +9,6 @@ use hex::{
         Id, Scene,
     },
     id,
-    math::Vec2d,
     once_cell::sync::Lazy,
 };
 use hex_instance::Instance;
@@ -28,8 +27,6 @@ pub struct State<'a> {
     pub items: HashMap<String, (Item, Instance)>,
     pub constructs: HashMap<String, (Construct<'a>, Instance)>,
     pub space: Texture,
-    pub placed: HashMap<(u64, u64), Id>,
-    pub floating: Vec<((Vec2d, Vec2d), String)>,
 }
 
 impl State<'_> {
@@ -75,8 +72,6 @@ impl State<'_> {
                 .map(|ref o @ (ref c, _)| (c.id.clone(), o.clone()))
                 .collect(),
             space: Tile::space(scene)?,
-            placed: HashMap::new(),
-            floating: Vec::new(),
         })
     }
 

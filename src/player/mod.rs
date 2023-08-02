@@ -9,14 +9,10 @@ pub use player_manager::PlayerManager;
 pub use save_data::SaveData;
 pub use state::State;
 
-use crate::{construct::Construct, projectile::Projectile};
+use crate::{construct::MINER, projectile::Projectile};
 use hex::{
     anyhow,
-    ecs::{
-        component_manager::{Component, ComponentManager},
-        entity_manager::EntityManager,
-        Id, Scene,
-    },
+    ecs::{component_manager::Component, Id, Scene},
     id,
     math::Vec2d,
 };
@@ -27,43 +23,37 @@ pub const HOTBAR_SLOTS: usize = 10;
 pub const PLAYER_MOVE_SPEED: f32 = 10.0;
 
 #[derive(Clone)]
-pub struct Player<'a> {
+pub struct Player {
     pub health: f32,
     pub fire_time: Instant,
     pub trail_time: Instant,
     pub states: ButtonStates,
     pub projectile: (Projectile, Collider, Instance),
-    pub hotbar: Vec<Option<(Construct<'a>, Instance)>>,
+    pub hotbar: Vec<Option<String>>,
 }
 
-impl<'a> Player<'a> {
-    pub fn new(
-        scene: &Scene,
-        (em, cm): (&mut EntityManager, &mut ComponentManager),
-    ) -> anyhow::Result<Self> {
+impl Player {
+    pub fn new(scene: &Scene) -> anyhow::Result<Self> {
         Ok(Self {
             health: 25.0,
             fire_time: Instant::now(),
             trail_time: Instant::now(),
             states: Default::default(),
             projectile: Projectile::player_bullet(scene)?,
-            hotbar: Self::default_hotbar(scene, (em, cm))?,
+            hotbar: Self::default_hotbar(),
         })
     }
 
-    pub fn current_item(&self) -> Option<(Construct<'a>, Instance)> {
+    pub fn current_item(&self) -> Option<String> {
         self.hotbar.get(self.states.mode).cloned().flatten()
     }
 
-    pub fn default_hotbar(
-        scene: &Scene,
-        (em, cm): (&mut EntityManager, &mut ComponentManager),
-    ) -> anyhow::Result<Vec<Option<(Construct<'a>, Instance)>>> {
+    pub fn default_hotbar() -> Vec<Option<String>> {
         let mut hotbar = vec![None; HOTBAR_SLOTS];
 
-        hotbar[1] = Construct::miner(scene, (em, cm))?;
+        hotbar[1] = Some(MINER.to_string());
 
-        Ok(hotbar)
+        hotbar
     }
 
     pub fn force(&self) -> Vec2d {
@@ -93,7 +83,7 @@ impl<'a> Player<'a> {
     }
 }
 
-impl Component for Player<'_> {
+impl Component for Player {
     fn id() -> Id {
         id!()
     }

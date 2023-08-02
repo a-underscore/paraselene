@@ -1,7 +1,7 @@
 use super::{Map, CHUNK_SIZE};
 use crate::{
     chunk::{Chunk, ChunkData},
-    construct::{Construct, ConstructData},
+    construct::{Construct, ConstructData, Item, ItemData},
     player::State,
     Tag, SAVE_DIR,
 };
@@ -20,6 +20,7 @@ use hex::{
     once_cell::sync::OnceCell,
 };
 use hex_instance::Instance;
+use hex_physics::Physical;
 use noise::NoiseFn;
 use rand::prelude::*;
 use std::{
@@ -168,46 +169,49 @@ impl ChunkManager {
         (pos.x().ceil() as u32, pos.y().ceil() as u32)
     }
 
-    pub fn load_constructs(
+    pub fn load_objects(
         &mut self,
         player: Id,
         (em, cm): (&mut EntityManager, &mut ComponentManager),
     ) {
-        let mut constructs = Vec::new();
-
-        if let Some(state) = cm.get_mut::<State>(player, em) {
+        if let Some(state) = cm.get::<State>(player, em).cloned() {
             for ConstructData {
                 id,
-                position: position @ (x, y),
+                position,
                 rotation,
             } in &state.save_data.constructs
             {
                 if let Some((construct, instance)) = state.constructs.get(id).cloned() {
+                    let position = Vec2d(*position);
                     let e = em.add();
 
-                    constructs.push((
+                    cm.add(e, construct, em);
+                    cm.add(e, instance, em);
+                    cm.add(
                         e,
-                        (
-                            construct,
-                            instance,
-                            Transform::new(
-                                Vec2d::new(*x as f32, *y as f32) + Vec2d([0.5; 2]),
-                                *rotation,
-                                Vec2d([1.0; 2]),
-                                true,
-                            ),
-                        ),
-                    ));
-
-                    state.placed.insert(*position, e);
+                        Transform::new(position, *rotation, Vec2d([1.0; 2]), true),
+                        em,
+                    );
                 }
             }
-        }
 
-        for (e, (construct, instance, transform)) in constructs {
-            cm.add(e, construct, em);
-            cm.add(e, instance, em);
-            cm.add(e, transform, em);
+            for ItemData {
+                id,
+                position,
+                velocity,
+            } in &state.save_data.items
+            {
+                if let Some((item, instance)) = state.items.get(id).cloned() {
+                    let position = Vec2d(*position);
+                    let velocity = Vec2d(*velocity);
+                    let e = em.add();
+
+                    cm.add(e, item, em);
+                    cm.add(e, instance, em);
+                    cm.add(e, Transform::new(position, 0.0, Vec2d([1.0; 2]), true), em);
+                    cm.add(e, Physical::new(velocity, true), em);
+                }
+            }
         }
     }
 }
@@ -222,7 +226,7 @@ impl<'a> System<'a> for ChunkManager {
             .player
             .get_or_init(|| Tag::new("player").find((em, cm)))
         {
-            self.load_constructs(player, (em, cm));
+            self.load_objects(player, (em, cm));
         }
 
         Ok(())
@@ -383,16 +387,34 @@ impl<'a> System<'a> for ChunkManager {
                         .and_then(|pr| Some((pr, cm.get_mut::<State>(player, em).cloned()?)))
                     {
                         state.save_data.player_position = p.0;
-                        state.save_data.constructs = state
-                            .placed
-                            .iter()
-                            .filter_map(|(pos, e)| {
-                                let transform = cm.get::<Transform>(*e, em)?;
+                        state.save_data.constructs = em
+                            .entities
+                            .keys()
+                            .cloned()
+                            .filter_map(|e| {
+                                let id = cm.get::<Construct>(e, em).map(|c| c.id.clone())?;
+                                let transform = cm.get::<Transform>(e, em)?;
 
                                 Some(ConstructData {
-                                    position: *pos,
-                                    id: cm.get::<Construct>(*e, em).map(|c| c.id.clone())?,
+                                    position: transform.position().0,
                                     rotation: transform.rotation(),
+                                    id,
+                                })
+                            })
+                            .collect();
+                        state.save_data.items = em
+                            .entities
+                            .keys()
+                            .cloned()
+                            .filter_map(|e| {
+                                let id = cm.get::<Item>(e, em).map(|c| c.id.clone())?;
+                                let physical = cm.get::<Physical>(e, em)?;
+                                let transform = cm.get::<Transform>(e, em)?;
+
+                                Some(ItemData {
+                                    position: transform.position().0,
+                                    velocity: physical.velocity().0,
+                                    id,
                                 })
                             })
                             .collect();

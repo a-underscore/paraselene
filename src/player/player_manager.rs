@@ -1,6 +1,7 @@
 use super::{Player, State};
 use crate::{
     chunk::{chunk_manager::MAX_MAP_SIZE, CHUNK_SIZE},
+    construct::Construct,
     player::PLAYER_MOVE_SPEED,
     util, Tag, ASTEROID_LAYER, PLAYER_LAYER, PROJECTILE_LAYER, UI_CAM_DIMS,
 };
@@ -22,7 +23,7 @@ use hex::{
 use hex_instance::Instance;
 use hex_physics::{Collider, Physical};
 use hex_ui::ScreenTransform;
-use std::{collections::hash_map::Entry, time::Instant};
+use std::time::Instant;
 
 pub const CAM_DIMS: f32 = 50.0 / 3.0;
 
@@ -43,6 +44,9 @@ impl PlayerManager {
         (em, cm): (&mut EntityManager, &mut ComponentManager),
     ) -> anyhow::Result<Self> {
         let player = em.add();
+
+        cm.add(player, Tag::new("player"), em);
+
         let state = State::load(scene, (em, cm))?;
 
         cm.add(
@@ -55,10 +59,10 @@ impl PlayerManager {
             ),
             em,
         );
+
+        let p = Player::new(scene)?;
+
         cm.add(player, state, em);
-
-        let p = Player::new(scene, (em, cm))?;
-
         cm.add(player, p, em);
         cm.add(
             player,
@@ -82,7 +86,6 @@ impl PlayerManager {
             ),
             em,
         );
-        cm.add(player, Tag::new("player"), em);
 
         let camera = em.add();
 
@@ -167,9 +170,14 @@ impl PlayerManager {
             .and_then(|p| self.mouse_pos_world(p, (em, cm)))
         {
             if let Some(((c, firing, removing), player_pos)) =
-                cm.get::<Player>(self.player, em).and_then(|t| {
+                cm.get::<Player>(self.player, em).cloned().and_then(|t| {
                     Some((
-                        (t.current_item(), t.states.firing, t.states.removing),
+                        (
+                            cm.get::<State>(self.player, em)
+                                .and_then(|s| s.constructs.get(&t.current_item()?).cloned()),
+                            t.states.firing,
+                            t.states.removing,
+                        ),
                         cm.get::<Transform>(self.player, em)?.position(),
                     ))
                 })
@@ -220,32 +228,39 @@ impl PlayerManager {
                                     transform.set_position(pos);
                                 }
 
-                                if let Some(state) = cm.get_mut::<State>(self.player, em) {
+                                let space = em.entities.keys().cloned().find_map(|e| {
+                                    if cm.get::<Construct>(e, em).is_some()
+                                        && cm
+                                            .get::<Transform>(e, em)
+                                            .map(|t| {
+                                                t.position().x().floor() as u64 == x
+                                                    && t.position().y().floor() as u64 == y
+                                            })
+                                            .unwrap_or(false)
+                                    {
+                                        Some(e)
+                                    } else {
+                                        None
+                                    }
+                                });
+
+                                println!("{space:?}");
+
+                                if let Some(e) = space {
+                                    if removing {
+                                        em.rm(e, cm);
+                                    }
+                                } else {
                                     if firing {
-                                        let entry = state.placed.entry((x, y));
+                                        let construct = em.add();
 
-                                        if let Entry::Vacant(_) = entry {
-                                            let construct = em.add();
-
-                                            entry.or_insert(construct);
-
-                                            cm.add(
-                                                construct,
-                                                Transform::new(
-                                                    pos,
-                                                    rotation,
-                                                    Vec2d([1.0; 2]),
-                                                    true,
-                                                ),
-                                                em,
-                                            );
-                                            cm.add(construct, c, em);
-                                            cm.add(construct, i, em);
-                                        }
-                                    } else if removing {
-                                        if let Some(id) = state.placed.remove(&(x, y)) {
-                                            em.rm(id, cm);
-                                        }
+                                        cm.add(
+                                            construct,
+                                            Transform::new(pos, rotation, Vec2d([1.0; 2]), true),
+                                            em,
+                                        );
+                                        cm.add(construct, c.clone(), em);
+                                        cm.add(construct, i.clone(), em);
                                     }
                                 }
                             }
