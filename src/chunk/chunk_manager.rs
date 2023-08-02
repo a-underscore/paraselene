@@ -83,7 +83,7 @@ impl ChunkManager {
                     .cloned()
                     .unwrap_or((None, &state.space));
 
-                data.grid[i][j] = id.as_ref().map(|s| s.clone());
+                data.grid[i][j] = id.as_ref().cloned();
             }
         }
 
