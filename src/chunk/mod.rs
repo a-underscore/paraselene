@@ -1,27 +1,26 @@
 pub mod chunk_data;
 pub mod chunk_manager;
 pub mod map;
-pub mod ore;
+pub mod tile;
 pub mod tile_data;
 
 pub use crate::player::State;
 pub use chunk_data::ChunkData;
 pub use chunk_manager::ChunkManager;
 pub use map::Map;
-pub use ore::Ore;
+pub use tile::Tile;
 pub use tile_data::TileData;
 
 use hex::{
     ecs::{component_manager::Component, Id},
     id,
 };
-use std::rc::Rc;
 
 pub const CHUNK_SIZE: u32 = 4;
 
 #[derive(Clone)]
 pub struct Chunk {
-    pub grid: Vec<Vec<Option<Rc<String>>>>,
+    pub grid: Vec<Vec<Option<String>>>,
 }
 
 impl Chunk {

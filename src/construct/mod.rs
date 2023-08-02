@@ -1,11 +1,13 @@
 pub mod construct_data;
 pub mod construct_manager;
+pub mod item;
 
 pub use construct_data::ConstructData;
 pub use construct_manager::ConstructManager;
+pub use item::Item;
 
 use crate::{
-    chunk::{ore::METAL, Chunk, ChunkManager, Map, CHUNK_SIZE},
+    chunk::{tile::METAL, Chunk, ChunkManager, Map, CHUNK_SIZE},
     tag::Tag,
     util,
 };
@@ -34,7 +36,7 @@ pub const MINER: &str = "miner";
 
 #[derive(Clone)]
 pub struct Construct<'a> {
-    pub id: Rc<String>,
+    pub id: String,
     pub update: Rc<UpdateFn<'a>>,
     pub time: Instant,
     pub update_duration: Duration,
@@ -47,8 +49,8 @@ impl Construct<'_> {
         (em, cm): (&mut EntityManager, &mut ComponentManager),
     ) -> anyhow::Result<Option<(Self, Instance)>> {
         let texture = util::load_texture(&scene.display, include_bytes!("miner.png"))?;
-        let ore = Instance::new(
-            util::load_texture(&scene.display, include_bytes!("ore.png"))?,
+        let tile = Instance::new(
+            util::load_texture(&scene.display, include_bytes!("metal.png"))?,
             [1.0; 4],
             -3.5,
             true,
@@ -57,7 +59,7 @@ impl Construct<'_> {
         Ok(Tag::new("map").find((em, cm)).map(|map| {
             (
                 Self {
-                    id: Rc::new(MINER.to_string()),
+                    id: MINER.to_string(),
                     update: Rc::new(move |e, (em, cm)| {
                         if let Some((transform, construct)) = cm
                             .get::<Transform>(e, em)
@@ -78,15 +80,15 @@ impl Construct<'_> {
                                     let y = CHUNK_SIZE as usize
                                         - ((pos.1 * CHUNK_SIZE) as usize
                                             - transform.position().y().floor() as usize);
-                                    let tile = &chunk.grid.get(x).and_then(|c| c.get(y)?.clone());
+                                    let tile_id =
+                                        &chunk.grid.get(x).and_then(|c| c.get(y)?.clone());
 
-                                    if let Some(tile) = tile {
-                                        if **tile == METAL {
+                                    if let Some(tile_id) = tile_id {
+                                        if tile_id == METAL {
                                             let entity = em.add();
 
-                                            cm.add(entity, ore.clone(), em);
+                                            cm.add(entity, tile.clone(), em);
                                             cm.add(entity, transform.clone(), em);
-
                                             cm.add(
                                                 entity,
                                                 Physical::new(

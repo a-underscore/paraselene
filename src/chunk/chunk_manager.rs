@@ -70,20 +70,20 @@ impl ChunkManager {
                 let x = pos.x() as f64 * CHUNK_SIZE as f64 + i as f64;
                 let y = pos.y() as f64 * CHUNK_SIZE as f64 + j as f64;
                 let val = state.perlin.get([x / 25.0, y / 25.0, 0.0]);
-                let ores: Vec<_> = state
-                    .ores
+                let tiles: Vec<_> = state
+                    .tiles
                     .values()
                     .filter_map(|t| {
                         t.check(&mut state.rng, val)
                             .map(|(id, t)| (Some(id.clone()), t))
                     })
                     .collect();
-                let (id, _) = ores
+                let (id, _) = tiles
                     .choose(&mut state.rng)
                     .cloned()
                     .unwrap_or((None, &state.space));
 
-                data.grid[i][j] = id.as_ref().map(|s| s.as_ref().clone());
+                data.grid[i][j] = id.as_ref().map(|s| s.clone());
             }
         }
 
@@ -134,7 +134,7 @@ impl ChunkManager {
             for j in 0..chunk.grid[i].len() {
                 let (id, t) = data.grid[i][j]
                     .as_ref()
-                    .and_then(|t| state.ores.get(t).map(|t| (Some(t.id.clone()), &t.texture)))
+                    .and_then(|t| state.tiles.get(t).map(|t| (Some(t.id.clone()), &t.texture)))
                     .unwrap_or((None, &state.space));
                 let data: Vec<_> = t.buffer.read();
                 let rect = Rect {
@@ -391,9 +391,7 @@ impl<'a> System<'a> for ChunkManager {
 
                                 Some(ConstructData {
                                     position: *pos,
-                                    id: cm
-                                        .get::<Construct>(*e, em)
-                                        .map(|c| c.id.as_ref().clone())?,
+                                    id: cm.get::<Construct>(*e, em).map(|c| c.id.clone())?,
                                     rotation: transform.rotation(),
                                 })
                             })

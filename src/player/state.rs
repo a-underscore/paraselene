@@ -1,5 +1,5 @@
 use super::SaveData;
-use crate::{chunk::Ore, construct::Construct, SAVE_DIR};
+use crate::{chunk::Tile, construct::Construct, construct::Item, SAVE_DIR};
 use hex::{
     anyhow,
     assets::Texture,
@@ -9,6 +9,7 @@ use hex::{
         Id, Scene,
     },
     id,
+    math::Vec2d,
     once_cell::sync::Lazy,
 };
 use hex_instance::Instance;
@@ -23,10 +24,12 @@ pub struct State<'a> {
     pub save_data: SaveData,
     pub rng: StdRng,
     pub perlin: Perlin,
-    pub ores: HashMap<String, Ore>,
+    pub tiles: HashMap<String, Tile>,
+    pub items: HashMap<String, (Item, Instance)>,
     pub constructs: HashMap<String, (Construct<'a>, Instance)>,
     pub space: Texture,
     pub placed: HashMap<(u64, u64), Id>,
+    pub floating: Vec<((Vec2d, Vec2d), String)>,
 }
 
 impl State<'_> {
@@ -54,21 +57,26 @@ impl State<'_> {
             save_data,
             perlin,
             rng,
-            ores: vec![
-                Ore::asteroid_1(scene)?,
-                Ore::asteroid_2(scene)?,
-                Ore::metal(scene)?,
+            tiles: vec![
+                Tile::asteroid_1(scene)?,
+                Tile::asteroid_2(scene)?,
+                Tile::metal(scene)?,
             ]
             .into_iter()
-            .map(|o| (o.id.as_ref().clone(), o))
+            .map(|t| (t.id.clone(), t))
             .collect(),
+            items: vec![Item::metal(scene)?]
+                .into_iter()
+                .map(|ref i @ (ref item, _)| (item.id.clone(), i.clone()))
+                .collect(),
             constructs: vec![Construct::miner(scene, (em, cm))?]
                 .into_iter()
                 .flatten()
-                .map(|ref o @ (ref c, _)| (c.id.as_ref().clone(), o.clone()))
+                .map(|ref o @ (ref c, _)| (c.id.clone(), o.clone()))
                 .collect(),
-            space: Ore::space(scene)?,
+            space: Tile::space(scene)?,
             placed: HashMap::new(),
+            floating: Vec::new(),
         })
     }
 

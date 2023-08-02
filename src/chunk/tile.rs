@@ -1,29 +1,28 @@
 use crate::util;
 use hex::{anyhow, assets::Texture, ecs::Scene};
 use rand::prelude::*;
-use std::rc::Rc;
 
 pub const METAL: &str = "metal";
 pub const ASTEROID_1: &str = "asteroid_1";
 pub const ASTEROID_2: &str = "asteroid_2";
 
 #[derive(Clone)]
-pub struct Ore {
+pub struct Tile {
     pub max: f64,
     pub min: f64,
     pub rand: f64,
     pub texture: Texture,
-    pub id: Rc<String>,
+    pub id: String,
 }
 
-impl Ore {
+impl Tile {
     pub fn asteroid_1(scene: &Scene) -> anyhow::Result<Self> {
         Ok(Self {
             max: 1.0,
             min: 0.25,
             rand: 1.0,
             texture: util::load_texture(&scene.display, include_bytes!("asteroid.png"))?,
-            id: Rc::new(ASTEROID_1.to_string()),
+            id: ASTEROID_1.to_string(),
         })
     }
 
@@ -33,7 +32,7 @@ impl Ore {
             min: 0.25,
             rand: 1.0,
             texture: util::load_texture(&scene.display, include_bytes!("asteroid2.png"))?,
-            id: Rc::new(ASTEROID_2.to_string()),
+            id: ASTEROID_2.to_string(),
         })
     }
 
@@ -43,7 +42,7 @@ impl Ore {
             min: 2.0 / 3.0,
             rand: 2.0 / 3.0,
             texture: util::load_texture(&scene.display, include_bytes!("metal.png"))?,
-            id: Rc::new(METAL.to_string()),
+            id: METAL.to_string(),
         })
     }
 
@@ -51,7 +50,7 @@ impl Ore {
         util::load_texture(&scene.display, include_bytes!("space.png"))
     }
 
-    pub fn check(&self, rng: &mut StdRng, value: f64) -> Option<(&Rc<String>, &Texture)> {
+    pub fn check(&self, rng: &mut StdRng, value: f64) -> Option<(&String, &Texture)> {
         if rng.gen_bool(self.rand) && self.max >= value && self.min <= value {
             Some((&self.id, &self.texture))
         } else {
