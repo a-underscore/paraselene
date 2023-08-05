@@ -16,7 +16,7 @@ use hex::{
     id,
 };
 
-pub const CHUNK_SIZE: u32 = 4;
+pub const CHUNK_SIZE: u32 = 8;
 
 #[derive(Clone)]
 pub struct Chunk {
