@@ -3,7 +3,7 @@ use crate::{
     chunk::{chunk_manager::MAX_MAP_SIZE, CHUNK_SIZE},
     construct::Construct,
     player::PLAYER_MOVE_SPEED,
-    util, Tag, ASTEROID_LAYER, PLAYER_LAYER, PROJECTILE_LAYER, UI_CAM_DIMS,
+    util, Tag, PLAYER_LAYER, PROJECTILE_LAYER, UI_CAM_DIMS,
 };
 use hex::{
     anyhow,
@@ -79,7 +79,7 @@ impl PlayerManager {
             player,
             Collider::oct(
                 Vec2d([1.0 / 3.0; 2]),
-                vec![ASTEROID_LAYER, PLAYER_LAYER],
+                vec![PLAYER_LAYER],
                 vec![PROJECTILE_LAYER],
                 false,
                 true,

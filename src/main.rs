@@ -38,7 +38,6 @@ pub const PHYSICS_RATE: u32 = 3;
 pub const TREE_ITEM_COUNT: usize = 4;
 pub const PROJECTILE_LAYER: Id = 1;
 pub const PLAYER_LAYER: Id = 2;
-pub const ASTEROID_LAYER: Id = 3;
 
 pub fn main() {
     init().unwrap();

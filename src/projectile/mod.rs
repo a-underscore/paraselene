@@ -2,7 +2,7 @@ pub mod projectile_manager;
 
 pub use projectile_manager::ProjectileManager;
 
-use crate::{util, ASTEROID_LAYER, PLAYER_LAYER, PROJECTILE_LAYER};
+use crate::{util, PLAYER_LAYER, PROJECTILE_LAYER};
 use hex::{
     anyhow,
     ecs::{component_manager::Component, Id, Scene},
@@ -37,7 +37,7 @@ impl Projectile {
             },
             Collider::rect(
                 Vec2d([1.0 / 3.0; 2]),
-                vec![PLAYER_LAYER, ASTEROID_LAYER, PROJECTILE_LAYER],
+                vec![PLAYER_LAYER, PROJECTILE_LAYER],
                 vec![PROJECTILE_LAYER],
                 false,
                 true,
