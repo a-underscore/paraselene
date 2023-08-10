@@ -4,10 +4,21 @@ use hex::{
     ecs::{ev::Control, system_manager::System, ComponentManager, EntityManager, Ev, Scene},
     glium::glutin::event::Event,
 };
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
-#[derive(Default)]
-pub struct ConstructManager;
+pub const TICK_INTERVAL: Duration = Duration::from_millis(50);
+
+pub struct ConstructManager {
+    pub last_tick: Instant,
+}
+
+impl Default for ConstructManager {
+    fn default() -> Self {
+        Self {
+            last_tick: Instant::now(),
+        }
+    }
+}
 
 impl System<'_> for ConstructManager {
     fn update(
@@ -21,17 +32,23 @@ impl System<'_> for ConstructManager {
             flow: _,
         }) = ev
         {
-            for e in em.entities.clone().into_keys() {
-                if let Some(update) = cm.get_mut::<Construct>(e, em).and_then(|c| {
-                    let now = Instant::now();
+            let now = Instant::now();
 
-                    (now.duration_since(c.time) >= c.update_duration).then(|| {
-                        c.time = now;
+            if now.duration_since(self.last_tick) >= TICK_INTERVAL {
+                self.last_tick = now;
 
-                        c.update.clone()
-                    })
-                }) {
-                    (*update)(e, (em, cm))?;
+                for e in em.entities.clone().into_keys() {
+                    if let Some(update) = cm.get_mut::<Construct>(e, em).and_then(|c| {
+                        c.tick_amount += 1;
+
+                        (c.tick_amount >= c.update_tick).then(|| {
+                            c.tick_amount = 0;
+
+                            c.update.clone()
+                        })
+                    }) {
+                        (*update)(e, (em, cm))?;
+                    }
                 }
             }
         }

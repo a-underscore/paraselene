@@ -5,4 +5,5 @@ pub struct ConstructData {
     pub id: String,
     pub position: [f32; 2],
     pub rotation: f32,
+    pub tick_amount: u32,
 }

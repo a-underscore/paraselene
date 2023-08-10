@@ -76,7 +76,7 @@ pub fn init() -> anyhow::Result<()> {
     system_manager.add(GameUiManager::default());
     system_manager.add(ProjectileManager::default());
     system_manager.add(UiManager::default());
-    system_manager.add(ConstructManager);
+    system_manager.add(ConstructManager::default());
     system_manager.add(CullingManager::default());
     system_manager.add(InstanceRenderer::new(
         &scene.display,

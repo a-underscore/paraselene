@@ -179,9 +179,14 @@ impl ChunkManager {
                 id,
                 position,
                 rotation,
+                tick_amount,
             } in &state.save_data.constructs
             {
-                if let Some((construct, instance)) = state.constructs.get(id).cloned() {
+                if let Some((mut construct, instance)) = state.constructs.get(id).cloned() {
+                    construct.tick_amount = *tick_amount;
+
+                    println!("{}", construct.tick_amount);
+
                     let position = Vec2d(*position);
                     let e = em.add();
 
@@ -392,13 +397,16 @@ impl<'a> System<'a> for ChunkManager {
                             .keys()
                             .cloned()
                             .filter_map(|e| {
-                                let id = cm.get::<Construct>(e, em).map(|c| c.id.clone())?;
+                                let (tick_amount, id) = cm
+                                    .get::<Construct>(e, em)
+                                    .map(|c| (c.tick_amount, c.id.clone()))?;
                                 let transform = cm.get::<Transform>(e, em)?;
 
                                 Some(ConstructData {
                                     position: transform.position().0,
                                     rotation: transform.rotation(),
                                     id,
+                                    tick_amount,
                                 })
                             })
                             .collect();

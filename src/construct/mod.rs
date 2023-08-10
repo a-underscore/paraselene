@@ -27,10 +27,7 @@ use hex::{
 };
 use hex_instance::Instance;
 use hex_physics::Physical;
-use std::{
-    rc::Rc,
-    time::{Duration, Instant},
-};
+use std::rc::Rc;
 
 pub type UpdateFn<'a> =
     dyn Fn(Id, (&'a mut EntityManager, &'a mut ComponentManager)) -> anyhow::Result<()>;
@@ -41,8 +38,8 @@ pub const MINER: &str = "miner";
 pub struct Construct<'a> {
     pub id: String,
     pub update: Rc<UpdateFn<'a>>,
-    pub time: Instant,
-    pub update_duration: Duration,
+    pub tick_amount: u32,
+    pub update_tick: u32,
     pub eject_speed: f32,
 }
 
@@ -118,8 +115,8 @@ impl Construct<'_> {
 
                             Ok(())
                         }),
-                        time: Instant::now(),
-                        update_duration: Duration::from_millis(1000),
+                        tick_amount: 0,
+                        update_tick: 50,
                         eject_speed: 1.0,
                     },
                     Instance::new(texture, [1.0; 4], -3.0, true),
