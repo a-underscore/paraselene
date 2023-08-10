@@ -185,8 +185,6 @@ impl ChunkManager {
                 if let Some((mut construct, instance)) = state.constructs.get(id).cloned() {
                     construct.tick_amount = *tick_amount;
 
-                    println!("{}", construct.tick_amount);
-
                     let position = Vec2d(*position);
                     let e = em.add();
 
