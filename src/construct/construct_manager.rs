@@ -21,6 +21,16 @@ impl Default for ConstructManager {
 }
 
 impl System<'_> for ConstructManager {
+    fn init(
+        &mut self,
+        _: &mut Scene,
+        _: (&mut EntityManager, &mut ComponentManager),
+    ) -> anyhow::Result<()> {
+        self.last_tick = Instant::now();
+
+        Ok(())
+    }
+
     fn update(
         &mut self,
         ev: &mut Ev,
