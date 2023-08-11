@@ -116,7 +116,7 @@ impl Construct<'_> {
                             Ok(())
                         }),
                         tick_amount: 0,
-                        update_tick: 50,
+                        update_tick: 100,
                         eject_speed: 1.0,
                     },
                     Instance::new(texture, [1.0; 4], -3.0, true),
