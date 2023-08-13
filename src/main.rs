@@ -50,7 +50,10 @@ pub fn init() -> anyhow::Result<()> {
     let wb = WindowBuilder::new()
         .with_title("Parselene")
         .with_max_inner_size(Size::Logical((WINDOW_DIMS_X, WINDOW_DIMS_Y).into()));
-    let cb = ContextBuilder::new().with_srgb(true).with_multisampling(8);
+    let cb = ContextBuilder::new()
+        .with_srgb(true)
+        .with_vsync(true)
+        .with_multisampling(8);
     let display = Display::new(wb, cb, &ev)?;
 
     display.gl_window().window().set_cursor_visible(false);
