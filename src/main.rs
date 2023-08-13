@@ -22,7 +22,7 @@ use hex::{
     math::{Ortho, Vec2d},
 };
 use hex_instance::InstanceRenderer;
-use hex_physics::{quad_tree::Box2d, PhysicsManager};
+use hex_physics::PhysicsManager;
 use hex_ui::{UiManager, UiRenderer};
 use player::PlayerManager;
 use projectile::ProjectileManager;
@@ -52,7 +52,6 @@ pub fn init() -> anyhow::Result<()> {
         .with_max_inner_size(Size::Logical((WINDOW_DIMS_X, WINDOW_DIMS_Y).into()));
     let cb = ContextBuilder::new()
         .with_srgb(true)
-        .with_vsync(true)
         .with_multisampling(8);
     let display = Display::new(wb, cb, &ev)?;
 
@@ -69,7 +68,6 @@ pub fn init() -> anyhow::Result<()> {
         PHYSICS_RATE,
         PHYSICS_CYCLES,
         Some(Duration::from_secs_f32(1.0 / 30.0)),
-        (Box2d::new(Default::default(), f32::MAX), TREE_ITEM_COUNT),
     ));
     system_manager.add(ChunkManager::new((&mut em, &mut cm)));
     system_manager.add(PlayerManager::new(&scene, (&mut em, &mut cm))?);
