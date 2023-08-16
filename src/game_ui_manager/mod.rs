@@ -1,6 +1,8 @@
 pub mod input;
+pub mod main_menu;
 
 pub use input::Input;
+pub use main_menu::MainMenu;
 
 use crate::{
     player::{player_manager::CAM_DIMS, Player},
@@ -40,15 +42,28 @@ pub type Binds = HashMap<
     >,
 >;
 
-#[derive(Default)]
 pub struct GameUiManager {
     pub player: OnceCell<Option<Id>>,
     pub prefab: OnceCell<Option<Id>>,
     pub camera: OnceCell<Option<Id>>,
     pub kp_cb: Binds,
+    pub main_menu: MainMenu,
 }
 
 impl GameUiManager {
+    pub fn new(
+        context: &Context,
+        (em, cm): (&mut EntityManager, &mut ComponentManager),
+    ) -> anyhow::Result<Self> {
+        Ok(Self {
+            player: Default::default(),
+            prefab: Default::default(),
+            camera: Default::default(),
+            kp_cb: Default::default(),
+            main_menu: MainMenu::new(&context.display, (em, cm))?,
+        })
+    }
+
     pub fn add_keybind<F>(&mut self, i: Input, f: F)
     where
         F: FnMut(

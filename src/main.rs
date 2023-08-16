@@ -71,7 +71,7 @@ pub fn init() -> anyhow::Result<()> {
     ));
     system_manager.add(ChunkManager::new((&mut em, &mut cm)));
     system_manager.add(PlayerManager::new(&context, (&mut em, &mut cm))?);
-    system_manager.add(GameUiManager::default());
+    system_manager.add(GameUiManager::new(&context, (&mut em, &mut cm))?);
     system_manager.add(ProjectileManager::default());
     system_manager.add(UiManager::default());
     system_manager.add(ConstructManager::default());
