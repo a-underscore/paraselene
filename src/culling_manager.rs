@@ -2,7 +2,7 @@ use crate::tag::Tag;
 use hex::{
     anyhow,
     components::{Camera, Transform},
-    ecs::{ev::Control, system_manager::System, ComponentManager, EntityManager, Ev, Id, Context},
+    ecs::{ev::Control, system_manager::System, ComponentManager, Context, EntityManager, Ev, Id},
     glium::glutin::event::Event,
     once_cell::sync::OnceCell,
 };

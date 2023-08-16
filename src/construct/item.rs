@@ -1,7 +1,7 @@
 use crate::{chunk::tile::METAL, util};
 use hex::{
     anyhow,
-    ecs::{component_manager::Component, Id, Context},
+    ecs::{component_manager::Component, Context, Id},
     id,
 };
 use hex_instance::Instance;

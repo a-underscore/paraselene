@@ -4,7 +4,7 @@ use hex::{
     ecs::{
         ev::{Control, Ev},
         system_manager::System,
-        ComponentManager, EntityManager, Id, Context,
+        ComponentManager, Context, EntityManager, Id,
     },
     glium::glutin::event::Event,
     once_cell::sync::OnceCell,

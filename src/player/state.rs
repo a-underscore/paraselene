@@ -6,7 +6,7 @@ use hex::{
     ecs::{
         component_manager::{Component, ComponentManager},
         entity_manager::EntityManager,
-        Id, Context,
+        Context, Id,
     },
     id,
     once_cell::sync::Lazy,

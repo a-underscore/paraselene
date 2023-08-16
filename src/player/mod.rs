@@ -12,7 +12,7 @@ pub use state::State;
 use crate::{construct::MINER, projectile::Projectile};
 use hex::{
     anyhow,
-    ecs::{component_manager::Component, Id, Context},
+    ecs::{component_manager::Component, Context, Id},
     id,
     math::Vec2d,
 };

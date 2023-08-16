@@ -1,7 +1,7 @@
 use super::Construct;
 use hex::{
     anyhow,
-    ecs::{ev::Control, system_manager::System, ComponentManager, EntityManager, Ev, Context},
+    ecs::{ev::Control, system_manager::System, ComponentManager, Context, EntityManager, Ev},
     glium::glutin::event::Event,
 };
 use std::time::{Duration, Instant};

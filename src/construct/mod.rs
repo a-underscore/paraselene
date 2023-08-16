@@ -20,7 +20,7 @@ use hex::{
     ecs::{
         component_manager::{Component, ComponentManager},
         entity_manager::EntityManager,
-        Id, Context,
+        Context, Id,
     },
     id,
     math::{Mat3d, Vec2d},

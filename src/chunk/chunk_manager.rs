@@ -9,7 +9,7 @@ use hex::{
     anyhow,
     assets::Texture,
     components::{Camera, Transform},
-    ecs::{ev::Control, system_manager::System, ComponentManager, EntityManager, Ev, Id, Context},
+    ecs::{ev::Control, system_manager::System, ComponentManager, Context, EntityManager, Ev, Id},
     glium::{
         glutin::event::{Event, WindowEvent},
         texture::{MipmapsOption, Texture2d},

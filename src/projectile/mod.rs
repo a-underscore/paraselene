@@ -5,7 +5,7 @@ pub use projectile_manager::ProjectileManager;
 use crate::{util, PLAYER_LAYER, PROJECTILE_LAYER};
 use hex::{
     anyhow,
-    ecs::{component_manager::Component, Id, Context},
+    ecs::{component_manager::Component, Context, Id},
     id,
     math::Vec2d,
     once_cell::sync::OnceCell,

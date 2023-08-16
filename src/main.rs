@@ -14,7 +14,7 @@ use game_ui_manager::GameUiManager;
 use hex::{
     anyhow,
     assets::Shape,
-    ecs::{ComponentManager, EntityManager, Id, Context, SystemManager},
+    ecs::{ComponentManager, Context, EntityManager, Id, SystemManager},
     glium::{
         glutin::{dpi::Size, event_loop::EventLoop, window::WindowBuilder, ContextBuilder},
         Display,
