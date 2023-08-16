@@ -4,7 +4,7 @@ use hex::{
     ecs::{
         ev::{Control, Ev},
         system_manager::System,
-        ComponentManager, EntityManager, Id, Scene,
+        ComponentManager, EntityManager, Id, Context,
     },
     glium::glutin::event::Event,
     once_cell::sync::OnceCell,
@@ -22,7 +22,7 @@ impl<'a> System<'a> for ProjectileManager {
     fn update(
         &mut self,
         ev: &mut Ev,
-        _: &mut Scene,
+        _: &mut Context,
         (em, cm): (&mut EntityManager, &mut ComponentManager),
     ) -> anyhow::Result<()> {
         if let Ev::Event(Control {

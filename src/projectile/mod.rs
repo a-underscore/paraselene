@@ -5,7 +5,7 @@ pub use projectile_manager::ProjectileManager;
 use crate::{util, PLAYER_LAYER, PROJECTILE_LAYER};
 use hex::{
     anyhow,
-    ecs::{component_manager::Component, Id, Scene},
+    ecs::{component_manager::Component, Id, Context},
     id,
     math::Vec2d,
     once_cell::sync::OnceCell,
@@ -25,7 +25,7 @@ pub struct Projectile {
 }
 
 impl Projectile {
-    pub fn player_bullet(scene: &Scene) -> anyhow::Result<(Self, Collider, Instance)> {
+    pub fn player_bullet(context: &Context) -> anyhow::Result<(Self, Collider, Instance)> {
         Ok((
             Self {
                 spawn_time: OnceCell::new(),
@@ -43,7 +43,7 @@ impl Projectile {
                 true,
             ),
             Instance::new(
-                util::load_texture(&scene.display, include_bytes!("player_projectile.png"))?,
+                util::load_texture(&context.display, include_bytes!("player_projectile.png"))?,
                 [1.0; 4],
                 -1.0,
                 true,

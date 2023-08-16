@@ -6,7 +6,7 @@ use hex::{
     ecs::{
         component_manager::{Component, ComponentManager},
         entity_manager::EntityManager,
-        Id, Scene,
+        Id, Context,
     },
     id,
     once_cell::sync::Lazy,
@@ -18,6 +18,9 @@ use std::{collections::HashMap, fs, path::PathBuf};
 
 pub static SAVE_PATH: Lazy<PathBuf> = Lazy::new(|| PathBuf::from(SAVE_DIR).join("map.json"));
 
+pub const MENU_MODE: u32 = 0;
+pub const GAME_MODE: u32 = 1;
+
 #[derive(Clone)]
 pub struct State<'a> {
     pub save_data: SaveData,
@@ -27,11 +30,12 @@ pub struct State<'a> {
     pub items: HashMap<String, (Item, Instance)>,
     pub constructs: HashMap<String, (Construct<'a>, Instance)>,
     pub space: Texture,
+    pub mode: u32,
 }
 
 impl State<'_> {
     pub fn load(
-        scene: &Scene,
+        context: &Context,
         (em, cm): (&mut EntityManager, &mut ComponentManager),
     ) -> anyhow::Result<Self> {
         let (mut rng, save_data) = fs::read_to_string(&*SAVE_PATH)
@@ -55,23 +59,24 @@ impl State<'_> {
             perlin,
             rng,
             tiles: vec![
-                Tile::asteroid_1(scene)?,
-                Tile::asteroid_2(scene)?,
-                Tile::metal(scene)?,
+                Tile::asteroid_1(context)?,
+                Tile::asteroid_2(context)?,
+                Tile::metal(context)?,
             ]
             .into_iter()
             .map(|t| (t.id.clone(), t))
             .collect(),
-            items: vec![Item::metal(scene)?]
+            items: vec![Item::metal(context)?]
                 .into_iter()
                 .map(|ref i @ (ref item, _)| (item.id.clone(), i.clone()))
                 .collect(),
-            constructs: vec![Construct::miner(scene, (em, cm))?]
+            constructs: vec![Construct::miner(context, (em, cm))?]
                 .into_iter()
                 .flatten()
                 .map(|ref o @ (ref c, _)| (c.id.clone(), o.clone()))
                 .collect(),
-            space: Tile::space(scene)?,
+            space: Tile::space(context)?,
+            mode: MENU_MODE,
         })
     }
 

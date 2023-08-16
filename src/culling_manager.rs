@@ -2,7 +2,7 @@ use crate::tag::Tag;
 use hex::{
     anyhow,
     components::{Camera, Transform},
-    ecs::{ev::Control, system_manager::System, ComponentManager, EntityManager, Ev, Id, Scene},
+    ecs::{ev::Control, system_manager::System, ComponentManager, EntityManager, Ev, Id, Context},
     glium::glutin::event::Event,
     once_cell::sync::OnceCell,
 };
@@ -17,7 +17,7 @@ impl System<'_> for CullingManager {
     fn update(
         &mut self,
         ev: &mut Ev,
-        _scene: &mut Scene,
+        _context: &mut Context,
         (em, cm): (&mut EntityManager, &mut ComponentManager),
     ) -> anyhow::Result<()> {
         if let Ev::Event(Control {

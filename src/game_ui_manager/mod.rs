@@ -12,7 +12,7 @@ use hex::{
     ecs::{
         ev::{Control, Ev},
         system_manager::System,
-        ComponentManager, EntityManager, Id, Scene,
+        ComponentManager, EntityManager, Id, Context,
     },
     glium::glutin::{
         dpi::PhysicalPosition,
@@ -34,7 +34,7 @@ pub type Binds = HashMap<
     Box<
         dyn FnMut(
             ElementState,
-            &mut Scene,
+            &mut Context,
             (&mut EntityManager, &mut ComponentManager),
         ) -> anyhow::Result<()>,
     >,
@@ -53,7 +53,7 @@ impl GameUiManager {
     where
         F: FnMut(
                 ElementState,
-                &mut Scene,
+                &mut Context,
                 (&mut EntityManager, &mut ComponentManager),
             ) -> anyhow::Result<()>
             + 'static,
@@ -184,7 +184,7 @@ impl GameUiManager {
 impl<'a> System<'a> for GameUiManager {
     fn init(
         &mut self,
-        _: &mut Scene,
+        _: &mut Context,
         (em, cm): (&mut EntityManager, &mut ComponentManager),
     ) -> anyhow::Result<()> {
         self.init_default_keybinds((em, cm));
@@ -195,7 +195,7 @@ impl<'a> System<'a> for GameUiManager {
     fn update(
         &mut self,
         ev: &mut Ev,
-        scene: &mut Scene,
+        context: &mut Context,
         (em, cm): (&mut EntityManager, &mut ComponentManager),
     ) -> anyhow::Result<()> {
         match ev {
@@ -206,7 +206,7 @@ impl<'a> System<'a> for GameUiManager {
                         window_id,
                         event: WindowEvent::CloseRequested,
                     },
-            }) if *window_id == scene.display.gl_window().window().id() => {
+            }) if *window_id == context.display.gl_window().window().id() => {
                 *flow = Some(ControlFlow::Exit);
             }
             Ev::Event(Control {
@@ -226,9 +226,9 @@ impl<'a> System<'a> for GameUiManager {
                         ..
                     },
                 flow: _,
-            }) if *window_id == scene.display.gl_window().window().id() => {
+            }) if *window_id == context.display.gl_window().window().id() => {
                 if let Some(key) = self.kp_cb.get_mut(&Input::Keyboard(*code)) {
-                    key(*state, scene, (em, cm))?;
+                    key(*state, context, (em, cm))?;
                 }
             }
             Ev::Event(Control {
@@ -239,9 +239,9 @@ impl<'a> System<'a> for GameUiManager {
                         ..
                     },
                 flow: _,
-            }) if *window_id == scene.display.gl_window().window().id() => {
+            }) if *window_id == context.display.gl_window().window().id() => {
                 if let Some(key) = self.kp_cb.get_mut(&Input::Mouse(*button)) {
-                    key(*state, scene, (em, cm))?;
+                    key(*state, context, (em, cm))?;
                 }
             }
             Ev::Event(Control {
@@ -252,7 +252,7 @@ impl<'a> System<'a> for GameUiManager {
                         ..
                     },
                 flow: _,
-            }) if *window_id == scene.display.gl_window().window().id() => {
+            }) if *window_id == context.display.gl_window().window().id() => {
                 if let Some(camera) = *self
                     .camera
                     .get_or_init(|| Tag::new("camera").find((em, cm)))

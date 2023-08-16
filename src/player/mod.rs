@@ -12,7 +12,7 @@ pub use state::State;
 use crate::{construct::MINER, projectile::Projectile};
 use hex::{
     anyhow,
-    ecs::{component_manager::Component, Id, Scene},
+    ecs::{component_manager::Component, Id, Context},
     id,
     math::Vec2d,
 };
@@ -33,13 +33,13 @@ pub struct Player {
 }
 
 impl Player {
-    pub fn new(scene: &Scene) -> anyhow::Result<Self> {
+    pub fn new(context: &Context) -> anyhow::Result<Self> {
         Ok(Self {
             health: 25.0,
             fire_time: Instant::now(),
             trail_time: Instant::now(),
             states: Default::default(),
-            projectile: Projectile::player_bullet(scene)?,
+            projectile: Projectile::player_bullet(context)?,
             hotbar: Self::default_hotbar(),
         })
     }

@@ -20,7 +20,7 @@ use hex::{
     ecs::{
         component_manager::{Component, ComponentManager},
         entity_manager::EntityManager,
-        Id, Scene,
+        Id, Context,
     },
     id,
     math::{Mat3d, Vec2d},
@@ -45,10 +45,10 @@ pub struct Construct<'a> {
 
 impl Construct<'_> {
     pub fn miner(
-        scene: &Scene,
+        context: &Context,
         (em, cm): (&mut EntityManager, &mut ComponentManager),
     ) -> anyhow::Result<Option<(Self, Instance)>> {
-        let texture = util::load_texture(&scene.display, include_bytes!("miner.png"))?;
+        let texture = util::load_texture(&context.display, include_bytes!("miner.png"))?;
 
         Ok(Tag::new("map")
             .find((em, cm))

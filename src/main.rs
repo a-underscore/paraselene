@@ -14,7 +14,7 @@ use game_ui_manager::GameUiManager;
 use hex::{
     anyhow,
     assets::Shape,
-    ecs::{ComponentManager, EntityManager, Id, Scene, SystemManager},
+    ecs::{ComponentManager, EntityManager, Id, Context, SystemManager},
     glium::{
         glutin::{dpi::Size, event_loop::EventLoop, window::WindowBuilder, ContextBuilder},
         Display,
@@ -29,15 +29,14 @@ use projectile::ProjectileManager;
 use std::time::Duration;
 use tag::Tag;
 
-pub const SAVE_DIR: &str = "save";
-pub const WINDOW_DIMS_X: u32 = 1920;
-pub const WINDOW_DIMS_Y: u32 = 1080;
-pub const UI_CAM_DIMS: f32 = 10.0;
-pub const PHYSICS_CYCLES: u32 = 2;
-pub const PHYSICS_RATE: u32 = 3;
-pub const TREE_ITEM_COUNT: usize = 4;
-pub const PROJECTILE_LAYER: Id = 1;
-pub const PLAYER_LAYER: Id = 2;
+const SAVE_DIR: &str = "save";
+const WINDOW_DIMS_X: u32 = 1920;
+const WINDOW_DIMS_Y: u32 = 1080;
+const UI_CAM_DIMS: f32 = 10.0;
+const PHYSICS_CYCLES: u32 = 2;
+const PHYSICS_RATE: u32 = 3;
+const PROJECTILE_LAYER: Id = 1;
+const PLAYER_LAYER: Id = 2;
 
 pub fn main() {
     init().unwrap();
@@ -61,7 +60,7 @@ pub fn init() -> anyhow::Result<()> {
     let mut em = EntityManager::default();
     let mut cm = ComponentManager::default();
 
-    let scene = Scene::new(display, [0.1, 0.1, 0.1, 1.0]);
+    let context = Context::new(display, [0.1, 0.1, 0.1, 1.0]);
 
     let mut system_manager = SystemManager::default();
 
@@ -71,18 +70,18 @@ pub fn init() -> anyhow::Result<()> {
         Some(Duration::from_secs_f32(1.0 / 30.0)),
     ));
     system_manager.add(ChunkManager::new((&mut em, &mut cm)));
-    system_manager.add(PlayerManager::new(&scene, (&mut em, &mut cm))?);
+    system_manager.add(PlayerManager::new(&context, (&mut em, &mut cm))?);
     system_manager.add(GameUiManager::default());
     system_manager.add(ProjectileManager::default());
     system_manager.add(UiManager::default());
     system_manager.add(ConstructManager::default());
     system_manager.add(CullingManager::default());
     system_manager.add(InstanceRenderer::new(
-        &scene.display,
-        Shape::rect(&scene.display, Vec2d([1.0; 2]))?,
+        &context.display,
+        Shape::rect(&context.display, Vec2d([1.0; 2]))?,
     )?);
     system_manager.add(UiRenderer::new(
-        &scene.display,
+        &context.display,
         Ortho::new(
             -UI_CAM_DIMS,
             UI_CAM_DIMS,
@@ -93,7 +92,7 @@ pub fn init() -> anyhow::Result<()> {
         ),
     )?);
 
-    scene.init(ev, (em, cm), system_manager)?;
+    context.init(ev, (em, cm), system_manager)?;
 
     Ok(())
 }

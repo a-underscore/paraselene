@@ -1,7 +1,7 @@
 use super::Construct;
 use hex::{
     anyhow,
-    ecs::{ev::Control, system_manager::System, ComponentManager, EntityManager, Ev, Scene},
+    ecs::{ev::Control, system_manager::System, ComponentManager, EntityManager, Ev, Context},
     glium::glutin::event::Event,
 };
 use std::time::{Duration, Instant};
@@ -24,7 +24,7 @@ impl System<'_> for ConstructManager {
     fn update(
         &mut self,
         ev: &mut Ev,
-        _scene: &mut Scene,
+        _context: &mut Context,
         (em, cm): (&mut EntityManager, &mut ComponentManager),
     ) -> anyhow::Result<()> {
         if let Ev::Event(Control {
