@@ -109,7 +109,7 @@ impl PlayerManager {
             Shape::rect(&context.display, Vec2d([1.0; 2]))?,
             util::load_texture(&context.display, include_bytes!("crosshair.png"))?,
             [1.0; 4],
-            0.0,
+            5.0,
             true,
         );
 
@@ -278,18 +278,12 @@ impl<'a> System<'a> for PlayerManager {
                 flow: _,
             }) => {
                 if let Some(mode) = cm.get::<State>(self.player, em).map(|p| p.mode) {
-                    let mode = mode == GAME_MODE;
+                    let now = Instant::now();
+                    let delta = now.duration_since(self.frame);
 
-                    if let Some(sprite) = cm.get_mut::<Sprite>(self.crosshair, em) {
-                        sprite.active = mode;
-                    }
+                    self.frame = now;
 
-                    if mode {
-                        let now = Instant::now();
-                        let delta = now.duration_since(self.frame);
-
-                        self.frame = now;
-
+                    if mode == GAME_MODE {
                         if let Some((position, transform)) = cm
                             .get::<ScreenTransform>(self.crosshair, em)
                             .cloned()
@@ -428,9 +422,9 @@ impl<'a> System<'a> for PlayerManager {
                                 ct.set_position(position);
                             }
                         }
-
-                        self.update_hotbar((em, cm))?;
                     }
+
+                    self.update_hotbar((em, cm))?;
                 }
             }
             Ev::Event(Control {

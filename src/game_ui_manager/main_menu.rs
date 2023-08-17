@@ -1,9 +1,10 @@
+use crate::player::{state::MENU_MODE, State};
 use crate::util;
 use hex::{
     anyhow,
     assets::{Shape, Texture},
     components::Sprite,
-    ecs::{ComponentManager, EntityManager},
+    ecs::{ComponentManager, EntityManager, Id},
     glium::{
         texture::MipmapsOption,
         uniforms::{MagnifySamplerFilter, MinifySamplerFilter, SamplerBehavior},
@@ -11,19 +12,25 @@ use hex::{
     },
     math::Vec2d,
 };
-use hex_ui::{ab_glyph::FontRef, ScreenTransform, Text};
+use hex_ui::{
+    ab_glyph::FontRef,
+    ui::{Button, Callback},
+    ScreenTransform, Text, Ui,
+};
 
-pub struct MainMenu {}
+pub struct MainMenu<'a> {
+    pub font: FontRef<'a>,
+    pub text: Id,
+    pub button: Id,
+    pub window: Id,
+}
 
-impl MainMenu {
+impl<'a> MainMenu<'a> {
     pub fn new(
         display: &Display,
         (em, cm): (&mut EntityManager, &mut ComponentManager),
     ) -> anyhow::Result<Self> {
-        let screen_transform = ScreenTransform::new(Vec2d([0.0; 2]), 0.0, Vec2d([1.0; 2]), true);
         let font = FontRef::try_from_slice(include_bytes!("font.otf"))?;
-        let _button_texture = util::load_texture(display, include_bytes!("button.png"))?;
-        let _window_texture = util::load_texture(display, include_bytes!("window.png"))?;
         let text_texture = Texture::text(
             display,
             "Play",
@@ -41,13 +48,83 @@ impl MainMenu {
             Shape::rect(display, Vec2d([1.0; 2]))?,
             text_texture,
             [1.0; 4],
+            2.0,
+            true,
+        );
+        let text = em.add();
+
+        cm.add(text, text_sprite, em);
+
+        cm.add(
+            text,
+            ScreenTransform::new(Vec2d([0.0; 2]), 0.0, Vec2d([1.0; 2]), true),
+            em,
+        );
+
+        let button_texture = util::load_texture(display, include_bytes!("button.png"))?;
+        let button_sprite = Sprite::new(
+            Shape::rect(display, Vec2d([1.0; 2]))?,
+            button_texture,
+            [1.0; 4],
+            1.0,
+            true,
+        );
+        let button = em.add();
+
+        cm.add(button, button_sprite, em);
+        cm.add(
+            button,
+            ScreenTransform::new(Vec2d([0.0; 2]), 0.0, Vec2d([5.0; 2]), true),
+            em,
+        );
+        cm.add(
+            button,
+            Box::new(Button {
+                dimensions: Vec2d([1.0; 2]),
+                active: true,
+            }) as Box<dyn Ui>,
+            em,
+        );
+        cm.add(button, Callback::default(), em);
+
+        let window_texture = util::load_texture(display, include_bytes!("window.png"))?;
+        let window_sprite = Sprite::new(
+            Shape::rect(display, Vec2d([1.0; 2]))?,
+            window_texture,
+            [1.0; 4],
             0.0,
             true,
         );
-        let text_entity = em.add();
-        let _text = cm.add(text_entity, text_sprite, em);
-        let _screen_transform = cm.add(text_entity, screen_transform, em);
+        let window = em.add();
 
-        Ok(Self {})
+        cm.add(window, window_sprite, em);
+        cm.add(
+            window,
+            ScreenTransform::new(Vec2d([0.0; 2]), 0.0, Vec2d([10.0; 2]), true),
+            em,
+        );
+
+        Ok(Self {
+            font,
+            text,
+            button,
+            window,
+        })
+    }
+
+    pub fn update(&self, player: Id, (em, cm): (&mut EntityManager, &mut ComponentManager)) {
+        if let Some(active) = cm.get::<State>(player, em).map(|p| p.mode == MENU_MODE) {
+            if let Some(text) = cm.get_mut::<Sprite>(self.text, em) {
+                text.active = active;
+            }
+
+            if let Some(button) = cm.get_mut::<Sprite>(self.button, em) {
+                button.active = active;
+            }
+
+            if let Some(window) = cm.get_mut::<Sprite>(self.window, em) {
+                window.active = active;
+            }
+        }
     }
 }

@@ -5,7 +5,7 @@ pub use input::Input;
 pub use main_menu::MainMenu;
 
 use crate::{
-    player::{player_manager::CAM_DIMS, Player},
+    player::{player_manager::CAM_DIMS, state::GAME_MODE, Player, State},
     Tag,
 };
 use hex::{
@@ -27,6 +27,7 @@ use hex::{
     math::Vec2d,
     once_cell::sync::OnceCell,
 };
+use hex_ui::ui::Callback;
 use std::{collections::HashMap, f32::consts::PI};
 
 pub const ZOOM: f32 = 5.0;
@@ -42,15 +43,15 @@ pub type Binds = HashMap<
     >,
 >;
 
-pub struct GameUiManager {
+pub struct GameUiManager<'a> {
     pub player: OnceCell<Option<Id>>,
     pub prefab: OnceCell<Option<Id>>,
     pub camera: OnceCell<Option<Id>>,
     pub kp_cb: Binds,
-    pub main_menu: MainMenu,
+    pub main_menu: MainMenu<'a>,
 }
 
-impl GameUiManager {
+impl<'a> GameUiManager<'a> {
     pub fn new(
         context: &Context,
         (em, cm): (&mut EntityManager, &mut ComponentManager),
@@ -196,7 +197,7 @@ impl GameUiManager {
     }
 }
 
-impl<'a> System<'a> for GameUiManager {
+impl<'a> System<'a> for GameUiManager<'a> {
     fn init(
         &mut self,
         _: &mut Context,
@@ -214,6 +215,28 @@ impl<'a> System<'a> for GameUiManager {
         (em, cm): (&mut EntityManager, &mut ComponentManager),
     ) -> anyhow::Result<()> {
         match ev {
+            Ev::Event(Control {
+                event: Event::MainEventsCleared,
+                flow: _,
+            }) => {
+                if let Some(player) = *self
+                    .player
+                    .get_or_init(|| Tag::new("player").find((em, cm)))
+                {
+                    self.main_menu.update(player, (em, cm));
+
+                    if let Some(pressed) = cm
+                        .get_mut::<Callback>(self.main_menu.button, em)
+                        .map(|c| c.check())
+                    {
+                        if pressed {
+                            if let Some(state) = cm.get_mut::<State>(player, em) {
+                                state.mode = GAME_MODE;
+                            }
+                        }
+                    }
+                }
+            }
             Ev::Event(Control {
                 flow,
                 event:
