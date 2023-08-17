@@ -42,6 +42,21 @@ pub fn setup_directories() -> anyhow::Result<()> {
     Ok(())
 }
 
+pub fn mouse_pos_world(
+    dims: Vec2d,
+    camera_scale: Vec2d,
+    window_dims: (u32, u32),
+    mouse_pos: (f64, f64),
+) -> Option<Vec2d> {
+    let (x, y) = mouse_pos;
+    let (width, height) = window_dims;
+
+    Some(Vec2d::new(
+        camera_scale.x() * ((x / width as f64) as f32 * dims.x() - dims.x() / 2.0),
+        -camera_scale.y() * ((y / height as f64) as f32 * dims.y() - dims.y() / 2.0),
+    ))
+}
+
 pub fn lerp(f1: f32, f2: f32, t: f32) -> f32 {
     f1 * t + f2 * t
 }

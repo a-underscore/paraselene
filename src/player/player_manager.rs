@@ -137,21 +137,6 @@ impl PlayerManager {
         })
     }
 
-    pub fn mouse_pos_world(
-        &self,
-        dims: Vec2d,
-        (em, cm): (&mut EntityManager, &mut ComponentManager),
-    ) -> Option<Vec2d> {
-        let (x, y) = self.mouse_pos;
-        let camera_transform = cm.get::<Transform>(self.player, em).map(|t| t.scale())?;
-        let (width, height) = self.window_dims;
-
-        Some(Vec2d::new(
-            camera_transform.x() * ((x / width as f64) as f32 * dims.x() - dims.x() / 2.0),
-            -camera_transform.y() * ((y / height as f64) as f32 * dims.y() - dims.y() / 2.0),
-        ))
-    }
-
     pub fn tile_pos(mouse_pos: Vec2d, player_pos: Vec2d) -> Vec2d {
         Vec2d::new(mouse_pos.x().floor(), mouse_pos.y().floor()) - player_pos
             + Vec2d::new(player_pos.x().round(), player_pos.y().round())
@@ -165,7 +150,14 @@ impl PlayerManager {
         if let Some(mouse_pos) = cm
             .get::<Camera>(self.camera, em)
             .map(|camera| camera.dimensions().0)
-            .and_then(|p| self.mouse_pos_world(p, (em, cm)))
+            .and_then(|p| {
+                util::mouse_pos_world(
+                    p,
+                    cm.get::<Transform>(self.player, em).map(|c| c.scale())?,
+                    self.window_dims,
+                    self.mouse_pos,
+                )
+            })
         {
             if let Some(((c, firing, removing), player_pos)) =
                 cm.get::<Player>(self.player, em).cloned().and_then(|t| {
@@ -186,14 +178,11 @@ impl PlayerManager {
                     cm.rm::<Instance>(self.prefab, em);
                 }
 
-                if let Some(screen_pos) =
-                    self.mouse_pos_world(Vec2d::new(UI_CAM_DIMS * 2.0, UI_CAM_DIMS * 2.0), (em, cm))
                 {
-                    if let Some(screen_transform) =
-                        cm.get_mut::<ScreenTransform>(self.crosshair, em)
+                    if let Some(screen_pos) = cm
+                        .get::<ScreenTransform>(self.crosshair, em)
+                        .map(|st| st.position)
                     {
-                        screen_transform.position = screen_pos;
-
                         let res = cm
                             .get_mut::<Transform>(self.prefab, em)
                             .and_then(|transform| {
@@ -276,6 +265,24 @@ impl<'a> System<'a> for PlayerManager {
                 flow: _,
             }) => {
                 if let Some(mode) = cm.get::<State>(self.player, em).map(|p| p.mode) {
+                    if let Some(screen_pos) =
+                        cm.get::<Transform>(self.camera, em)
+                            .and_then(|camera_transform| {
+                                util::mouse_pos_world(
+                                    Vec2d::new(UI_CAM_DIMS * 2.0, UI_CAM_DIMS * 2.0),
+                                    camera_transform.scale(),
+                                    self.window_dims,
+                                    self.mouse_pos,
+                                )
+                            })
+                    {
+                        if let Some(screen_transform) =
+                            cm.get_mut::<ScreenTransform>(self.crosshair, em)
+                        {
+                            screen_transform.position = screen_pos;
+                        }
+                    }
+
                     let now = Instant::now();
                     let delta = now.duration_since(self.frame);
 
@@ -420,9 +427,9 @@ impl<'a> System<'a> for PlayerManager {
                                 ct.set_position(position);
                             }
                         }
-                    }
 
-                    self.update_hotbar((em, cm))?;
+                        self.update_hotbar((em, cm))?;
+                    }
                 }
             }
             Ev::Event(Control {
