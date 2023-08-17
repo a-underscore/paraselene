@@ -143,9 +143,7 @@ impl PlayerManager {
         (em, cm): (&mut EntityManager, &mut ComponentManager),
     ) -> Option<Vec2d> {
         let (x, y) = self.mouse_pos;
-        let camera_transform = cm
-            .get::<Transform>(self.player, em)
-            .and_then(|t| t.active.then_some(t.scale()))?;
+        let camera_transform = cm.get::<Transform>(self.player, em).map(|t| t.scale())?;
         let (width, height) = self.window_dims;
 
         Some(Vec2d::new(
