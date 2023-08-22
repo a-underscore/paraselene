@@ -296,8 +296,9 @@ impl<'a> System<'a> for PlayerManager {
                     self.frame = now;
 
                     if mode == GAME_MODE {
-                        cm.get_mut::<Instance>(self.player, em)
-                            .map(|i| i.active = true);
+                        if let Some(i) = cm.get_mut::<Instance>(self.player, em) {
+                            i.active = true;
+                        }
 
                         if let Some((position, transform)) = cm
                             .get::<ScreenTransform>(self.crosshair, em)
