@@ -5,7 +5,11 @@ pub use input::Input;
 pub use main_menu::MainMenu;
 
 use crate::{
-    player::{player_manager::CAM_DIMS, state::GAME_MODE, Player, State},
+    player::{
+        player_manager::CAM_DIMS,
+        state::{GAME_MODE, MENU_MODE},
+        Player, State,
+    },
     Tag,
 };
 use hex::{
@@ -187,6 +191,18 @@ impl<'a> GameUiManager<'a> {
                     if let ElementState::Pressed = state {
                         if let Some(transform) = cm.get_mut::<Transform>(prefab, em) {
                             transform.set_rotation(transform.rotation() % (2.0 * PI) + (PI / 2.0));
+                        }
+                    }
+
+                    Ok(())
+                },
+            );
+            self.add_keybind(
+                Input::Keyboard(VirtualKeyCode::Escape),
+                move |state, _, (em, cm)| {
+                    if let ElementState::Pressed = state {
+                        if let Some(state) = cm.get_mut::<State>(player, em) {
+                            state.mode = MENU_MODE;
                         }
                     }
 

@@ -2,7 +2,10 @@ use super::{Map, CHUNK_SIZE};
 use crate::{
     chunk::{Chunk, ChunkData},
     construct::{Construct, ConstructData, Item, ItemData},
-    player::State,
+    player::{
+        state::{GAME_MODE, MENU_MODE},
+        State,
+    },
     Tag, SAVE_DIR,
 };
 use hex::{
@@ -254,123 +257,144 @@ impl<'a> System<'a> for ChunkManager {
                     event: Event::MainEventsCleared,
                     flow: _,
                 }) => {
-                    if let Some((cam_dims, _)) =
-                        cm.get::<Camera>(camera, em).map(|c| c.dimensions())
-                    {
-                        let now = Instant::now();
-                        let delta = now.duration_since(self.frame);
-
-                        self.frame = now;
-
-                        let chunks: Vec<_> = (0..(FRAME_LOAD_AMOUNT
-                            * delta.as_secs_f32().ceil() as u64))
-                            .filter_map(|_| cm.get_mut::<Map>(self.map, em)?.load_queue.pop())
-                            .collect();
-
-                        for c in chunks {
-                            if let Some((chunk, instance, transform)) =
-                                if let Some(state) = cm.get_mut::<State>(player, em) {
-                                    Some(self.load_chunk(c, context, state)?)
-                                } else {
-                                    None
-                                }
+                    if let Some(mode) = cm.get::<State>(player, em).map(|p| p.mode) {
+                        if mode == GAME_MODE {
+                            if let Some((cam_dims, _)) =
+                                cm.get::<Camera>(camera, em).map(|c| c.dimensions())
                             {
-                                let e = em.add();
+                                let now = Instant::now();
+                                let delta = now.duration_since(self.frame);
 
-                                cm.add(e, chunk, em);
-                                cm.add(e, instance, em);
-                                cm.add(e, transform, em);
+                                self.frame = now;
 
-                                if let Some(map) = cm.get_mut::<Map>(self.map, em) {
-                                    map.loaded.insert(c, e);
-                                }
-                            }
-                        }
+                                let chunks: Vec<_> = (0..(FRAME_LOAD_AMOUNT
+                                    * delta.as_secs_f32().ceil() as u64))
+                                    .filter_map(|_| {
+                                        cm.get_mut::<Map>(self.map, em)?.load_queue.pop()
+                                    })
+                                    .collect();
 
-                        if now.duration_since(self.check) >= ASTEROID_UPDATE_TIME {
-                            self.check = now;
+                                for c in chunks {
+                                    if let Some((chunk, instance, transform)) =
+                                        if let Some(state) = cm.get_mut::<State>(player, em) {
+                                            Some(self.load_chunk(c, context, state)?)
+                                        } else {
+                                            None
+                                        }
+                                    {
+                                        let e = em.add();
 
-                            for e in em.entities.keys().cloned() {
-                                if let Some(p) = cm
-                                    .get::<Construct>(e, em)
-                                    .and_then(|_| cm.get::<Transform>(e, em).map(|t| t.position()))
-                                {
-                                    if let Some(map) = cm.get_mut::<Map>(self.map, em) {
-                                        map.queue_load(Self::chunk_pos(p));
-                                    }
-                                }
-                            }
-
-                            if let Some(player_chunk) = cm
-                                .get::<Transform>(player, em)
-                                .and_then(|t| t.active.then_some(Self::chunk_pos(t.position())))
-                            {
-                                let offset_x = (cam_dims.x().ceil() / CHUNK_SIZE as f32
-                                    * CHUNK_DIST)
-                                    .ceil() as u32;
-                                let offset_y = (cam_dims.y().ceil() / CHUNK_SIZE as f32
-                                    * CHUNK_DIST)
-                                    .ceil() as u32;
-                                let min = (
-                                    player_chunk
-                                        .0
-                                        .checked_sub(offset_x)
-                                        .unwrap_or_default()
-                                        .max(MIN_CHUNK),
-                                    player_chunk
-                                        .1
-                                        .checked_sub(offset_y)
-                                        .unwrap_or_default()
-                                        .max(MIN_CHUNK),
-                                );
-                                let max = (
-                                    (player_chunk.0 + offset_x).min(MAX_CHUNK),
-                                    (player_chunk.1 + offset_y).min(MAX_CHUNK),
-                                );
-
-                                for i in min.0..max.0 {
-                                    for j in min.1..max.1 {
-                                        let chunk = (i, j);
+                                        cm.add(e, chunk, em);
+                                        cm.add(e, instance, em);
+                                        cm.add(e, transform, em);
 
                                         if let Some(map) = cm.get_mut::<Map>(self.map, em) {
-                                            map.queue_load(chunk);
+                                            map.loaded.insert(c, e);
                                         }
                                     }
                                 }
 
-                                for e in em.entities.clone().into_keys() {
-                                    if cm.get::<Chunk>(e, em).is_some() {
-                                        if let Some(position) =
-                                            cm.get::<Transform>(e, em).and_then(|t| {
-                                                t.active.then_some(Self::chunk_pos(t.position()))
-                                            })
-                                        {
-                                            if position.0
-                                                < min.0.checked_sub(UNLOAD_BIAS).unwrap_or_default()
-                                                || position.0
-                                                    > max
-                                                        .0
-                                                        .checked_add(UNLOAD_BIAS)
-                                                        .unwrap_or(MAX_MAP_SIZE)
-                                                || position.1
-                                                    < min
-                                                        .1
-                                                        .checked_sub(UNLOAD_BIAS)
-                                                        .unwrap_or_default()
-                                                || position.1
-                                                    > max
-                                                        .1
-                                                        .checked_add(UNLOAD_BIAS)
-                                                        .unwrap_or(MAX_MAP_SIZE)
-                                            {
-                                                if let Some(map) = cm.get_mut::<Map>(self.map, em) {
-                                                    map.loaded.remove(&position);
+                                if now.duration_since(self.check) >= ASTEROID_UPDATE_TIME {
+                                    self.check = now;
 
-                                                    em.rm(e, cm);
+                                    for e in em.entities.keys().cloned() {
+                                        if let Some(p) = cm.get::<Construct>(e, em).and_then(|_| {
+                                            cm.get::<Transform>(e, em).map(|t| t.position())
+                                        }) {
+                                            if let Some(map) = cm.get_mut::<Map>(self.map, em) {
+                                                map.queue_load(Self::chunk_pos(p));
+                                            }
+                                        }
+                                    }
+
+                                    if let Some(player_chunk) =
+                                        cm.get::<Transform>(player, em).and_then(|t| {
+                                            t.active.then_some(Self::chunk_pos(t.position()))
+                                        })
+                                    {
+                                        let offset_x = (cam_dims.x().ceil() / CHUNK_SIZE as f32
+                                            * CHUNK_DIST)
+                                            .ceil()
+                                            as u32;
+                                        let offset_y = (cam_dims.y().ceil() / CHUNK_SIZE as f32
+                                            * CHUNK_DIST)
+                                            .ceil()
+                                            as u32;
+                                        let min = (
+                                            player_chunk
+                                                .0
+                                                .checked_sub(offset_x)
+                                                .unwrap_or_default()
+                                                .max(MIN_CHUNK),
+                                            player_chunk
+                                                .1
+                                                .checked_sub(offset_y)
+                                                .unwrap_or_default()
+                                                .max(MIN_CHUNK),
+                                        );
+                                        let max = (
+                                            (player_chunk.0 + offset_x).min(MAX_CHUNK),
+                                            (player_chunk.1 + offset_y).min(MAX_CHUNK),
+                                        );
+
+                                        for i in min.0..max.0 {
+                                            for j in min.1..max.1 {
+                                                let chunk = (i, j);
+
+                                                if let Some(map) = cm.get_mut::<Map>(self.map, em) {
+                                                    map.queue_load(chunk);
+                                                }
+                                            }
+                                        }
+
+                                        for e in em.entities.clone().into_keys() {
+                                            if cm.get::<Chunk>(e, em).is_some() {
+                                                if let Some(position) =
+                                                    cm.get::<Transform>(e, em).and_then(|t| {
+                                                        t.active.then_some(Self::chunk_pos(
+                                                            t.position(),
+                                                        ))
+                                                    })
+                                                {
+                                                    if position.0
+                                                        < min
+                                                            .0
+                                                            .checked_sub(UNLOAD_BIAS)
+                                                            .unwrap_or_default()
+                                                        || position.0
+                                                            > max
+                                                                .0
+                                                                .checked_add(UNLOAD_BIAS)
+                                                                .unwrap_or(MAX_MAP_SIZE)
+                                                        || position.1
+                                                            < min
+                                                                .1
+                                                                .checked_sub(UNLOAD_BIAS)
+                                                                .unwrap_or_default()
+                                                        || position.1
+                                                            > max
+                                                                .1
+                                                                .checked_add(UNLOAD_BIAS)
+                                                                .unwrap_or(MAX_MAP_SIZE)
+                                                    {
+                                                        if let Some(map) =
+                                                            cm.get_mut::<Map>(self.map, em)
+                                                        {
+                                                            map.loaded.remove(&position);
+
+                                                            em.rm(e, cm);
+                                                        }
+                                                    }
                                                 }
                                             }
                                         }
                                     }
+                                }
+                            }
+                        } else if mode == MENU_MODE {
+                            for e in em.entities.clone().into_keys() {
+                                if cm.get::<Chunk>(e, em).is_some() {
+                                    em.rm(e, cm);
                                 }
                             }
                         }
@@ -384,12 +408,19 @@ impl<'a> System<'a> for ChunkManager {
                         },
                     flow: _,
                 }) if *window_id == context.display.gl_window().window().id() => {
-                    if let Some((p, mut state)) = cm
+                    if let Some((p, v, mut state)) = cm
                         .get::<Transform>(player, em)
                         .map(|t| t.position())
-                        .and_then(|pr| Some((pr, cm.get_mut::<State>(player, em).cloned()?)))
+                        .and_then(|p| {
+                            Some((
+                                p,
+                                cm.get::<Physical>(player, em).map(|p| p.velocity())?,
+                                cm.get_mut::<State>(player, em).cloned()?,
+                            ))
+                        })
                     {
                         state.save_data.player_position = p.0;
+                        state.save_data.player_velocity = v.0;
                         state.save_data.constructs = em
                             .entities
                             .keys()

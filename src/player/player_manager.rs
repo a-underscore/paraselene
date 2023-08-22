@@ -1,4 +1,7 @@
-use super::{state::GAME_MODE, Player, State};
+use super::{
+    state::{GAME_MODE, MENU_MODE},
+    Player, State,
+};
 use crate::{
     chunk::{chunk_manager::MAX_MAP_SIZE, CHUNK_SIZE},
     construct::Construct,
@@ -62,7 +65,6 @@ impl PlayerManager {
 
         let p = Player::new(context)?;
 
-        cm.add(player, state, em);
         cm.add(player, p, em);
         cm.add(
             player,
@@ -74,7 +76,12 @@ impl PlayerManager {
             ),
             em,
         );
-        cm.add(player, Physical::new(Default::default(), true), em);
+        cm.add(
+            player,
+            Physical::new(Vec2d(state.save_data.player_velocity), true),
+            em,
+        );
+        cm.add(player, state, em);
         cm.add(
             player,
             Collider::oct(
@@ -289,6 +296,9 @@ impl<'a> System<'a> for PlayerManager {
                     self.frame = now;
 
                     if mode == GAME_MODE {
+                        cm.get_mut::<Instance>(self.player, em)
+                            .map(|i| i.active = true);
+
                         if let Some((position, transform)) = cm
                             .get::<ScreenTransform>(self.crosshair, em)
                             .cloned()
@@ -429,6 +439,9 @@ impl<'a> System<'a> for PlayerManager {
                         }
 
                         self.update_hotbar((em, cm))?;
+                    } else if mode == MENU_MODE {
+                        cm.get_mut::<Instance>(self.player, em)
+                            .map(|i| i.active = false);
                     }
                 }
             }

@@ -64,6 +64,7 @@ pub fn init() -> anyhow::Result<()> {
 
     let mut system_manager = SystemManager::default();
 
+    system_manager.add(UiManager::default());
     system_manager.add(PhysicsManager::new(
         PHYSICS_RATE,
         PHYSICS_CYCLES,
@@ -73,7 +74,6 @@ pub fn init() -> anyhow::Result<()> {
     system_manager.add(PlayerManager::new(&context, (&mut em, &mut cm))?);
     system_manager.add(GameUiManager::new(&context, (&mut em, &mut cm))?);
     system_manager.add(ProjectileManager::default());
-    system_manager.add(UiManager::default());
     system_manager.add(ConstructManager::default());
     system_manager.add(CullingManager::default());
     system_manager.add(InstanceRenderer::new(

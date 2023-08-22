@@ -6,6 +6,7 @@ use serde_derive::{Deserialize, Serialize};
 pub struct SaveData {
     pub seed: u64,
     pub player_position: [f32; 2],
+    pub player_velocity: [f32; 2],
     pub constructs: Vec<ConstructData>,
     pub items: Vec<ItemData>,
 }
@@ -15,6 +16,7 @@ impl SaveData {
         Self {
             seed,
             player_position: [Self::gen_map_coord(rng), Self::gen_map_coord(rng)],
+            player_velocity: [0.0; 2],
             constructs: Vec::new(),
             items: Vec::new(),
         }
