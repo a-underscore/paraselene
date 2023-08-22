@@ -440,8 +440,9 @@ impl<'a> System<'a> for PlayerManager {
 
                         self.update_hotbar((em, cm))?;
                     } else if mode == MENU_MODE {
-                        cm.get_mut::<Instance>(self.player, em)
-                            .map(|i| i.active = false);
+                        if let Some(i) = cm.get_mut::<Instance>(self.player, em) {
+                            i.active = false;
+                        }
                     }
                 }
             }
