@@ -1,7 +1,4 @@
-use super::{
-    state::{GAME_MODE, MENU_MODE},
-    Player, State,
-};
+use super::{state::GAME_MODE, Player, State};
 use crate::{
     chunk::{chunk_manager::MAX_MAP_SIZE, CHUNK_SIZE},
     construct::Construct,
@@ -296,10 +293,6 @@ impl<'a> System<'a> for PlayerManager {
                     self.frame = now;
 
                     if mode == GAME_MODE {
-                        if let Some(i) = cm.get_mut::<Instance>(self.player, em) {
-                            i.active = true;
-                        }
-
                         if let Some((position, transform)) = cm
                             .get::<ScreenTransform>(self.crosshair, em)
                             .cloned()
@@ -440,10 +433,6 @@ impl<'a> System<'a> for PlayerManager {
                         }
 
                         self.update_hotbar((em, cm))?;
-                    } else if mode == MENU_MODE {
-                        if let Some(i) = cm.get_mut::<Instance>(self.player, em) {
-                            i.active = false;
-                        }
                     }
                 }
             }

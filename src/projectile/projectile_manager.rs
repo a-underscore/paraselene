@@ -7,14 +7,12 @@ use hex::{
         ComponentManager, Context, EntityManager, Id,
     },
     glium::glutin::event::Event,
-    once_cell::sync::OnceCell,
 };
 use hex_physics::Collider;
 use std::time::Instant;
 
 #[derive(Default)]
 pub struct ProjectileManager {
-    pub player: OnceCell<Option<Id>>,
     queued_rm: Vec<Id>,
 }
 
@@ -51,6 +49,7 @@ impl<'a> System<'a> for ProjectileManager {
                 .into_iter()
                 .filter_map(|(e, spawn_time, projectile)| {
                     let delta = now.duration_since(spawn_time);
+
                     (cm.get::<Collider>(e, em)
                         .map(|collider| {
                             collider
