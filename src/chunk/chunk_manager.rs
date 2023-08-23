@@ -3,7 +3,7 @@ use crate::{
     chunk::{Chunk, ChunkData},
     construct::{Construct, ConstructData, Item, ItemData},
     player::{
-        state::{GAME_MODE, MENU_MODE},
+        state::GAME_MODE,
         State,
     },
     Tag, SAVE_DIR,
@@ -389,12 +389,6 @@ impl<'a> System<'a> for ChunkManager {
                                             }
                                         }
                                     }
-                                }
-                            }
-                        } else if mode == MENU_MODE {
-                            for e in em.entities.clone().into_keys() {
-                                if cm.get::<Chunk>(e, em).is_some() {
-                                    em.rm(e, cm);
                                 }
                             }
                         }

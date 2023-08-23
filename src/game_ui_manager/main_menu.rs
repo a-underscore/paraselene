@@ -80,7 +80,7 @@ impl<'a> MainMenu<'a> {
         cm.add(
             button,
             Box::new(Button {
-                dimensions: Vec2d([1.0; 2]),
+                dimensions: Vec2d::new(1.0, 0.5),
                 active: true,
             }) as Box<dyn Ui>,
             em,
