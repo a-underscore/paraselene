@@ -39,7 +39,7 @@ pub const ZOOM: f32 = 5.0;
 pub type Binds = HashMap<
     Input,
     Box<
-        dyn FnMut(
+        dyn Fn(
             ElementState,
             &mut Context,
             (&mut EntityManager, &mut ComponentManager),
@@ -71,7 +71,7 @@ impl<'a> GameUiManager<'a> {
 
     pub fn add_keybind<F>(&mut self, i: Input, f: F)
     where
-        F: FnMut(
+        F: Fn(
                 ElementState,
                 &mut Context,
                 (&mut EntityManager, &mut ComponentManager),

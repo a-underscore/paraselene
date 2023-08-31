@@ -55,11 +55,11 @@ impl System<'_> for CullingManager {
                                     let diff = pos - camera_pos;
                                     let dimensions = dimensions / 2.0;
 
-                                    instance.active = mode == GAME_MODE && (
-                                        -dimensions.x() <= diff.x()
-                                        || dimensions.x() >= diff.x()
-                                        || -dimensions.y() <= diff.y()
-                                        || dimensions.y() >= diff.y());
+                                    instance.active = mode == GAME_MODE
+                                        && (-dimensions.x() <= diff.x()
+                                            || dimensions.x() >= diff.x()
+                                            || -dimensions.y() <= diff.y()
+                                            || dimensions.y() >= diff.y());
                                 }
                             }
                         }

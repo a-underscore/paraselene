@@ -45,7 +45,7 @@ impl<'a> System<'a> for ProjectileManager {
                     Some((e, spawn_time, projectile.clone()))
                 })
                 .collect();
-            let rm = projectiles
+            let rm: Vec<_> = projectiles
                 .into_iter()
                 .filter_map(|(e, spawn_time, projectile)| {
                     let delta = now.duration_since(spawn_time);
@@ -63,7 +63,7 @@ impl<'a> System<'a> for ProjectileManager {
                         || delta >= projectile.alive_time)
                         .then_some(e)
                 })
-                .collect::<Vec<_>>();
+                .collect();
 
             self.queued_rm.extend(rm);
         }

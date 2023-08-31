@@ -2,10 +2,7 @@ use super::{Map, CHUNK_SIZE};
 use crate::{
     chunk::{Chunk, ChunkData},
     construct::{Construct, ConstructData, Item, ItemData},
-    player::{
-        state::GAME_MODE,
-        State,
-    },
+    player::{state::GAME_MODE, State},
     Tag, SAVE_DIR,
 };
 use hex::{
