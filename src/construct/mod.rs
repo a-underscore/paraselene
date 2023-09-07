@@ -167,27 +167,38 @@ impl Construct<'_> {
             .map(|t| (t.position(), t.rotation()))
         {
             for e in em.entities.keys().cloned() {
-                if let Some((iid, tid, position)) = cm.get_id::<Item>(e, em).and_then(|iid| {
-                    let item = cm.get_cache::<Item>(iid)?;
+                if let Some((iid, tid, force, position)) =
+                    cm.get_id::<Item>(e, em).and_then(|iid| {
+                        let item = cm.get_cache::<Item>(iid)?;
 
-                    if item.last.map(|l| l != entity).unwrap_or(true) {
-                        cm.get_id::<Transform>(e, em).and_then(|tid| {
-                            Some((
-                                iid,
-                                tid,
-                                cm.get_cache::<Transform>(tid).map(|t| t.position())?,
-                            ))
-                        })
-                    } else {
-                        None
-                    }
-                }) {
+                        if item.last.map(|l| l != entity).unwrap_or(true) {
+                            cm.get_id::<Transform>(e, em).and_then(|tid| {
+                                Some((
+                                    iid,
+                                    tid,
+                                    cm.get::<Physical>(e, em).map(|p| p.force)?,
+                                    cm.get_cache::<Transform>(tid).map(|t| t.position())?,
+                                ))
+                            })
+                        } else {
+                            None
+                        }
+                    })
+                {
                     let transformed = construct_position
                         + (Mat3d::rotation(construct_rotation)
                             * (Vec2d::new(0.0, -PICKUP_BIAS * 2.0), 1.0))
                             .0;
+                    let direction = {
+                        let direction =
+                            (Mat3d::rotation(construct_rotation) * (Vec2d::new(0.0, 1.0), 1.0)).0;
 
-                    if (transformed.x() - position.x()).abs() <= PICKUP_BIAS
+                        Vec2d::new(direction.x().round(), direction.y().round()).normal()
+                    };
+                    let force = Vec2d::new(force.x().round(), force.y().round()).normal();
+
+                    if direction == force
+                        && (transformed.x() - position.x()).abs() <= PICKUP_BIAS
                         && (transformed.y() - position.y()).abs() <= PICKUP_BIAS
                     {
                         if let Some(transform) = cm.get_cache_mut::<Transform>(tid) {
