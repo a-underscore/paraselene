@@ -10,7 +10,7 @@ pub use save_data::SaveData;
 pub use state::State;
 
 use crate::{
-    construct::{MINER, ROUTER},
+    construct::{MINER, RIGHT_ROUTER},
     projectile::Projectile,
 };
 use hex::{
@@ -55,7 +55,7 @@ impl Player {
         let mut hotbar = vec![None; HOTBAR_SLOTS];
 
         hotbar[1] = Some(MINER.to_string());
-        hotbar[2] = Some(ROUTER.to_string());
+        hotbar[2] = Some(RIGHT_ROUTER.to_string());
 
         hotbar
     }

@@ -33,7 +33,7 @@ pub type UpdateFn<'a> =
     dyn Fn(Id, (&'a mut EntityManager, &'a mut ComponentManager)) -> anyhow::Result<()>;
 
 pub const MINER: &str = "miner";
-pub const ROUTER: &str = "router";
+pub const RIGHT_ROUTER: &str = "right_router";
 pub const PICKUP_BIAS: f32 = 0.25;
 
 #[derive(Clone)]
@@ -126,12 +126,12 @@ impl Construct<'_> {
             }))
     }
 
-    pub fn router(context: &Context) -> anyhow::Result<(Self, Instance)> {
-        let texture = util::load_texture(&context.display, include_bytes!("router.png"))?;
+    pub fn right_router(context: &Context) -> anyhow::Result<(Self, Instance)> {
+        let texture = util::load_texture(&context.display, include_bytes!("right_router.png"))?;
 
         Ok((
             Self {
-                id: ROUTER.to_string(),
+                id: RIGHT_ROUTER.to_string(),
                 update: Rc::new(move |entity, (em, cm)| {
                     if let Some((construct_position, construct_rotation)) = cm
                         .get::<Transform>(entity, em)
