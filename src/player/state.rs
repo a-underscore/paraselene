@@ -73,7 +73,10 @@ impl State<'_> {
             constructs: vec![Construct::miner(context, (em, cm))?]
                 .into_iter()
                 .flatten()
-                .chain(vec![Construct::right_router(context)?])
+                .chain(vec![
+                    Construct::left_router(context)?,
+                    Construct::right_router(context)?,
+                ])
                 .map(|ref o @ (ref c, _)| (c.id.clone(), o.clone()))
                 .collect(),
             space: Tile::space(context)?,

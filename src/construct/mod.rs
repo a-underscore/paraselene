@@ -34,6 +34,7 @@ pub type UpdateFn<'a> =
 
 pub const MINER: &str = "miner";
 pub const RIGHT_ROUTER: &str = "right_router";
+pub const LEFT_ROUTER: &str = "left_router";
 pub const PICKUP_BIAS: f32 = 0.25;
 
 #[derive(Clone)]
@@ -132,68 +133,86 @@ impl Construct<'_> {
         Ok((
             Self {
                 id: RIGHT_ROUTER.to_string(),
-                update: Rc::new(move |entity, (em, cm)| {
-                    if let Some((construct_position, construct_rotation)) = cm
-                        .get::<Transform>(entity, em)
-                        .map(|t| (t.position(), t.rotation()))
-                    {
-                        for e in em.entities.keys().cloned() {
-                            if let Some((iid, tid, position)) =
-                                cm.get_id::<Item>(e, em).and_then(|iid| {
-                                    let item = cm.get_cache::<Item>(iid)?;
-
-                                    if item.last.map(|l| l != entity).unwrap_or(true) {
-                                        cm.get_id::<Transform>(e, em).and_then(|tid| {
-                                            Some((
-                                                iid,
-                                                tid,
-                                                cm.get_cache::<Transform>(tid)
-                                                    .map(|t| t.position())?,
-                                            ))
-                                        })
-                                    } else {
-                                        None
-                                    }
-                                })
-                            {
-                                let transformed = construct_position
-                                    + (Mat3d::rotation(construct_rotation)
-                                        * (Vec2d::new(0.0, -PICKUP_BIAS * 2.0), 1.0))
-                                        .0;
-
-                                if (transformed.x() - position.x()).abs() <= PICKUP_BIAS
-                                    && (transformed.y() - position.y()).abs() <= PICKUP_BIAS
-                                {
-                                    if let Some(transform) = cm.get_cache_mut::<Transform>(tid) {
-                                        transform.set_position(
-                                            (Mat3d::rotation(-PI / 2.0 + construct_rotation)
-                                                * (Vec2d::new(0.0, PICKUP_BIAS * 2.0), 1.0))
-                                                .0
-                                                + construct_position,
-                                        );
-                                    }
-
-                                    if let Some(physical) = cm.get_mut::<Physical>(e, em) {
-                                        physical.force =
-                                            (Mat3d::rotation(-PI / 2.0) * (physical.force, 1.0)).0;
-                                    }
-
-                                    if let Some(item) = cm.get_cache_mut::<Item>(iid) {
-                                        item.last = Some(e);
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    Ok(())
-                }),
+                update: Rc::new(move |entity, (em, cm)| Self::router(entity, (em, cm), 1.0)),
                 tick_amount: 0,
                 update_tick: 1,
                 eject_speed: 1.0,
             },
             Instance::new(texture, [1.0; 4], -3.0, true),
         ))
+    }
+
+    pub fn left_router(context: &Context) -> anyhow::Result<(Self, Instance)> {
+        let texture = util::load_texture(&context.display, include_bytes!("left_router.png"))?;
+
+        Ok((
+            Self {
+                id: LEFT_ROUTER.to_string(),
+                update: Rc::new(move |entity, (em, cm)| Self::router(entity, (em, cm), -1.0)),
+                tick_amount: 0,
+                update_tick: 1,
+                eject_speed: 1.0,
+            },
+            Instance::new(texture, [1.0; 4], -3.0, true),
+        ))
+    }
+
+    fn router(
+        entity: Id,
+        (em, cm): (&mut EntityManager, &mut ComponentManager),
+        dir: f32,
+    ) -> anyhow::Result<()> {
+        if let Some((construct_position, construct_rotation)) = cm
+            .get::<Transform>(entity, em)
+            .map(|t| (t.position(), t.rotation()))
+        {
+            for e in em.entities.keys().cloned() {
+                if let Some((iid, tid, position)) = cm.get_id::<Item>(e, em).and_then(|iid| {
+                    let item = cm.get_cache::<Item>(iid)?;
+
+                    if item.last.map(|l| l != entity).unwrap_or(true) {
+                        cm.get_id::<Transform>(e, em).and_then(|tid| {
+                            Some((
+                                iid,
+                                tid,
+                                cm.get_cache::<Transform>(tid).map(|t| t.position())?,
+                            ))
+                        })
+                    } else {
+                        None
+                    }
+                }) {
+                    let transformed = construct_position
+                        + (Mat3d::rotation(construct_rotation)
+                            * (Vec2d::new(0.0, -PICKUP_BIAS * 2.0), 1.0))
+                            .0;
+
+                    if (transformed.x() - position.x()).abs() <= PICKUP_BIAS
+                        && (transformed.y() - position.y()).abs() <= PICKUP_BIAS
+                    {
+                        if let Some(transform) = cm.get_cache_mut::<Transform>(tid) {
+                            transform.set_position(
+                                (Mat3d::rotation(dir * (construct_rotation - PI / 2.0))
+                                    * (Vec2d::new(0.0, PICKUP_BIAS * 2.0), 1.0))
+                                    .0
+                                    + construct_position,
+                            );
+                        }
+
+                        if let Some(physical) = cm.get_mut::<Physical>(e, em) {
+                            physical.force =
+                                (Mat3d::rotation(dir * -PI / 2.0) * (physical.force, 1.0)).0;
+                        }
+
+                        if let Some(item) = cm.get_cache_mut::<Item>(iid) {
+                            item.last = Some(e);
+                        }
+                    }
+                }
+            }
+        }
+
+        Ok(())
     }
 }
 
