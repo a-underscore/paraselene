@@ -33,8 +33,8 @@ const SAVE_DIR: &str = "save";
 const WINDOW_DIMS_X: u32 = 1920;
 const WINDOW_DIMS_Y: u32 = 1080;
 const UI_CAM_DIMS: f32 = 10.0;
-const PHYSICS_CYCLES: u32 = 2;
-const PHYSICS_RATE: u32 = 3;
+const PHYSICS_CYCLES: u32 = 1;
+const PHYSICS_RATE: u32 = 5;
 const PROJECTILE_LAYER: Id = 1;
 const PLAYER_LAYER: Id = 2;
 

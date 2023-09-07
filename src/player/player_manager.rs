@@ -182,69 +182,67 @@ impl PlayerManager {
                     cm.rm::<Instance>(self.prefab, em);
                 }
 
+                if let Some(screen_pos) = cm
+                    .get::<ScreenTransform>(self.crosshair, em)
+                    .map(|st| st.position)
                 {
-                    if let Some(screen_pos) = cm
-                        .get::<ScreenTransform>(self.crosshair, em)
-                        .map(|st| st.position)
-                    {
-                        let res = cm
-                            .get_mut::<Transform>(self.prefab, em)
-                            .and_then(|transform| {
-                                if let Some(res) = c.map(|(c, i)| {
-                                    transform.set_position(screen_pos);
+                    let res = cm
+                        .get_mut::<Transform>(self.prefab, em)
+                        .and_then(|transform| {
+                            if let Some(res) = c.map(|(c, i)| {
+                                transform.set_position(screen_pos);
 
-                                    (c, i, transform.rotation())
-                                }) {
-                                    Some(res)
-                                } else {
-                                    transform.set_position(screen_pos);
+                                (c, i, transform.rotation())
+                            }) {
+                                Some(res)
+                            } else {
+                                transform.set_position(screen_pos);
 
-                                    None
-                                }
+                                None
+                            }
+                        });
+
+                    if let Some((c, i, rotation)) = res {
+                        let position = Self::tile_pos(mouse_pos, player_pos);
+                        let pos = position + player_pos;
+
+                        if pos.x() >= 0.0
+                            && pos.x() <= MAX_MAP_SIZE as f32
+                            && pos.y() >= 0.0
+                            && pos.y() <= MAX_MAP_SIZE as f32
+                        {
+                            let x = pos.x() as u64;
+                            let y = pos.y() as u64;
+
+                            if let Some(transform) = cm.get_mut::<Transform>(self.prefab, em) {
+                                transform.set_position(pos);
+                            }
+
+                            let space = em.entities.keys().cloned().find(|e| {
+                                cm.get::<Construct>(*e, em).is_some()
+                                    && cm
+                                        .get::<Transform>(*e, em)
+                                        .map(|t| {
+                                            t.position().x().floor() as u64 == x
+                                                && t.position().y().floor() as u64 == y
+                                        })
+                                        .unwrap_or(false)
                             });
 
-                        if let Some((c, i, rotation)) = res {
-                            let position = Self::tile_pos(mouse_pos, player_pos);
-                            let pos = position + player_pos;
-
-                            if pos.x() >= 0.0
-                                && pos.x() <= MAX_MAP_SIZE as f32
-                                && pos.y() >= 0.0
-                                && pos.y() <= MAX_MAP_SIZE as f32
-                            {
-                                let x = pos.x() as u64;
-                                let y = pos.y() as u64;
-
-                                if let Some(transform) = cm.get_mut::<Transform>(self.prefab, em) {
-                                    transform.set_position(pos);
+                            if let Some(e) = space {
+                                if removing {
+                                    em.rm(e, cm);
                                 }
+                            } else if firing {
+                                let construct = em.add();
 
-                                let space = em.entities.keys().cloned().find(|e| {
-                                    cm.get::<Construct>(*e, em).is_some()
-                                        && cm
-                                            .get::<Transform>(*e, em)
-                                            .map(|t| {
-                                                t.position().x().floor() as u64 == x
-                                                    && t.position().y().floor() as u64 == y
-                                            })
-                                            .unwrap_or(false)
-                                });
-
-                                if let Some(e) = space {
-                                    if removing {
-                                        em.rm(e, cm);
-                                    }
-                                } else if firing {
-                                    let construct = em.add();
-
-                                    cm.add(
-                                        construct,
-                                        Transform::new(pos, rotation, Vec2d([1.0; 2]), true),
-                                        em,
-                                    );
-                                    cm.add(construct, c.clone(), em);
-                                    cm.add(construct, i.clone(), em);
-                                }
+                                cm.add(
+                                    construct,
+                                    Transform::new(pos, rotation, Vec2d([1.0; 2]), true),
+                                    em,
+                                );
+                                cm.add(construct, c.clone(), em);
+                                cm.add(construct, i.clone(), em);
                             }
                         }
                     }

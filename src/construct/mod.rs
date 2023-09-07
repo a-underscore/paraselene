@@ -27,12 +27,14 @@ use hex::{
 };
 use hex_instance::Instance;
 use hex_physics::Physical;
-use std::rc::Rc;
+use std::{f32::consts::PI, rc::Rc};
 
 pub type UpdateFn<'a> =
     dyn Fn(Id, (&'a mut EntityManager, &'a mut ComponentManager)) -> anyhow::Result<()>;
 
 pub const MINER: &str = "miner";
+pub const ROUTER: &str = "router";
+pub const PICKUP_BIAS: f32 = 0.25;
 
 #[derive(Clone)]
 pub struct Construct<'a> {
@@ -122,6 +124,71 @@ impl Construct<'_> {
                     Instance::new(texture, [1.0; 4], -3.0, true),
                 )
             }))
+    }
+
+    pub fn router(context: &Context) -> anyhow::Result<(Self, Instance)> {
+        let texture = util::load_texture(&context.display, include_bytes!("router.png"))?;
+
+        Ok((
+            Self {
+                id: ROUTER.to_string(),
+                update: Rc::new(move |entity, (em, cm)| {
+                    if let Some((construct_position, construct_rotation)) = cm
+                        .get::<Transform>(entity, em)
+                        .map(|t| (t.position(), t.rotation()))
+                    {
+                        for e in em.entities.keys().cloned() {
+                            if let Some((iid, tid, position)) =
+                                cm.get_id::<Item>(e, em).and_then(|iid| {
+                                    let item = cm.get_cache::<Item>(iid)?;
+
+                                    if item.last.map(|l| l != entity).unwrap_or(true) {
+                                        cm.get_id::<Transform>(e, em).and_then(|tid| {
+                                            Some((
+                                                iid,
+                                                tid,
+                                                cm.get_cache::<Transform>(tid)
+                                                    .map(|t| t.position())?,
+                                            ))
+                                        })
+                                    } else {
+                                        None
+                                    }
+                                })
+                            {
+                                if (construct_position.x() - position.x()).abs() <= PICKUP_BIAS
+                                    && (construct_position.y() - position.y()).abs() <= PICKUP_BIAS
+                                {
+                                    if let Some(transform) = cm.get_cache_mut::<Transform>(tid) {
+                                        transform.set_position(
+                                            (Mat3d::rotation(-PI / 2.0 + construct_rotation)
+                                                * (Vec2d::new(0.0, PICKUP_BIAS * 2.0), 1.0))
+                                                .0
+                                                + construct_position,
+                                        );
+                                    }
+
+                                    if let Some(physical) = cm.get_mut::<Physical>(e, em) {
+                                        physical.force =
+                                            (Mat3d::rotation(-PI / 2.0) * (physical.force, 1.0)).0;
+                                    }
+
+                                    if let Some(item) = cm.get_cache_mut::<Item>(iid) {
+                                        item.last = Some(e);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Ok(())
+                }),
+                tick_amount: 0,
+                update_tick: 1,
+                eject_speed: 1.0,
+            },
+            Instance::new(texture, [1.0; 4], -3.0, true),
+        ))
     }
 }
 
