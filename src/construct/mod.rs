@@ -156,8 +156,13 @@ impl Construct<'_> {
                                     }
                                 })
                             {
-                                if (construct_position.x() - position.x()).abs() <= PICKUP_BIAS
-                                    && (construct_position.y() - position.y()).abs() <= PICKUP_BIAS
+                                let transformed = construct_position
+                                    + (Mat3d::rotation(construct_rotation)
+                                        * (Vec2d::new(0.0, -PICKUP_BIAS * 2.0), 1.0))
+                                        .0;
+
+                                if (transformed.x() - position.x()).abs() <= PICKUP_BIAS
+                                    && (transformed.y() - position.y()).abs() <= PICKUP_BIAS
                                 {
                                     if let Some(transform) = cm.get_cache_mut::<Transform>(tid) {
                                         transform.set_position(
