@@ -203,7 +203,7 @@ impl Construct<'_> {
                     {
                         if let Some(transform) = cm.get_cache_mut::<Transform>(tid) {
                             transform.set_position(
-                                (Mat3d::rotation(dir * (construct_rotation - PI / 2.0))
+                                (Mat3d::rotation(construct_rotation + dir * -PI / 2.0)
                                     * (Vec2d::new(0.0, PICKUP_BIAS * 2.0), 1.0))
                                     .0
                                     + construct_position,
