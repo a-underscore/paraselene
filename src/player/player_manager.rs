@@ -23,7 +23,7 @@ use hex::{
 use hex_instance::Instance;
 use hex_physics::{Collider, Physical};
 use hex_ui::ScreenTransform;
-use std::time::Instant;
+use std::{f32::MIN_POSITIVE, time::Instant};
 
 pub const CAM_DIMS: f32 = 50.0 / 3.0;
 
@@ -176,8 +176,10 @@ impl PlayerManager {
                     ))
                 })
             {
-                if let Some((_, i)) = &c {
-                    cm.add(self.prefab, i.clone(), em);
+                if let Some(mut i) = c.as_ref().map(|(_, i)| i.clone()) {
+                    i.z += MIN_POSITIVE;
+
+                    cm.add(self.prefab, i, em);
                 } else {
                     cm.rm::<Instance>(self.prefab, em);
                 }
