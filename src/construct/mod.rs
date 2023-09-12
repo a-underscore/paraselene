@@ -5,7 +5,7 @@ pub mod item_data;
 
 pub use construct_data::ConstructData;
 pub use construct_manager::ConstructManager;
-pub use item::Item;
+pub use item::{Item, METAL, REFINED_METAL};
 pub use item_data::ItemData;
 
 use crate::{
@@ -27,7 +27,7 @@ use hex::{
 };
 use hex_instance::Instance;
 use hex_physics::Physical;
-use std::{f32::consts::PI, rc::Rc};
+use std::{collections::HashMap, f32::consts::PI, rc::Rc};
 
 pub type UpdateFn<'a> =
     dyn Fn(Id, (&'a mut EntityManager, &'a mut ComponentManager)) -> anyhow::Result<()>;
@@ -35,6 +35,7 @@ pub type UpdateFn<'a> =
 pub const MINER: &str = "miner";
 pub const RIGHT_ROUTER: &str = "right_router";
 pub const LEFT_ROUTER: &str = "left_router";
+pub const FURNACE: &str = "FURNACE";
 pub const PICKUP_BIAS: f32 = 0.1;
 
 #[derive(Clone)]
@@ -157,17 +158,85 @@ impl Construct<'_> {
         ))
     }
 
+    pub fn furnace(
+        context: &Context,
+        (em, cm): (&mut EntityManager, &mut ComponentManager),
+    ) -> anyhow::Result<Option<(Self, Instance)>> {
+        let texture = util::load_texture(&context.display, include_bytes!("furnace.png"))?;
+        let refinery_map: HashMap<_, _> = [(METAL.to_string(), REFINED_METAL.to_string())]
+            .into_iter()
+            .collect();
+
+        Ok(Tag::new("player").find((em, cm)).map(|player| {
+            (
+                Self {
+                    id: FURNACE.to_string(),
+                    update: Rc::new(move |entity, (em, cm)| {
+                        if let Some(transform) = cm.get::<Transform>(entity, em).cloned() {
+                            for e in em.entities.keys().cloned() {
+                                if let Some((iid, item_id, force, position)) =
+                                    cm.get_id::<Item>(e, em).and_then(|iid| {
+                                        let item = cm.get_cache::<Item>(iid)?;
+
+                                        if item.last.map(|l| l != entity).unwrap_or(true) {
+                                            Some((
+                                                iid,
+                                                item.id.clone(),
+                                                cm.get::<Physical>(e, em).map(|p| p.force)?,
+                                                cm.get::<Transform>(e, em).map(|t| t.position())?,
+                                            ))
+                                        } else {
+                                            None
+                                        }
+                                    })
+                                {
+                                    if Self::pickup(&transform, position, force) {
+                                        if let Some(new_item_id) =
+                                            refinery_map.get(&item_id).cloned()
+                                        {
+                                            if let Some((new_item, new_instance)) =
+                                                if let Some(state) = cm.get::<State>(player, em) {
+                                                    state.items.get(&new_item_id).cloned()
+                                                } else {
+                                                    None
+                                                }
+                                            {
+                                                if let Some(item) = cm.get_cache_mut::<Item>(iid) {
+                                                    *item = new_item;
+                                                    item.last = Some(entity);
+                                                }
+
+                                                if let Some(instance) =
+                                                    cm.get_mut::<Instance>(e, em)
+                                                {
+                                                    *instance = new_instance;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        Ok(())
+                    }),
+                    tick_amount: 0,
+                    update_tick: 1,
+                    eject_speed: 1.0,
+                },
+                Instance::new(texture, [1.0; 4], -3.0, true),
+            )
+        }))
+    }
+
     fn router(
         entity: Id,
         (em, cm): (&mut EntityManager, &mut ComponentManager),
         dir: f32,
     ) -> anyhow::Result<()> {
-        if let Some((construct_position, construct_rotation)) = cm
-            .get::<Transform>(entity, em)
-            .map(|t| (t.position(), t.rotation()))
-        {
+        if let Some(construct_transform) = cm.get::<Transform>(entity, em).cloned() {
             for e in em.entities.keys().cloned() {
-                if let Some((iid, tid, force, position)) =
+                if let Some((iid, tid, force, item_position)) =
                     cm.get_id::<Item>(e, em).and_then(|iid| {
                         let item = cm.get_cache::<Item>(iid)?;
 
@@ -185,28 +254,13 @@ impl Construct<'_> {
                         }
                     })
                 {
-                    let transformed = construct_position
-                        + (Mat3d::rotation(construct_rotation)
-                            * (Vec2d::new(0.0, -PICKUP_BIAS * 2.0), 1.0))
-                            .0;
-                    let direction = {
-                        let direction =
-                            (Mat3d::rotation(construct_rotation) * (Vec2d::new(0.0, 1.0), 1.0)).0;
-
-                        Vec2d::new(direction.x().round(), direction.y().round()).normal()
-                    };
-                    let force = Vec2d::new(force.x().round(), force.y().round()).normal();
-
-                    if direction == force
-                        && (transformed.x() - position.x()).abs() <= PICKUP_BIAS
-                        && (transformed.y() - position.y()).abs() <= PICKUP_BIAS
-                    {
+                    if Self::pickup(&construct_transform, item_position, force) {
                         if let Some(transform) = cm.get_cache_mut::<Transform>(tid) {
                             transform.set_position(
-                                (Mat3d::rotation(construct_rotation + dir * -PI / 2.0)
+                                (Mat3d::rotation(construct_transform.rotation() + dir * -PI / 2.0)
                                     * (Vec2d::new(0.0, PICKUP_BIAS * 2.0), 1.0))
                                     .0
-                                    + construct_position,
+                                    + construct_transform.position(),
                             );
                         }
 
@@ -224,6 +278,24 @@ impl Construct<'_> {
         }
 
         Ok(())
+    }
+
+    pub fn pickup(construct_transform: &Transform, item_position: Vec2d, force: Vec2d) -> bool {
+        let transformed = construct_transform.position()
+            + (Mat3d::rotation(construct_transform.rotation())
+                * (Vec2d::new(0.0, -PICKUP_BIAS * 2.0), 1.0))
+                .0;
+        let direction = {
+            let direction =
+                (Mat3d::rotation(construct_transform.rotation()) * (Vec2d::new(0.0, 1.0), 1.0)).0;
+
+            Vec2d::new(direction.x().round(), direction.y().round()).normal()
+        };
+        let force = Vec2d::new(force.x().round(), force.y().round()).normal();
+
+        direction == force
+            && (transformed.x() - item_position.x()).abs() <= PICKUP_BIAS
+            && (transformed.y() - item_position.y()).abs() <= PICKUP_BIAS
     }
 }
 

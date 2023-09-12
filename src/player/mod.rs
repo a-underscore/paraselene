@@ -10,7 +10,7 @@ pub use save_data::SaveData;
 pub use state::State;
 
 use crate::{
-    construct::{LEFT_ROUTER, MINER, RIGHT_ROUTER},
+    construct::{FURNACE, LEFT_ROUTER, MINER, RIGHT_ROUTER},
     projectile::Projectile,
 };
 use hex::{
@@ -57,6 +57,7 @@ impl Player {
         hotbar[1] = Some(MINER.to_string());
         hotbar[2] = Some(RIGHT_ROUTER.to_string());
         hotbar[3] = Some(LEFT_ROUTER.to_string());
+        hotbar[4] = Some(FURNACE.to_string());
 
         hotbar
     }

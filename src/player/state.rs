@@ -66,19 +66,22 @@ impl State<'_> {
             .into_iter()
             .map(|t| (t.id.clone(), t))
             .collect(),
-            items: vec![Item::metal(context)?]
+            items: vec![Item::metal(context)?, Item::refined_metal(context)?]
                 .into_iter()
                 .map(|ref i @ (ref item, _)| (item.id.clone(), i.clone()))
                 .collect(),
-            constructs: vec![Construct::miner(context, (em, cm))?]
-                .into_iter()
-                .flatten()
-                .chain(vec![
-                    Construct::left_router(context)?,
-                    Construct::right_router(context)?,
-                ])
-                .map(|ref o @ (ref c, _)| (c.id.clone(), o.clone()))
-                .collect(),
+            constructs: vec![
+                Construct::miner(context, (em, cm))?,
+                Construct::furnace(context, (em, cm))?,
+            ]
+            .into_iter()
+            .flatten()
+            .chain(vec![
+                Construct::left_router(context)?,
+                Construct::right_router(context)?,
+            ])
+            .map(|ref o @ (ref c, _)| (c.id.clone(), o.clone()))
+            .collect(),
             space: Tile::space(context)?,
             mode: MENU_MODE,
         })

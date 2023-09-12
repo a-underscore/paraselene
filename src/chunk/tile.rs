@@ -1,8 +1,7 @@
-use crate::util;
+use crate::{construct::item::METAL, util};
 use hex::{anyhow, assets::Texture, ecs::Context};
 use rand::prelude::*;
 
-pub const METAL: &str = "metal";
 pub const ASTEROID_1: &str = "asteroid_1";
 pub const ASTEROID_2: &str = "asteroid_2";
 
