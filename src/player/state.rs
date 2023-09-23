@@ -79,6 +79,8 @@ impl State {
             .chain(vec![
                 Construct::left_router(context)?,
                 Construct::right_router(context)?,
+                Construct::left_splitter(context)?,
+                Construct::right_splitter(context)?,
             ])
             .map(|ref o @ (ref c, _)| (c.id.clone(), o.clone()))
             .collect(),

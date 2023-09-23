@@ -34,6 +34,8 @@ pub type UpdateFn = dyn Fn(Id, (&mut EntityManager, &mut ComponentManager)) -> a
 pub const MINER: &str = "miner";
 pub const RIGHT_ROUTER: &str = "right_router";
 pub const LEFT_ROUTER: &str = "left_router";
+pub const RIGHT_SPLITTER: &str = "right_splitter";
+pub const LEFT_SPLITTER: &str = "left_splitter";
 pub const FURNACE: &str = "furnace";
 pub const PICKUP_BIAS: f32 = 0.1;
 
@@ -44,6 +46,7 @@ pub struct Construct {
     pub tick_amount: u32,
     pub update_tick: u32,
     pub eject_speed: f32,
+    pub mode: Option<bool>,
 }
 
 impl Construct {
@@ -121,6 +124,7 @@ impl Construct {
                         tick_amount: 0,
                         update_tick: 100,
                         eject_speed: 1.0,
+                        mode: None,
                     },
                     Instance::new(texture, [1.0; 4], -3.0, true),
                 )
@@ -137,6 +141,7 @@ impl Construct {
                 tick_amount: 0,
                 update_tick: 1,
                 eject_speed: 1.0,
+                mode: None,
             },
             Instance::new(texture, [1.0; 4], -3.0, true),
         ))
@@ -152,9 +157,158 @@ impl Construct {
                 tick_amount: 0,
                 update_tick: 1,
                 eject_speed: 1.0,
+                mode: None,
             },
             Instance::new(texture, [1.0; 4], -3.0, true),
         ))
+    }
+
+    fn router(
+        entity: Id,
+        (em, cm): (&mut EntityManager, &mut ComponentManager),
+        dir: f32,
+    ) -> anyhow::Result<()> {
+        if let Some(construct_transform) = cm.get::<Transform>(entity, em).cloned() {
+            for e in em.entities.keys().cloned() {
+                if let Some((iid, tid, force, item_position)) =
+                    cm.get_id::<Item>(e, em).and_then(|iid| {
+                        let item = cm.get_cache::<Item>(iid)?;
+
+                        if item.last.map(|l| l != entity).unwrap_or(true) {
+                            cm.get_id::<Transform>(e, em).and_then(|tid| {
+                                Some((
+                                    iid,
+                                    tid,
+                                    cm.get::<Physical>(e, em).map(|p| p.force)?,
+                                    cm.get_cache::<Transform>(tid).map(|t| t.position())?,
+                                ))
+                            })
+                        } else {
+                            None
+                        }
+                    })
+                {
+                    if Self::pickup(&construct_transform, item_position, force) {
+                        if let Some(transform) = cm.get_cache_mut::<Transform>(tid) {
+                            transform.set_position(
+                                (Mat3d::rotation(construct_transform.rotation() + dir * -PI / 2.0)
+                                    * (Vec2d::new(0.0, PICKUP_BIAS * 2.0), 1.0))
+                                    .0
+                                    + construct_transform.position(),
+                            );
+                        }
+
+                        if let Some(physical) = cm.get_mut::<Physical>(e, em) {
+                            physical.force =
+                                (Mat3d::rotation(dir * -PI / 2.0) * (physical.force, 1.0)).0;
+                        }
+
+                        if let Some(item) = cm.get_cache_mut::<Item>(iid) {
+                            item.last = Some(entity);
+                        }
+                    }
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    pub fn left_splitter(context: &Context) -> anyhow::Result<(Self, Instance)> {
+        let texture = util::load_texture(&context.display, include_bytes!("left_splitter.png"))?;
+
+        Ok((
+            Self {
+                id: LEFT_SPLITTER.to_string(),
+                update: Rc::new(move |entity, (em, cm)| Self::splitter(entity, (em, cm), -1.0)),
+                tick_amount: 0,
+                update_tick: 1,
+                eject_speed: 1.0,
+                mode: Some(true),
+            },
+            Instance::new(texture, [1.0; 4], -3.0, true),
+        ))
+    }
+
+    pub fn right_splitter(context: &Context) -> anyhow::Result<(Self, Instance)> {
+        let texture = util::load_texture(&context.display, include_bytes!("right_splitter.png"))?;
+
+        Ok((
+            Self {
+                id: RIGHT_SPLITTER.to_string(),
+                update: Rc::new(move |entity, (em, cm)| Self::splitter(entity, (em, cm), 1.0)),
+                tick_amount: 0,
+                update_tick: 1,
+                eject_speed: 1.0,
+                mode: Some(true),
+            },
+            Instance::new(texture, [1.0; 4], -3.0, true),
+        ))
+    }
+
+    fn splitter(
+        entity: Id,
+        (em, cm): (&mut EntityManager, &mut ComponentManager),
+        dir: f32,
+    ) -> anyhow::Result<()> {
+        if let Some(construct_transform) = cm.get::<Transform>(entity, em).cloned() {
+            for e in em.entities.keys().cloned() {
+                if let Some((iid, tid, force, item_position)) =
+                    cm.get_id::<Item>(e, em).and_then(|iid| {
+                        let item = cm.get_cache::<Item>(iid)?;
+
+                        if item.last.map(|l| l != entity).unwrap_or(true) {
+                            cm.get_id::<Transform>(e, em).and_then(|tid| {
+                                Some((
+                                    iid,
+                                    tid,
+                                    cm.get::<Physical>(e, em).map(|p| p.force)?,
+                                    cm.get_cache::<Transform>(tid).map(|t| t.position())?,
+                                ))
+                            })
+                        } else {
+                            None
+                        }
+                    })
+                {
+                    if Self::pickup(&construct_transform, item_position, force) {
+                        if let Some(m) = cm.get_mut::<Construct>(entity, em).and_then(|c| {
+                            if let Some(m) = &mut c.mode {
+                                *m = !*m;
+
+                                Some(*m)
+                            } else {
+                                None
+                            }
+                        }) {
+                            if m {
+                                if let Some(transform) = cm.get_cache_mut::<Transform>(tid) {
+                                    transform.set_position(
+                                        (Mat3d::rotation(
+                                            construct_transform.rotation() + dir * -PI / 2.0,
+                                        ) * (Vec2d::new(0.0, PICKUP_BIAS * 2.0), 1.0))
+                                            .0
+                                            + construct_transform.position(),
+                                    );
+                                }
+
+                                if let Some(physical) = cm.get_mut::<Physical>(e, em) {
+                                    physical.force = (Mat3d::rotation(dir * -PI / 2.0)
+                                        * (physical.force, 1.0))
+                                        .0;
+                                }
+                            }
+
+                            if let Some(item) = cm.get_cache_mut::<Item>(iid) {
+                                item.last = Some(entity);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Ok(())
     }
 
     pub fn furnace(
@@ -222,64 +376,14 @@ impl Construct {
                     tick_amount: 0,
                     update_tick: 1,
                     eject_speed: 1.0,
+                    mode: None,
                 },
                 Instance::new(texture, [1.0; 4], -3.0, true),
             )
         }))
     }
 
-    fn router(
-        entity: Id,
-        (em, cm): (&mut EntityManager, &mut ComponentManager),
-        dir: f32,
-    ) -> anyhow::Result<()> {
-        if let Some(construct_transform) = cm.get::<Transform>(entity, em).cloned() {
-            for e in em.entities.keys().cloned() {
-                if let Some((iid, tid, force, item_position)) =
-                    cm.get_id::<Item>(e, em).and_then(|iid| {
-                        let item = cm.get_cache::<Item>(iid)?;
-
-                        if item.last.map(|l| l != entity).unwrap_or(true) {
-                            cm.get_id::<Transform>(e, em).and_then(|tid| {
-                                Some((
-                                    iid,
-                                    tid,
-                                    cm.get::<Physical>(e, em).map(|p| p.force)?,
-                                    cm.get_cache::<Transform>(tid).map(|t| t.position())?,
-                                ))
-                            })
-                        } else {
-                            None
-                        }
-                    })
-                {
-                    if Self::pickup(&construct_transform, item_position, force) {
-                        if let Some(transform) = cm.get_cache_mut::<Transform>(tid) {
-                            transform.set_position(
-                                (Mat3d::rotation(construct_transform.rotation() + dir * -PI / 2.0)
-                                    * (Vec2d::new(0.0, PICKUP_BIAS * 2.0), 1.0))
-                                    .0
-                                    + construct_transform.position(),
-                            );
-                        }
-
-                        if let Some(physical) = cm.get_mut::<Physical>(e, em) {
-                            physical.force =
-                                (Mat3d::rotation(dir * -PI / 2.0) * (physical.force, 1.0)).0;
-                        }
-
-                        if let Some(item) = cm.get_cache_mut::<Item>(iid) {
-                            item.last = Some(e);
-                        }
-                    }
-                }
-            }
-        }
-
-        Ok(())
-    }
-
-    pub fn pickup(construct_transform: &Transform, item_position: Vec2d, force: Vec2d) -> bool {
+    fn pickup(construct_transform: &Transform, item_position: Vec2d, force: Vec2d) -> bool {
         let transformed = construct_transform.position()
             + (Mat3d::rotation(construct_transform.rotation())
                 * (Vec2d::new(0.0, -PICKUP_BIAS * 2.0), 1.0))
