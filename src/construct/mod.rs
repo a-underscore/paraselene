@@ -35,7 +35,7 @@ pub type UpdateFn<'a> =
 pub const MINER: &str = "miner";
 pub const RIGHT_ROUTER: &str = "right_router";
 pub const LEFT_ROUTER: &str = "left_router";
-pub const FURNACE: &str = "FURNACE";
+pub const FURNACE: &str = "furnace";
 pub const PICKUP_BIAS: f32 = 0.1;
 
 #[derive(Clone)]
