@@ -22,18 +22,18 @@ pub const MENU_MODE: u32 = 0;
 pub const GAME_MODE: u32 = 1;
 
 #[derive(Clone)]
-pub struct State<'a> {
+pub struct State {
     pub save_data: SaveData,
     pub rng: StdRng,
     pub perlin: Perlin,
     pub tiles: HashMap<String, Tile>,
     pub items: HashMap<String, (Item, Instance)>,
-    pub constructs: HashMap<String, (Construct<'a>, Instance)>,
+    pub constructs: HashMap<String, (Construct, Instance)>,
     pub space: Texture,
     pub mode: u32,
 }
 
-impl State<'_> {
+impl State {
     pub fn load(
         context: &Context,
         (em, cm): (&mut EntityManager, &mut ComponentManager),
@@ -96,7 +96,7 @@ impl State<'_> {
     }
 }
 
-impl Component for State<'_> {
+impl Component for State {
     fn id() -> Id {
         id!()
     }

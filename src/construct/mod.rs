@@ -29,8 +29,7 @@ use hex_instance::Instance;
 use hex_physics::Physical;
 use std::{collections::HashMap, f32::consts::PI, rc::Rc};
 
-pub type UpdateFn<'a> =
-    dyn Fn(Id, (&'a mut EntityManager, &'a mut ComponentManager)) -> anyhow::Result<()>;
+pub type UpdateFn = dyn Fn(Id, (&mut EntityManager, &mut ComponentManager)) -> anyhow::Result<()>;
 
 pub const MINER: &str = "miner";
 pub const RIGHT_ROUTER: &str = "right_router";
@@ -39,15 +38,15 @@ pub const FURNACE: &str = "furnace";
 pub const PICKUP_BIAS: f32 = 0.1;
 
 #[derive(Clone)]
-pub struct Construct<'a> {
+pub struct Construct {
     pub id: String,
-    pub update: Rc<UpdateFn<'a>>,
+    pub update: Rc<UpdateFn>,
     pub tick_amount: u32,
     pub update_tick: u32,
     pub eject_speed: f32,
 }
 
-impl Construct<'_> {
+impl Construct {
     pub fn miner(
         context: &Context,
         (em, cm): (&mut EntityManager, &mut ComponentManager),
@@ -299,7 +298,7 @@ impl Construct<'_> {
     }
 }
 
-impl Component for Construct<'_> {
+impl Component for Construct {
     fn id() -> Id {
         id!()
     }
