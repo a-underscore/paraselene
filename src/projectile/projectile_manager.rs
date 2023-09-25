@@ -50,18 +50,19 @@ impl<'a> System<'a> for ProjectileManager {
                 .filter_map(|(e, spawn_time, projectile)| {
                     let delta = now.duration_since(spawn_time);
 
-                    (cm.get::<Collider>(e, em)
-                        .map(|collider| {
-                            collider
-                                .collisions
-                                .iter()
-                                .cloned()
-                                .filter_map(|c| cm.get::<Collider>(c, em))
-                                .any(|c| !c.ghost)
-                        })
-                        .unwrap_or(false)
-                        || delta >= projectile.alive_time)
-                        .then_some(e)
+                    (delta >= projectile.alive_time
+                        || cm
+                            .get::<Collider>(e, em)
+                            .map(|collider| {
+                                collider
+                                    .collisions
+                                    .iter()
+                                    .cloned()
+                                    .filter_map(|c| cm.get::<Collider>(c, em))
+                                    .any(|c| !c.ghost)
+                            })
+                            .unwrap_or(false))
+                    .then_some(e)
                 })
                 .collect();
 

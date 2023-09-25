@@ -45,7 +45,6 @@ pub struct Construct {
     pub update: Rc<UpdateFn>,
     pub tick_amount: u32,
     pub update_tick: u32,
-    pub eject_speed: f32,
     pub mode: Option<bool>,
 }
 
@@ -64,11 +63,7 @@ impl Construct {
                     Self {
                         id: MINER.to_string(),
                         update: Rc::new(move |e, (em, cm)| {
-                            if let Some((transform, construct)) = cm
-                                .get::<Transform>(e, em)
-                                .cloned()
-                                .and_then(|t| Some((t, cm.get::<Construct>(e, em).cloned()?)))
-                            {
+                            if let Some(transform) = cm.get::<Transform>(e, em).cloned() {
                                 let pos = ChunkManager::chunk_pos(transform.position());
 
                                 if let Some(id) = if let Some(map) = cm.get_mut::<Map>(map, em) {
@@ -100,13 +95,7 @@ impl Construct {
                                                         entity,
                                                         Physical::new(
                                                             (Mat3d::rotation(transform.rotation())
-                                                                * (
-                                                                    Vec2d::new(
-                                                                        0.0,
-                                                                        construct.eject_speed,
-                                                                    ),
-                                                                    1.0,
-                                                                ))
+                                                                * (Vec2d::new(0.0, 1.0), 1.0))
                                                                 .0,
                                                             true,
                                                         ),
@@ -123,7 +112,6 @@ impl Construct {
                         }),
                         tick_amount: 0,
                         update_tick: 100,
-                        eject_speed: 1.0,
                         mode: None,
                     },
                     Instance::new(texture, [1.0; 4], -3.0, true),
@@ -140,7 +128,6 @@ impl Construct {
                 update: Rc::new(move |entity, (em, cm)| Self::router(entity, (em, cm), 1.0)),
                 tick_amount: 0,
                 update_tick: 1,
-                eject_speed: 1.0,
                 mode: None,
             },
             Instance::new(texture, [1.0; 4], -3.0, true),
@@ -156,7 +143,6 @@ impl Construct {
                 update: Rc::new(move |entity, (em, cm)| Self::router(entity, (em, cm), -1.0)),
                 tick_amount: 0,
                 update_tick: 1,
-                eject_speed: 1.0,
                 mode: None,
             },
             Instance::new(texture, [1.0; 4], -3.0, true),
@@ -223,7 +209,6 @@ impl Construct {
                 update: Rc::new(move |entity, (em, cm)| Self::splitter(entity, (em, cm), -1.0)),
                 tick_amount: 0,
                 update_tick: 1,
-                eject_speed: 1.0,
                 mode: Some(true),
             },
             Instance::new(texture, [1.0; 4], -3.0, true),
@@ -239,7 +224,6 @@ impl Construct {
                 update: Rc::new(move |entity, (em, cm)| Self::splitter(entity, (em, cm), 1.0)),
                 tick_amount: 0,
                 update_tick: 1,
-                eject_speed: 1.0,
                 mode: Some(true),
             },
             Instance::new(texture, [1.0; 4], -3.0, true),
@@ -375,7 +359,6 @@ impl Construct {
                     }),
                     tick_amount: 0,
                     update_tick: 1,
-                    eject_speed: 1.0,
                     mode: None,
                 },
                 Instance::new(texture, [1.0; 4], -3.0, true),
