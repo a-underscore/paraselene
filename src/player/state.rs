@@ -97,5 +97,4 @@ impl State {
     }
 }
 
-impl Component for State {
-}
+impl Component for State {}

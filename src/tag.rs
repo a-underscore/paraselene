@@ -1,7 +1,4 @@
-use hex::{
-    ecs::{component_manager::Component, ComponentManager, EntityManager, Id},
-    id,
-};
+use hex::ecs::{component_manager::Component, ComponentManager, EntityManager, Id};
 
 #[derive(Clone)]
 pub struct Tag(pub String);
@@ -22,5 +19,4 @@ impl Tag {
     }
 }
 
-impl Component for Tag {
-}
+impl Component for Tag {}

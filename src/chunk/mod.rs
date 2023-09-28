@@ -11,9 +11,7 @@ pub use map::Map;
 pub use tile::Tile;
 pub use tile_data::TileData;
 
-use hex::{
-    ecs::{component_manager::Component},
-};
+use hex::ecs::component_manager::Component;
 
 pub const CHUNK_SIZE: u32 = 8;
 
@@ -30,5 +28,4 @@ impl Chunk {
     }
 }
 
-impl Component for Chunk {
-}
+impl Component for Chunk {}

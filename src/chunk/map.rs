@@ -1,6 +1,4 @@
-use hex::{
-    ecs::{component_manager::Component, Id},
-};
+use hex::ecs::{component_manager::Component, Id};
 use std::collections::HashMap;
 
 #[derive(Default)]
@@ -17,5 +15,4 @@ impl Map {
     }
 }
 
-impl Component for Map {
-}
+impl Component for Map {}

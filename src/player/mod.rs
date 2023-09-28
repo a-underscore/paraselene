@@ -15,8 +15,7 @@ use crate::{
 };
 use hex::{
     anyhow,
-    ecs::{component_manager::Component, Context, Id},
-    id,
+    ecs::{component_manager::Component, Context},
     math::Vec2d,
 };
 use hex_physics::Collider;
@@ -91,5 +90,4 @@ impl Player {
     }
 }
 
-impl Component for Player {
-}
+impl Component for Player {}

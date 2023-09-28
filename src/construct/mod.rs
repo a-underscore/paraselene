@@ -384,5 +384,4 @@ impl Construct {
     }
 }
 
-impl Component for Construct {
-}
+impl Component for Construct {}

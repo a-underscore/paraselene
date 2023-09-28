@@ -46,5 +46,4 @@ impl Item {
     }
 }
 
-impl Component for Item {
-}
+impl Component for Item {}
