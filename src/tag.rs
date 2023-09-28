@@ -23,7 +23,4 @@ impl Tag {
 }
 
 impl Component for Tag {
-    fn id() -> Id {
-        id!()
-    }
 }

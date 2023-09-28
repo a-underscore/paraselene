@@ -16,7 +16,7 @@ pub struct ProjectileManager {
     queued_rm: Vec<Id>,
 }
 
-impl<'a> System<'a> for ProjectileManager {
+impl System for ProjectileManager {
     fn update(
         &mut self,
         ev: &mut Ev,

@@ -6,9 +6,8 @@ use hex::{
     ecs::{
         component_manager::{Component, ComponentManager},
         entity_manager::EntityManager,
-        Context, Id,
+        Context,
     },
-    id,
     once_cell::sync::Lazy,
 };
 use hex_instance::Instance;
@@ -99,7 +98,4 @@ impl State {
 }
 
 impl Component for State {
-    fn id() -> Id {
-        id!()
-    }
 }

@@ -22,7 +22,6 @@ use hex::{
         entity_manager::EntityManager,
         Context, Id,
     },
-    id,
     math::{Mat3d, Vec2d},
 };
 use hex_instance::Instance;
@@ -386,7 +385,4 @@ impl Construct {
 }
 
 impl Component for Construct {
-    fn id() -> Id {
-        id!()
-    }
 }

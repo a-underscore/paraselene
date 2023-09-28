@@ -17,7 +17,7 @@ pub struct CullingManager {
     pub player: OnceCell<Option<Id>>,
 }
 
-impl System<'_> for CullingManager {
+impl System for CullingManager {
     fn update(
         &mut self,
         ev: &mut Ev,

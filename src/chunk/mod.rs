@@ -12,8 +12,7 @@ pub use tile::Tile;
 pub use tile_data::TileData;
 
 use hex::{
-    ecs::{component_manager::Component, Id},
-    id,
+    ecs::{component_manager::Component},
 };
 
 pub const CHUNK_SIZE: u32 = 8;
@@ -32,7 +31,4 @@ impl Chunk {
 }
 
 impl Component for Chunk {
-    fn id() -> Id {
-        id!()
-    }
 }

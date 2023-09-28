@@ -47,15 +47,15 @@ pub type Binds = HashMap<
     >,
 >;
 
-pub struct GameUiManager<'a> {
+pub struct GameUiManager {
     pub player: OnceCell<Option<Id>>,
     pub prefab: OnceCell<Option<Id>>,
     pub camera: OnceCell<Option<Id>>,
     pub kp_cb: Binds,
-    pub main_menu: MainMenu<'a>,
+    pub main_menu: MainMenu<'static>,
 }
 
-impl<'a> GameUiManager<'a> {
+impl GameUiManager {
     pub fn new(
         context: &Context,
         (em, cm): (&mut EntityManager, &mut ComponentManager),
@@ -213,7 +213,7 @@ impl<'a> GameUiManager<'a> {
     }
 }
 
-impl<'a> System<'a> for GameUiManager<'a> {
+impl System for GameUiManager {
     fn init(
         &mut self,
         _: &mut Context,

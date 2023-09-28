@@ -256,7 +256,7 @@ impl PlayerManager {
     }
 }
 
-impl<'a> System<'a> for PlayerManager {
+impl System for PlayerManager {
     fn update(
         &mut self,
         ev: &mut Ev,

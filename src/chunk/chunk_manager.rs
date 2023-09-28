@@ -221,7 +221,7 @@ impl ChunkManager {
     }
 }
 
-impl<'a> System<'a> for ChunkManager {
+impl System for ChunkManager {
     fn init(
         &mut self,
         _: &mut Context,

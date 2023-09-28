@@ -1,6 +1,5 @@
 use hex::{
     ecs::{component_manager::Component, Id},
-    id,
 };
 use std::collections::HashMap;
 
@@ -19,7 +18,4 @@ impl Map {
 }
 
 impl Component for Map {
-    fn id() -> Id {
-        id!()
-    }
 }

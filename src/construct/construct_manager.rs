@@ -20,7 +20,7 @@ impl Default for ConstructManager {
     }
 }
 
-impl System<'_> for ConstructManager {
+impl System for ConstructManager {
     fn update(
         &mut self,
         ev: &mut Ev,

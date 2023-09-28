@@ -92,7 +92,4 @@ impl Player {
 }
 
 impl Component for Player {
-    fn id() -> Id {
-        id!()
-    }
 }

@@ -2,7 +2,6 @@ use crate::util;
 use hex::{
     anyhow,
     ecs::{component_manager::Component, Context, Id},
-    id,
 };
 use hex_instance::Instance;
 
@@ -48,7 +47,4 @@ impl Item {
 }
 
 impl Component for Item {
-    fn id() -> Id {
-        id!()
-    }
 }

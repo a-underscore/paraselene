@@ -53,7 +53,4 @@ impl Projectile {
 }
 
 impl Component for Projectile {
-    fn id() -> Id {
-        id!()
-    }
 }
