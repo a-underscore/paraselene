@@ -154,7 +154,7 @@ impl Construct {
         dir: f32,
     ) -> anyhow::Result<()> {
         if let Some(construct_transform) = cm.get::<Transform>(entity, em).cloned() {
-            for e in em.entities.keys().cloned() {
+            for e in em.entities() {
                 if let Some((iid, tid, force, item_position)) =
                     cm.get_id::<Item>(e, em).and_then(|iid| {
                         let item = cm.get_cache::<Item>(iid)?;
@@ -235,7 +235,7 @@ impl Construct {
         dir: f32,
     ) -> anyhow::Result<()> {
         if let Some(construct_transform) = cm.get::<Transform>(entity, em).cloned() {
-            for e in em.entities.keys().cloned() {
+            for e in em.entities() {
                 if let Some((iid, tid, force, item_position)) =
                     cm.get_id::<Item>(e, em).and_then(|iid| {
                         let item = cm.get_cache::<Item>(iid)?;
@@ -309,7 +309,7 @@ impl Construct {
                     id: FURNACE.to_string(),
                     update: Rc::new(move |entity, (em, cm)| {
                         if let Some(transform) = cm.get::<Transform>(entity, em).cloned() {
-                            for e in em.entities.keys().cloned() {
+                            for e in em.entities() {
                                 if let Some((iid, item_id, force, position)) =
                                     cm.get_id::<Item>(e, em).and_then(|iid| {
                                         let item = cm.get_cache::<Item>(iid)?;

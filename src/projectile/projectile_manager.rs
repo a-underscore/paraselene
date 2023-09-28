@@ -35,9 +35,7 @@ impl System for ProjectileManager {
             }
 
             let projectiles: Vec<_> = em
-                .entities
-                .keys()
-                .cloned()
+                .entities()
                 .filter_map(|e| {
                     let projectile = cm.get::<Projectile>(e, em)?;
                     let spawn_time = *projectile.spawn_time.get_or_init(|| now);

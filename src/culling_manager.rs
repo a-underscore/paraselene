@@ -46,7 +46,7 @@ impl System for CullingManager {
                     })
                 {
                     if let Some(mode) = cm.get::<State>(player, em).map(|s| s.mode) {
-                        for e in em.entities.keys().cloned() {
+                        for e in em.entities() {
                             if let Some(pos) = cm
                                 .get::<Transform>(e, em)
                                 .and_then(|t| t.active.then_some(t.position()))

@@ -37,7 +37,9 @@ impl System for ConstructManager {
             if now.duration_since(self.last_tick) >= TICK_INTERVAL {
                 self.last_tick = now;
 
-                for e in em.entities.clone().into_keys() {
+                let entities: Vec<_> = em.entities().collect();
+
+                for e in entities {
                     if let Some(update) = cm.get_mut::<Construct>(e, em).and_then(|c| {
                         c.tick_amount += 1;
 

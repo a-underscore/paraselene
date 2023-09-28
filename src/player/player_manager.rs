@@ -220,7 +220,7 @@ impl PlayerManager {
                                 transform.set_position(pos);
                             }
 
-                            let space = em.entities.keys().cloned().find(|e| {
+                            let space = em.entities().find(|e| {
                                 cm.get::<Construct>(*e, em).is_some()
                                     && cm
                                         .get::<Transform>(*e, em)

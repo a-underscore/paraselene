@@ -296,7 +296,7 @@ impl System for ChunkManager {
                                 if now.duration_since(self.check) >= ASTEROID_UPDATE_TIME {
                                     self.check = now;
 
-                                    for e in em.entities.keys().cloned() {
+                                    for e in em.entities() {
                                         if let Some(p) = cm.get::<Construct>(e, em).and_then(|_| {
                                             cm.get::<Transform>(e, em).map(|t| t.position())
                                         }) {
@@ -346,7 +346,9 @@ impl System for ChunkManager {
                                             }
                                         }
 
-                                        for e in em.entities.clone().into_keys() {
+                                        let entities: Vec<_> = em.entities().collect();
+
+                                        for e in entities {
                                             if cm.get::<Chunk>(e, em).is_some() {
                                                 if let Some(position) =
                                                     cm.get::<Transform>(e, em).and_then(|t| {
@@ -415,9 +417,7 @@ impl System for ChunkManager {
                         state.save_data.player_position = p.0;
                         state.save_data.player_velocity = v.0;
                         state.save_data.constructs = em
-                            .entities
-                            .keys()
-                            .cloned()
+                            .entities()
                             .filter_map(|e| {
                                 let (tick_amount, mode, id) = cm
                                     .get::<Construct>(e, em)
@@ -434,9 +434,7 @@ impl System for ChunkManager {
                             })
                             .collect();
                         state.save_data.items = em
-                            .entities
-                            .keys()
-                            .cloned()
+                            .entities()
                             .filter_map(|e| {
                                 let id = cm.get::<Item>(e, em).map(|c| c.id.clone())?;
                                 let physical = cm.get::<Physical>(e, em)?;
