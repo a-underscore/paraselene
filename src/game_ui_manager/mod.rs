@@ -52,7 +52,7 @@ pub struct GameUiManager {
     pub prefab: OnceCell<Option<Id>>,
     pub camera: OnceCell<Option<Id>>,
     pub kp_cb: Binds,
-    pub main_menu: MainMenu<'static>,
+    pub main_menu: MainMenu,
 }
 
 impl GameUiManager {

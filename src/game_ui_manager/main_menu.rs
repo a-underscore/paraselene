@@ -18,14 +18,14 @@ use hex_ui::{
     ScreenTransform, Text, Ui,
 };
 
-pub struct MainMenu<'a> {
-    pub font: FontRef<'a>,
+pub struct MainMenu {
+    pub font: FontRef<'static>,
     pub text: Id,
     pub button: Id,
     pub window: Id,
 }
 
-impl<'a> MainMenu<'a> {
+impl MainMenu {
     pub fn new(
         display: &Display,
         (em, cm): (&mut EntityManager, &mut ComponentManager),
