@@ -37,21 +37,21 @@ impl State {
         context: &Context,
         (em, cm): (&mut EntityManager, &mut ComponentManager),
     ) -> anyhow::Result<Self> {
-        let (mut rng, save_data) = fs::read_to_string(&*SAVE_PATH)
+        let (rng, save_data) = fs::read_to_string(&*SAVE_PATH)
             .ok()
             .map(|s| -> anyhow::Result<_> {
                 let save_data: SaveData = serde_json::from_str(&s)?;
 
-                Ok((StdRng::seed_from_u64(save_data.seed), save_data))
+                Ok((StdRng::seed_from_u64(save_data.seed as u64), save_data))
             })
             .unwrap_or_else(|| {
-                let seed = thread_rng().gen_range(u64::MIN..u64::MAX);
-                let mut rng = StdRng::seed_from_u64(seed);
+                let seed = thread_rng().gen_range(u32::MIN..u32::MAX);
+                let mut rng = StdRng::seed_from_u64(seed as u64);
                 let data = SaveData::new(seed, &mut rng);
 
                 Ok((rng, data))
             })?;
-        let perlin = Perlin::new(rng.gen_range(u32::MIN..u32::MAX));
+        let perlin = Perlin::new(save_data.seed);
 
         Ok(Self {
             save_data,

@@ -4,7 +4,7 @@ use serde_derive::{Deserialize, Serialize};
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct SaveData {
-    pub seed: u64,
+    pub seed: u32,
     pub player_position: [f32; 2],
     pub player_velocity: [f32; 2],
     pub constructs: Vec<ConstructData>,
@@ -12,7 +12,7 @@ pub struct SaveData {
 }
 
 impl SaveData {
-    pub fn new(seed: u64, rng: &mut StdRng) -> Self {
+    pub fn new(seed: u32, rng: &mut StdRng) -> Self {
         Self {
             seed,
             player_position: [Self::gen_map_coord(rng), Self::gen_map_coord(rng)],
