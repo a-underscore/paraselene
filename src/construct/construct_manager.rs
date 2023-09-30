@@ -6,7 +6,7 @@ use hex::{
 };
 use std::time::{Duration, Instant};
 
-pub const TICK_INTERVAL: Duration = Duration::from_millis(50);
+pub const TICK_INTERVAL: Duration = Duration::from_millis(25);
 
 pub struct ConstructManager {
     pub last_tick: Instant,
