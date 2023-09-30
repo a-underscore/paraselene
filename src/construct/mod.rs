@@ -110,7 +110,7 @@ impl Construct {
                             Ok(())
                         }),
                         tick_amount: 0,
-                        update_tick: 100,
+                        update_tick: 1000,
                         mode: None,
                     },
                     Instance::new(texture, [1.0; 4], -3.0, true),
