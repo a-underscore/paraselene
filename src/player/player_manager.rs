@@ -23,7 +23,7 @@ use hex::{
 use hex_instance::Instance;
 use hex_physics::{Collider, Physical};
 use hex_ui::ScreenTransform;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 pub const CAM_DIMS: f32 = 50.0 / 3.0;
 
@@ -36,6 +36,8 @@ pub struct PlayerManager {
     pub window_dims: (u32, u32),
     pub crosshair_sprite: Sprite,
     pub frame: Instant,
+    pub frame_time: Instant,
+    pub fps: u32,
 }
 
 impl PlayerManager {
@@ -138,6 +140,8 @@ impl PlayerManager {
             frame: Instant::now(),
             mouse_pos: Default::default(),
             window_dims: Default::default(),
+            frame_time: Instant::now(),
+            fps: 0,
         })
     }
 
@@ -268,6 +272,17 @@ impl System for PlayerManager {
                 event: Event::MainEventsCleared,
                 flow: _,
             }) => {
+                let now = Instant::now();
+
+                if now.duration_since(self.frame_time) >= Duration::from_secs(1) {
+                    println!("{}", self.fps);
+
+                    self.frame_time = Instant::now();
+                    self.fps = 0;
+                } else {
+                    self.fps += 1;
+                }
+
                 if let Some(mode) = cm.get::<State>(self.player, em).map(|p| p.mode) {
                     if let Some(screen_pos) =
                         cm.get::<Transform>(self.camera, em)
@@ -286,8 +301,6 @@ impl System for PlayerManager {
                             screen_transform.position = screen_pos;
                         }
                     }
-
-                    let now = Instant::now();
                     let delta = now.duration_since(self.frame);
 
                     self.frame = now;

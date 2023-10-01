@@ -51,7 +51,7 @@ pub fn init() -> anyhow::Result<()> {
         .with_max_inner_size(Size::Logical((WINDOW_DIMS_X, WINDOW_DIMS_Y).into()));
     let cb = ContextBuilder::new()
         .with_srgb(true)
-        .with_vsync(true)
+        .with_vsync(false)
         .with_multisampling(8);
     let display = Display::new(wb, cb, &ev)?;
 
