@@ -12,6 +12,7 @@ pub const METAL: &str = "metal";
 pub struct Item {
     pub id: String,
     pub last: Option<Id>,
+    pub refined: Option<String>,
 }
 
 impl Item {
@@ -20,6 +21,7 @@ impl Item {
             Self {
                 id: METAL.to_string(),
                 last: None,
+                refined: Some(REFINED_METAL.to_string()),
             },
             Instance::new(
                 util::load_texture(&context.display, include_bytes!("metal.png"))?,
@@ -35,6 +37,7 @@ impl Item {
             Self {
                 id: REFINED_METAL.to_string(),
                 last: None,
+                refined: None,
             },
             Instance::new(
                 util::load_texture(&context.display, include_bytes!("refined_metal.png"))?,

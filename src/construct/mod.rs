@@ -26,7 +26,7 @@ use hex::{
 };
 use hex_instance::Instance;
 use hex_physics::Physical;
-use std::{collections::HashMap, f32::consts::PI, rc::Rc};
+use std::{f32::consts::PI, rc::Rc};
 
 pub type UpdateFn = dyn Fn(Id, (&mut EntityManager, &mut ComponentManager)) -> anyhow::Result<()>;
 
@@ -299,9 +299,6 @@ impl Construct {
         (em, cm): (&mut EntityManager, &mut ComponentManager),
     ) -> anyhow::Result<Option<(Self, Instance)>> {
         let texture = util::load_texture(&context.display, include_bytes!("furnace.png"))?;
-        let refinery_map: HashMap<_, _> = [(METAL.to_string(), REFINED_METAL.to_string())]
-            .into_iter()
-            .collect();
 
         Ok(Tag::new("player").find((em, cm)).map(|player| {
             (
@@ -310,16 +307,16 @@ impl Construct {
                     update: Rc::new(move |entity, (em, cm)| {
                         if let Some(transform) = cm.get::<Transform>(entity, em).cloned() {
                             for e in em.entities() {
-                                if let Some((iid, item_id, force, position)) =
+                                if let Some((iid, force, position, refined)) =
                                     cm.get_id::<Item>(e, em).and_then(|iid| {
                                         let item = cm.get_cache::<Item>(iid)?;
 
                                         if item.last.map(|l| l != entity).unwrap_or(true) {
                                             Some((
                                                 iid,
-                                                item.id.clone(),
                                                 cm.get::<Physical>(e, em).map(|p| p.force)?,
                                                 cm.get::<Transform>(e, em).map(|t| t.position())?,
+                                                item.refined.clone(),
                                             ))
                                         } else {
                                             None
@@ -327,12 +324,10 @@ impl Construct {
                                     })
                                 {
                                     if Self::pickup(&transform, position, force) {
-                                        if let Some(new_item_id) =
-                                            refinery_map.get(&item_id).cloned()
-                                        {
+                                        if let Some(item_id) = refined {
                                             if let Some((new_item, new_instance)) =
                                                 if let Some(state) = cm.get::<State>(player, em) {
-                                                    state.items.get(&new_item_id).cloned()
+                                                    state.items.get(&item_id).cloned()
                                                 } else {
                                                     None
                                                 }
