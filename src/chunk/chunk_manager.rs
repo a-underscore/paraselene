@@ -174,7 +174,7 @@ impl ChunkManager {
         player: Id,
         (em, cm): (&mut EntityManager, &mut ComponentManager),
     ) {
-        if let Some(state) = cm.get::<State>(player, em).cloned() {
+        if let Some(state) = cm.get::<State>(player).cloned() {
             for ConstructData {
                 id,
                 position,
@@ -256,10 +256,10 @@ impl System for ChunkManager {
                     event: Event::MainEventsCleared,
                     flow: _,
                 }) => {
-                    if let Some(mode) = cm.get::<State>(player, em).map(|p| p.mode) {
+                    if let Some(mode) = cm.get::<State>(player).map(|p| p.mode) {
                         if mode == GAME_MODE {
                             if let Some((cam_dims, _)) =
-                                cm.get::<Camera>(camera, em).map(|c| c.dimensions())
+                                cm.get::<Camera>(camera).map(|c| c.dimensions())
                             {
                                 let now = Instant::now();
                                 let delta = now.duration_since(self.frame);
@@ -269,13 +269,13 @@ impl System for ChunkManager {
                                 let chunks: Vec<_> = (0..(FRAME_LOAD_AMOUNT
                                     * delta.as_secs_f32().ceil() as u64))
                                     .filter_map(|_| {
-                                        cm.get_mut::<Map>(self.map, em)?.load_queue.pop()
+                                        cm.get_mut::<Map>(self.map)?.load_queue.pop()
                                     })
                                     .collect();
 
                                 for c in chunks {
                                     if let Some((chunk, instance, transform)) =
-                                        if let Some(state) = cm.get_mut::<State>(player, em) {
+                                        if let Some(state) = cm.get_mut::<State>(player) {
                                             Some(self.load_chunk(c, context, state)?)
                                         } else {
                                             None
@@ -287,7 +287,7 @@ impl System for ChunkManager {
                                         cm.add(e, instance, em);
                                         cm.add(e, transform, em);
 
-                                        if let Some(map) = cm.get_mut::<Map>(self.map, em) {
+                                        if let Some(map) = cm.get_mut::<Map>(self.map) {
                                             map.loaded.insert(c, e);
                                         }
                                     }
@@ -297,17 +297,17 @@ impl System for ChunkManager {
                                     self.check = now;
 
                                     for e in em.entities() {
-                                        if let Some(p) = cm.get::<Construct>(e, em).and_then(|_| {
-                                            cm.get::<Transform>(e, em).map(|t| t.position())
+                                        if let Some(p) = cm.get::<Construct>(e).and_then(|_| {
+                                            cm.get::<Transform>(e).map(|t| t.position())
                                         }) {
-                                            if let Some(map) = cm.get_mut::<Map>(self.map, em) {
+                                            if let Some(map) = cm.get_mut::<Map>(self.map) {
                                                 map.queue_load(Self::chunk_pos(p));
                                             }
                                         }
                                     }
 
                                     if let Some(player_chunk) =
-                                        cm.get::<Transform>(player, em).and_then(|t| {
+                                        cm.get::<Transform>(player).and_then(|t| {
                                             t.active.then_some(Self::chunk_pos(t.position()))
                                         })
                                     {
@@ -340,7 +340,7 @@ impl System for ChunkManager {
                                             for j in min.1..max.1 {
                                                 let chunk = (i, j);
 
-                                                if let Some(map) = cm.get_mut::<Map>(self.map, em) {
+                                                if let Some(map) = cm.get_mut::<Map>(self.map) {
                                                     map.queue_load(chunk);
                                                 }
                                             }
@@ -349,9 +349,9 @@ impl System for ChunkManager {
                                         let entities: Vec<_> = em.entities().collect();
 
                                         for e in entities {
-                                            if cm.get::<Chunk>(e, em).is_some() {
+                                            if cm.get::<Chunk>(e).is_some() {
                                                 if let Some(position) =
-                                                    cm.get::<Transform>(e, em).and_then(|t| {
+                                                    cm.get::<Transform>(e).and_then(|t| {
                                                         t.active.then_some(Self::chunk_pos(
                                                             t.position(),
                                                         ))
@@ -379,7 +379,7 @@ impl System for ChunkManager {
                                                                 .unwrap_or(MAX_MAP_SIZE)
                                                     {
                                                         if let Some(map) =
-                                                            cm.get_mut::<Map>(self.map, em)
+                                                            cm.get_mut::<Map>(self.map)
                                                         {
                                                             map.loaded.remove(&position);
 
@@ -404,13 +404,13 @@ impl System for ChunkManager {
                     flow: _,
                 }) if *window_id == context.display.gl_window().window().id() => {
                     if let Some((p, v, mut state)) = cm
-                        .get::<Transform>(player, em)
+                        .get::<Transform>(player)
                         .map(|t| t.position())
                         .and_then(|p| {
                             Some((
                                 p,
-                                cm.get::<Physical>(player, em).map(|p| p.velocity())?,
-                                cm.get_mut::<State>(player, em).cloned()?,
+                                cm.get::<Physical>(player).map(|p| p.velocity())?,
+                                cm.get_mut::<State>(player).cloned()?,
                             ))
                         })
                     {
@@ -420,9 +420,9 @@ impl System for ChunkManager {
                             .entities()
                             .filter_map(|e| {
                                 let (tick_amount, mode, id) = cm
-                                    .get::<Construct>(e, em)
+                                    .get::<Construct>(e)
                                     .map(|c| (c.tick_amount, c.mode, c.id.clone()))?;
-                                let transform = cm.get::<Transform>(e, em)?;
+                                let transform = cm.get::<Transform>(e)?;
 
                                 Some(ConstructData {
                                     position: transform.position().0,
@@ -436,9 +436,9 @@ impl System for ChunkManager {
                         state.save_data.items = em
                             .entities()
                             .filter_map(|e| {
-                                let id = cm.get::<Item>(e, em).map(|c| c.id.clone())?;
-                                let physical = cm.get::<Physical>(e, em)?;
-                                let transform = cm.get::<Transform>(e, em)?;
+                                let id = cm.get::<Item>(e).map(|c| c.id.clone())?;
+                                let physical = cm.get::<Physical>(e)?;
+                                let transform = cm.get::<Transform>(e)?;
 
                                 Some(ItemData {
                                     position: transform.position().0,

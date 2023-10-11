@@ -40,7 +40,7 @@ impl System for ConstructManager {
                 let entities: Vec<_> = em.entities().collect();
 
                 for e in entities {
-                    if let Some(update) = cm.get_mut::<Construct>(e, em).and_then(|c| {
+                    if let Some(update) = cm.get_mut::<Construct>(e).and_then(|c| {
                         c.tick_amount += 1;
 
                         (c.tick_amount >= c.update_tick).then(|| {

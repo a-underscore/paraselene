@@ -37,7 +37,7 @@ impl System for ProjectileManager {
             let projectiles: Vec<_> = em
                 .entities()
                 .filter_map(|e| {
-                    let projectile = cm.get::<Projectile>(e, em)?;
+                    let projectile = cm.get::<Projectile>(e)?;
                     let spawn_time = *projectile.spawn_time.get_or_init(|| now);
 
                     Some((e, spawn_time, projectile.clone()))
@@ -50,13 +50,13 @@ impl System for ProjectileManager {
 
                     (delta >= projectile.alive_time
                         || cm
-                            .get::<Collider>(e, em)
+                            .get::<Collider>(e)
                             .map(|collider| {
                                 collider
                                     .collisions
                                     .iter()
                                     .cloned()
-                                    .filter_map(|c| cm.get::<Collider>(c, em))
+                                    .filter_map(|c| cm.get::<Collider>(c))
                                     .any(|c| !c.ghost)
                             })
                             .unwrap_or(false))

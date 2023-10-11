@@ -94,7 +94,7 @@ impl GameUiManager {
             self.add_keybind(
                 Input::Keyboard(VirtualKeyCode::W),
                 move |state, _, (em, cm)| {
-                    if let Some(p) = cm.get_mut::<Player>(player, em) {
+                    if let Some(p) = cm.get_mut::<Player>(player) {
                         p.states.forward = match state {
                             ElementState::Pressed => true,
                             ElementState::Released => false,
@@ -107,7 +107,7 @@ impl GameUiManager {
             self.add_keybind(
                 Input::Keyboard(VirtualKeyCode::S),
                 move |state, _, (em, cm)| {
-                    if let Some(p) = cm.get_mut::<Player>(player, em) {
+                    if let Some(p) = cm.get_mut::<Player>(player) {
                         p.states.backward = match state {
                             ElementState::Pressed => true,
                             ElementState::Released => false,
@@ -120,7 +120,7 @@ impl GameUiManager {
             self.add_keybind(
                 Input::Keyboard(VirtualKeyCode::A),
                 move |state, _, (em, cm)| {
-                    if let Some(p) = cm.get_mut::<Player>(player, em) {
+                    if let Some(p) = cm.get_mut::<Player>(player) {
                         p.states.left = match state {
                             ElementState::Pressed => true,
                             ElementState::Released => false,
@@ -133,7 +133,7 @@ impl GameUiManager {
             self.add_keybind(
                 Input::Keyboard(VirtualKeyCode::D),
                 move |state, _, (em, cm)| {
-                    if let Some(p) = cm.get_mut::<Player>(player, em) {
+                    if let Some(p) = cm.get_mut::<Player>(player) {
                         p.states.right = match state {
                             ElementState::Pressed => true,
                             ElementState::Released => false,
@@ -151,7 +151,7 @@ impl GameUiManager {
                         ElementState::Released => false,
                     };
 
-                    if let Some(player) = cm.get_mut::<Player>(player, em) {
+                    if let Some(player) = cm.get_mut::<Player>(player) {
                         player.states.firing = firing;
                     }
 
@@ -166,7 +166,7 @@ impl GameUiManager {
                         ElementState::Released => false,
                     };
 
-                    if let Some(player) = cm.get_mut::<Player>(player, em) {
+                    if let Some(player) = cm.get_mut::<Player>(player) {
                         player.states.removing = removing;
                     }
 
@@ -177,7 +177,7 @@ impl GameUiManager {
                 Input::Keyboard(VirtualKeyCode::Tab),
                 move |state, _, (em, cm)| {
                     if let ElementState::Pressed = state {
-                        if let Some(player) = cm.get_mut::<Player>(player, em) {
+                        if let Some(player) = cm.get_mut::<Player>(player) {
                             player.states.mode = (player.states.mode + 1) % player.hotbar.len();
                         }
                     }
@@ -189,7 +189,7 @@ impl GameUiManager {
                 Input::Keyboard(VirtualKeyCode::R),
                 move |state, _, (em, cm)| {
                     if let ElementState::Pressed = state {
-                        if let Some(transform) = cm.get_mut::<Transform>(prefab, em) {
+                        if let Some(transform) = cm.get_mut::<Transform>(prefab) {
                             transform.set_rotation(transform.rotation() % (2.0 * PI) + (PI / 2.0));
                         }
                     }
@@ -201,7 +201,7 @@ impl GameUiManager {
                 Input::Keyboard(VirtualKeyCode::Escape),
                 move |state, _, (em, cm)| {
                     if let ElementState::Pressed = state {
-                        if let Some(state) = cm.get_mut::<State>(player, em) {
+                        if let Some(state) = cm.get_mut::<State>(player) {
                             state.mode = MENU_MODE;
                         }
                     }
@@ -242,11 +242,11 @@ impl System for GameUiManager {
                     self.main_menu.update(player, (em, cm));
 
                     if let Some(pressed) = cm
-                        .get_mut::<Callback>(self.main_menu.button, em)
+                        .get_mut::<Callback>(self.main_menu.button)
                         .map(|c| c.check())
                     {
                         if pressed {
-                            if let Some(state) = cm.get_mut::<State>(player, em) {
+                            if let Some(state) = cm.get_mut::<State>(player) {
                                 state.mode = GAME_MODE;
                             }
                         }
@@ -318,7 +318,7 @@ impl System for GameUiManager {
                         }
                     };
 
-                    if let Some(camera) = cm.get_mut::<Camera>(camera, em) {
+                    if let Some(camera) = cm.get_mut::<Camera>(camera) {
                         let (dimensions, z) = {
                             let (dimensions, z) = camera.dimensions();
                             let mut dimensions = dimensions - Vec2d([y; 2]);

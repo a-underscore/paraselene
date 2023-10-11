@@ -112,17 +112,17 @@ impl MainMenu {
         })
     }
 
-    pub fn update(&self, player: Id, (em, cm): (&mut EntityManager, &mut ComponentManager)) {
-        if let Some(active) = cm.get::<State>(player, em).map(|p| p.mode == MENU_MODE) {
-            if let Some(text) = cm.get_mut::<Sprite>(self.text, em) {
+    pub fn update(&self, player: Id, (_, cm): (&mut EntityManager, &mut ComponentManager)) {
+        if let Some(active) = cm.get::<State>(player).map(|p| p.mode == MENU_MODE) {
+            if let Some(text) = cm.get_mut::<Sprite>(self.text) {
                 text.active = active;
             }
 
-            if let Some(button) = cm.get_mut::<Sprite>(self.button, em) {
+            if let Some(button) = cm.get_mut::<Sprite>(self.button) {
                 button.active = active;
             }
 
-            if let Some(window) = cm.get_mut::<Sprite>(self.window, em) {
+            if let Some(window) = cm.get_mut::<Sprite>(self.window) {
                 window.active = active;
             }
         }

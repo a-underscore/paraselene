@@ -13,7 +13,7 @@ impl Tag {
 
     pub fn find(&self, (em, cm): (&mut EntityManager, &mut ComponentManager)) -> Option<Id> {
         em.entities().find_map(|e| {
-            cm.get::<Tag>(e, em)
+            cm.get::<Tag>(e)
                 .and_then(|t| (self.0 == t.0).then_some(e))
         })
     }

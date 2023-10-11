@@ -38,20 +38,20 @@ impl System for CullingManager {
                     .get_or_init(|| Tag::new("camera").find((em, cm)))
                     .and_then(|p| {
                         Some((
-                            cm.get::<Transform>(p, em)
+                            cm.get::<Transform>(p)
                                 .and_then(|t| t.active.then_some(t.position()))?,
-                            cm.get::<Camera>(p, em)
+                            cm.get::<Camera>(p)
                                 .and_then(|t| t.active.then_some(t.dimensions()))?,
                         ))
                     })
                 {
-                    if let Some(mode) = cm.get::<State>(player, em).map(|s| s.mode) {
+                    if let Some(mode) = cm.get::<State>(player).map(|s| s.mode) {
                         for e in em.entities() {
                             if let Some(pos) = cm
-                                .get::<Transform>(e, em)
+                                .get::<Transform>(e)
                                 .and_then(|t| t.active.then_some(t.position()))
                             {
-                                if let Some(instance) = cm.get_mut::<Instance>(e, em) {
+                                if let Some(instance) = cm.get_mut::<Instance>(e) {
                                     let diff = pos - camera_pos;
                                     let dimensions = dimensions / 2.0;
 

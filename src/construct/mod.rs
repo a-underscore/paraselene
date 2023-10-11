@@ -62,15 +62,15 @@ impl Construct {
                     Self {
                         id: MINER.to_string(),
                         update: Rc::new(move |e, (em, cm)| {
-                            if let Some(transform) = cm.get::<Transform>(e, em).cloned() {
+                            if let Some(transform) = cm.get::<Transform>(e).cloned() {
                                 let pos = ChunkManager::chunk_pos(transform.position());
 
-                                if let Some(id) = if let Some(map) = cm.get_mut::<Map>(map, em) {
+                                if let Some(id) = if let Some(map) = cm.get_mut::<Map>(map) {
                                     map.loaded.get(&pos).cloned()
                                 } else {
                                     None
                                 } {
-                                    if let Some(chunk) = cm.get::<Chunk>(id, em).cloned() {
+                                    if let Some(chunk) = cm.get::<Chunk>(id).cloned() {
                                         let x = CHUNK_SIZE as usize
                                             - ((pos.0 * CHUNK_SIZE) as usize
                                                 - transform.position().x().floor() as usize);
@@ -80,7 +80,7 @@ impl Construct {
                                         let tile_id =
                                             &chunk.grid.get(x).and_then(|c| c.get(y)?.clone());
 
-                                        if let Some(state) = cm.get::<State>(player, em).cloned() {
+                                        if let Some(state) = cm.get::<State>(player).cloned() {
                                             if let Some(tile_id) = tile_id {
                                                 if let Some((item, instance)) =
                                                     state.items.get(tile_id)
@@ -153,28 +153,23 @@ impl Construct {
         (em, cm): (&mut EntityManager, &mut ComponentManager),
         dir: f32,
     ) -> anyhow::Result<()> {
-        if let Some(construct_transform) = cm.get::<Transform>(entity, em).cloned() {
+        if let Some(construct_transform) = cm.get::<Transform>(entity).cloned() {
             for e in em.entities() {
-                if let Some((iid, tid, force, item_position)) =
-                    cm.get_id::<Item>(e, em).and_then(|iid| {
-                        let item = cm.get_cache::<Item>(iid)?;
+                if let Some((force, item_position)) =
+                        cm.get::<Item>(e).and_then(|item| {
 
                         if item.last.map(|l| l != entity).unwrap_or(true) {
-                            cm.get_id::<Transform>(e, em).and_then(|tid| {
                                 Some((
-                                    iid,
-                                    tid,
-                                    cm.get::<Physical>(e, em).map(|p| p.force)?,
-                                    cm.get_cache::<Transform>(tid).map(|t| t.position())?,
-                                ))
-                            })
+                                    cm.get::<Physical>(e).map(|p| p.force)?,
+                                    cm.get::<Transform>(e).map(|t| t.position())?,
+                            ))
                         } else {
                             None
                         }
                     })
                 {
                     if Self::pickup(&construct_transform, item_position, force) {
-                        if let Some(transform) = cm.get_cache_mut::<Transform>(tid) {
+                        if let Some(transform) = cm.get_mut::<Transform>(e) {
                             transform.set_position(
                                 (Mat3d::rotation(construct_transform.rotation() + dir * -PI / 2.0)
                                     * (Vec2d::new(0.0, PICKUP_BIAS * 2.0), 1.0))
@@ -183,12 +178,12 @@ impl Construct {
                             );
                         }
 
-                        if let Some(physical) = cm.get_mut::<Physical>(e, em) {
+                        if let Some(physical) = cm.get_mut::<Physical>(e) {
                             physical.force =
                                 (Mat3d::rotation(dir * -PI / 2.0) * (physical.force, 1.0)).0;
                         }
 
-                        if let Some(item) = cm.get_cache_mut::<Item>(iid) {
+                        if let Some(item) = cm.get_mut::<Item>(e) {
                             item.last = Some(entity);
                         }
                     }
@@ -234,28 +229,23 @@ impl Construct {
         (em, cm): (&mut EntityManager, &mut ComponentManager),
         dir: f32,
     ) -> anyhow::Result<()> {
-        if let Some(construct_transform) = cm.get::<Transform>(entity, em).cloned() {
+        if let Some(construct_transform) = cm.get::<Transform>(entity).cloned() {
             for e in em.entities() {
-                if let Some((iid, tid, force, item_position)) =
-                    cm.get_id::<Item>(e, em).and_then(|iid| {
-                        let item = cm.get_cache::<Item>(iid)?;
+                if let Some((force, item_position)) =
+                        cm.get::<Item>(e).and_then(|item| {
 
                         if item.last.map(|l| l != entity).unwrap_or(true) {
-                            cm.get_id::<Transform>(e, em).and_then(|tid| {
                                 Some((
-                                    iid,
-                                    tid,
-                                    cm.get::<Physical>(e, em).map(|p| p.force)?,
-                                    cm.get_cache::<Transform>(tid).map(|t| t.position())?,
-                                ))
-                            })
+                                    cm.get::<Physical>(e).map(|p| p.force)?,
+                                    cm.get::<Transform>(e).map(|t| t.position())?,
+                            ))
                         } else {
                             None
                         }
                     })
                 {
                     if Self::pickup(&construct_transform, item_position, force) {
-                        if let Some(m) = cm.get_mut::<Construct>(entity, em).and_then(|c| {
+                        if let Some(m) = cm.get_mut::<Construct>(entity).and_then(|c| {
                             if let Some(m) = &mut c.mode {
                                 *m = !*m;
 
@@ -265,7 +255,7 @@ impl Construct {
                             }
                         }) {
                             if m {
-                                if let Some(transform) = cm.get_cache_mut::<Transform>(tid) {
+                                if let Some(transform) = cm.get_mut::<Transform>(e) {
                                     transform.set_position(
                                         (Mat3d::rotation(
                                             construct_transform.rotation() + dir * -PI / 2.0,
@@ -275,14 +265,14 @@ impl Construct {
                                     );
                                 }
 
-                                if let Some(physical) = cm.get_mut::<Physical>(e, em) {
+                                if let Some(physical) = cm.get_mut::<Physical>(e) {
                                     physical.force = (Mat3d::rotation(dir * -PI / 2.0)
                                         * (physical.force, 1.0))
                                         .0;
                                 }
                             }
 
-                            if let Some(item) = cm.get_cache_mut::<Item>(iid) {
+                            if let Some(item) = cm.get_mut::<Item>(e) {
                                 item.last = Some(entity);
                             }
                         }
@@ -305,17 +295,14 @@ impl Construct {
                 Self {
                     id: FURNACE.to_string(),
                     update: Rc::new(move |entity, (em, cm)| {
-                        if let Some(transform) = cm.get::<Transform>(entity, em).cloned() {
+                        if let Some(transform) = cm.get::<Transform>(entity).cloned() {
                             for e in em.entities() {
-                                if let Some((iid, force, position, refined)) =
-                                    cm.get_id::<Item>(e, em).and_then(|iid| {
-                                        let item = cm.get_cache::<Item>(iid)?;
-
+                                if let Some((force, position, refined)) =
+                                    cm.get::<Item>(e).and_then(|item| {
                                         if item.last.map(|l| l != entity).unwrap_or(true) {
                                             Some((
-                                                iid,
-                                                cm.get::<Physical>(e, em).map(|p| p.force)?,
-                                                cm.get::<Transform>(e, em).map(|t| t.position())?,
+                                                cm.get::<Physical>(e).map(|p| p.force)?,
+                                                cm.get::<Transform>(e).map(|t| t.position())?,
                                                 item.refined.clone(),
                                             ))
                                         } else {
@@ -326,19 +313,19 @@ impl Construct {
                                     if Self::pickup(&transform, position, force) {
                                         if let Some(item_id) = refined {
                                             if let Some((new_item, new_instance)) =
-                                                if let Some(state) = cm.get::<State>(player, em) {
+                                                if let Some(state) = cm.get::<State>(player) {
                                                     state.items.get(&item_id).cloned()
                                                 } else {
                                                     None
                                                 }
                                             {
-                                                if let Some(item) = cm.get_cache_mut::<Item>(iid) {
+                                                if let Some(item) = cm.get_mut::<Item>(e) {
                                                     *item = new_item;
                                                     item.last = Some(entity);
                                                 }
 
                                                 if let Some(instance) =
-                                                    cm.get_mut::<Instance>(e, em)
+                                                    cm.get_mut::<Instance>(e)
                                                 {
                                                     *instance = new_instance;
                                                 }

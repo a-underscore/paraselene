@@ -156,27 +156,27 @@ impl PlayerManager {
         (em, cm): (&mut EntityManager, &mut ComponentManager),
     ) -> anyhow::Result<()> {
         if let Some(mouse_pos) = cm
-            .get::<Camera>(self.camera, em)
+            .get::<Camera>(self.camera)
             .map(|camera| camera.dimensions().0)
             .and_then(|p| {
                 util::mouse_pos_world(
                     p,
-                    cm.get::<Transform>(self.player, em).map(|c| c.scale())?,
+                    cm.get::<Transform>(self.player).map(|c| c.scale())?,
                     self.window_dims,
                     self.mouse_pos,
                 )
             })
         {
             if let Some(((c, firing, removing), player_pos)) =
-                cm.get::<Player>(self.player, em).cloned().and_then(|t| {
+                cm.get::<Player>(self.player).cloned().and_then(|t| {
                     Some((
                         (
-                            cm.get::<State>(self.player, em)
+                            cm.get::<State>(self.player)
                                 .and_then(|s| s.constructs.get(&t.current_item()?).cloned()),
                             t.states.firing,
                             t.states.removing,
                         ),
-                        cm.get::<Transform>(self.player, em)?.position(),
+                        cm.get::<Transform>(self.player)?.position(),
                     ))
                 })
             {
@@ -189,11 +189,11 @@ impl PlayerManager {
                 }
 
                 if let Some(screen_pos) = cm
-                    .get::<ScreenTransform>(self.crosshair, em)
+                    .get::<ScreenTransform>(self.crosshair)
                     .map(|st| st.position)
                 {
                     let res = cm
-                        .get_mut::<Transform>(self.prefab, em)
+                        .get_mut::<Transform>(self.prefab)
                         .and_then(|transform| {
                             if let Some(res) = c.map(|(c, i)| {
                                 transform.set_position(screen_pos);
@@ -220,14 +220,14 @@ impl PlayerManager {
                             let x = pos.x() as u64;
                             let y = pos.y() as u64;
 
-                            if let Some(transform) = cm.get_mut::<Transform>(self.prefab, em) {
+                            if let Some(transform) = cm.get_mut::<Transform>(self.prefab) {
                                 transform.set_position(pos);
                             }
 
                             let space = em.entities().find(|e| {
-                                cm.get::<Construct>(*e, em).is_some()
+                                cm.get::<Construct>(*e).is_some()
                                     && cm
-                                        .get::<Transform>(*e, em)
+                                        .get::<Transform>(*e)
                                         .map(|t| {
                                             t.position().x().floor() as u64 == x
                                                 && t.position().y().floor() as u64 == y
@@ -283,9 +283,9 @@ impl System for PlayerManager {
                     self.fps += 1;
                 }
 
-                if let Some(mode) = cm.get::<State>(self.player, em).map(|p| p.mode) {
+                if let Some(mode) = cm.get::<State>(self.player).map(|p| p.mode) {
                     if let Some(screen_pos) =
-                        cm.get::<Transform>(self.camera, em)
+                        cm.get::<Transform>(self.camera)
                             .and_then(|camera_transform| {
                                 util::mouse_pos_world(
                                     Vec2d::new(UI_CAM_DIMS * 2.0, UI_CAM_DIMS * 2.0),
@@ -296,7 +296,7 @@ impl System for PlayerManager {
                             })
                     {
                         if let Some(screen_transform) =
-                            cm.get_mut::<ScreenTransform>(self.crosshair, em)
+                            cm.get_mut::<ScreenTransform>(self.crosshair)
                         {
                             screen_transform.position = screen_pos;
                         }
@@ -307,12 +307,12 @@ impl System for PlayerManager {
 
                     if mode == GAME_MODE {
                         if let Some((position, transform)) = cm
-                            .get::<ScreenTransform>(self.crosshair, em)
+                            .get::<ScreenTransform>(self.crosshair)
                             .cloned()
                             .and_then(|s| {
                                 Some((
                                     s.active.then_some(s.position)?,
-                                    cm.get_mut::<Transform>(self.player, em)
+                                    cm.get_mut::<Transform>(self.player)
                                         .and_then(|t| t.active.then_some(t))?,
                                 ))
                             })
@@ -321,10 +321,10 @@ impl System for PlayerManager {
                         }
 
                         if let Some((player, transform)) =
-                            cm.get::<Player>(self.player, em).cloned().and_then(|p| {
+                            cm.get::<Player>(self.player).cloned().and_then(|p| {
                                 Some((
                                     p,
-                                    cm.get::<Transform>(self.player, em)
+                                    cm.get::<Transform>(self.player)
                                         .and_then(|t| t.active.then_some(t))?
                                         .clone(),
                                 ))
@@ -333,7 +333,7 @@ impl System for PlayerManager {
                             let f = player.force();
 
                             if let Some(p) = cm
-                                .get_mut::<Physical>(self.player, em)
+                                .get_mut::<Physical>(self.player)
                                 .and_then(|p| p.active.then_some(p))
                             {
                                 let force = if f.magnitude() != 0.0 {
@@ -365,10 +365,10 @@ impl System for PlayerManager {
                             }
                         }
 
-                        let res = cm.get::<Transform>(self.player, em).cloned().and_then(|t| {
+                        let res = cm.get::<Transform>(self.player).cloned().and_then(|t| {
                             Some((
                                 t.active.then_some(t)?,
-                                cm.get::<Physical>(self.player, em)
+                                cm.get::<Physical>(self.player)
                                     .and_then(|p| p.active.then_some(p))?
                                     .clone(),
                             ))
@@ -376,7 +376,7 @@ impl System for PlayerManager {
 
                         if let Some(((transform, physical), (projectile, collider, instance))) =
                             res.as_ref().and_then(|(transform, physical)| {
-                                let player = cm.get_mut::<Player>(self.player, em)?;
+                                let player = cm.get_mut::<Player>(self.player)?;
                                 let ref p @ (ref projectile, _, _) = player.projectile.clone();
 
                                 (player.states.firing
@@ -409,7 +409,7 @@ impl System for PlayerManager {
                         }
 
                         if let Some(pos) = if let Some(t) = cm
-                            .get_mut::<Transform>(self.player, em)
+                            .get_mut::<Transform>(self.player)
                             .and_then(|t| t.active.then_some(t))
                         {
                             let position = t.position();
@@ -429,7 +429,7 @@ impl System for PlayerManager {
                         } else {
                             None
                         } {
-                            if let Some(ct) = cm.get_mut::<Transform>(self.camera, em) {
+                            if let Some(ct) = cm.get_mut::<Transform>(self.camera) {
                                 let position = Vec2d::new(
                                     pos.x().clamp(
                                         CHUNK_SIZE as f32,
