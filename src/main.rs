@@ -38,11 +38,11 @@ const PHYSICS_RATE: u32 = 5;
 const PROJECTILE_LAYER: Id = 1;
 const PLAYER_LAYER: Id = 2;
 
-pub fn main() {
+fn main() {
     init().unwrap();
 }
 
-pub fn init() -> anyhow::Result<()> {
+fn init() -> anyhow::Result<()> {
     util::setup_directories()?;
 
     let ev = EventLoop::new();
