@@ -93,7 +93,7 @@ impl GameUiManager {
         ) {
             self.add_keybind(
                 Input::Keyboard(VirtualKeyCode::W),
-                move |state, _, (em, cm)| {
+                move |state, _, (_em, cm)| {
                     if let Some(p) = cm.get_mut::<Player>(player) {
                         p.states.forward = match state {
                             ElementState::Pressed => true,
@@ -106,7 +106,7 @@ impl GameUiManager {
             );
             self.add_keybind(
                 Input::Keyboard(VirtualKeyCode::S),
-                move |state, _, (em, cm)| {
+                move |state, _, (_em, cm)| {
                     if let Some(p) = cm.get_mut::<Player>(player) {
                         p.states.backward = match state {
                             ElementState::Pressed => true,
@@ -119,7 +119,7 @@ impl GameUiManager {
             );
             self.add_keybind(
                 Input::Keyboard(VirtualKeyCode::A),
-                move |state, _, (em, cm)| {
+                move |state, _, (_em, cm)| {
                     if let Some(p) = cm.get_mut::<Player>(player) {
                         p.states.left = match state {
                             ElementState::Pressed => true,
@@ -132,7 +132,7 @@ impl GameUiManager {
             );
             self.add_keybind(
                 Input::Keyboard(VirtualKeyCode::D),
-                move |state, _, (em, cm)| {
+                move |state, _, (_em, cm)| {
                     if let Some(p) = cm.get_mut::<Player>(player) {
                         p.states.right = match state {
                             ElementState::Pressed => true,
@@ -145,7 +145,7 @@ impl GameUiManager {
             );
             self.add_keybind(
                 Input::Mouse(MouseButton::Left),
-                move |state, _, (em, cm)| {
+                move |state, _, (_em, cm)| {
                     let firing = match state {
                         ElementState::Pressed => true,
                         ElementState::Released => false,
@@ -160,7 +160,7 @@ impl GameUiManager {
             );
             self.add_keybind(
                 Input::Mouse(MouseButton::Right),
-                move |state, _, (em, cm)| {
+                move |state, _, (_em, cm)| {
                     let removing = match state {
                         ElementState::Pressed => true,
                         ElementState::Released => false,
@@ -175,7 +175,7 @@ impl GameUiManager {
             );
             self.add_keybind(
                 Input::Keyboard(VirtualKeyCode::Tab),
-                move |state, _, (em, cm)| {
+                move |state, _, (_em, cm)| {
                     if let ElementState::Pressed = state {
                         if let Some(player) = cm.get_mut::<Player>(player) {
                             player.states.mode = (player.states.mode + 1) % player.hotbar.len();
@@ -187,7 +187,7 @@ impl GameUiManager {
             );
             self.add_keybind(
                 Input::Keyboard(VirtualKeyCode::R),
-                move |state, _, (em, cm)| {
+                move |state, _, (_em, cm)| {
                     if let ElementState::Pressed = state {
                         if let Some(transform) = cm.get_mut::<Transform>(prefab) {
                             transform.set_rotation(transform.rotation() % (2.0 * PI) + (PI / 2.0));
@@ -199,7 +199,7 @@ impl GameUiManager {
             );
             self.add_keybind(
                 Input::Keyboard(VirtualKeyCode::Escape),
-                move |state, _, (em, cm)| {
+                move |state, _, (_em, cm)| {
                     if let ElementState::Pressed = state {
                         if let Some(state) = cm.get_mut::<State>(player) {
                             state.mode = MENU_MODE;
