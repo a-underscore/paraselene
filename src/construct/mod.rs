@@ -155,19 +155,16 @@ impl Construct {
     ) -> anyhow::Result<()> {
         if let Some(construct_transform) = cm.get::<Transform>(entity).cloned() {
             for e in em.entities() {
-                if let Some((force, item_position)) =
-                        cm.get::<Item>(e).and_then(|item| {
-
-                        if item.last.map(|l| l != entity).unwrap_or(true) {
-                                Some((
-                                    cm.get::<Physical>(e).map(|p| p.force)?,
-                                    cm.get::<Transform>(e).map(|t| t.position())?,
-                            ))
-                        } else {
-                            None
-                        }
-                    })
-                {
+                if let Some((force, item_position)) = cm.get::<Item>(e).and_then(|item| {
+                    if item.last.map(|l| l != entity).unwrap_or(true) {
+                        Some((
+                            cm.get::<Physical>(e).map(|p| p.force)?,
+                            cm.get::<Transform>(e).map(|t| t.position())?,
+                        ))
+                    } else {
+                        None
+                    }
+                }) {
                     if Self::pickup(&construct_transform, item_position, force) {
                         if let Some(transform) = cm.get_mut::<Transform>(e) {
                             transform.set_position(
@@ -231,19 +228,16 @@ impl Construct {
     ) -> anyhow::Result<()> {
         if let Some(construct_transform) = cm.get::<Transform>(entity).cloned() {
             for e in em.entities() {
-                if let Some((force, item_position)) =
-                        cm.get::<Item>(e).and_then(|item| {
-
-                        if item.last.map(|l| l != entity).unwrap_or(true) {
-                                Some((
-                                    cm.get::<Physical>(e).map(|p| p.force)?,
-                                    cm.get::<Transform>(e).map(|t| t.position())?,
-                            ))
-                        } else {
-                            None
-                        }
-                    })
-                {
+                if let Some((force, item_position)) = cm.get::<Item>(e).and_then(|item| {
+                    if item.last.map(|l| l != entity).unwrap_or(true) {
+                        Some((
+                            cm.get::<Physical>(e).map(|p| p.force)?,
+                            cm.get::<Transform>(e).map(|t| t.position())?,
+                        ))
+                    } else {
+                        None
+                    }
+                }) {
                     if Self::pickup(&construct_transform, item_position, force) {
                         if let Some(m) = cm.get_mut::<Construct>(entity).and_then(|c| {
                             if let Some(m) = &mut c.mode {
@@ -324,9 +318,7 @@ impl Construct {
                                                     item.last = Some(entity);
                                                 }
 
-                                                if let Some(instance) =
-                                                    cm.get_mut::<Instance>(e)
-                                                {
+                                                if let Some(instance) = cm.get_mut::<Instance>(e) {
                                                     *instance = new_instance;
                                                 }
                                             }

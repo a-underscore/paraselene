@@ -268,9 +268,7 @@ impl System for ChunkManager {
 
                                 let chunks: Vec<_> = (0..(FRAME_LOAD_AMOUNT
                                     * delta.as_secs_f32().ceil() as u64))
-                                    .filter_map(|_| {
-                                        cm.get_mut::<Map>(self.map)?.load_queue.pop()
-                                    })
+                                    .filter_map(|_| cm.get_mut::<Map>(self.map)?.load_queue.pop())
                                     .collect();
 
                                 for c in chunks {

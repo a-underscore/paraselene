@@ -192,21 +192,19 @@ impl PlayerManager {
                     .get::<ScreenTransform>(self.crosshair)
                     .map(|st| st.position)
                 {
-                    let res = cm
-                        .get_mut::<Transform>(self.prefab)
-                        .and_then(|transform| {
-                            if let Some(res) = c.map(|(c, i)| {
-                                transform.set_position(screen_pos);
+                    let res = cm.get_mut::<Transform>(self.prefab).and_then(|transform| {
+                        if let Some(res) = c.map(|(c, i)| {
+                            transform.set_position(screen_pos);
 
-                                (c, i, transform.rotation())
-                            }) {
-                                Some(res)
-                            } else {
-                                transform.set_position(screen_pos);
+                            (c, i, transform.rotation())
+                        }) {
+                            Some(res)
+                        } else {
+                            transform.set_position(screen_pos);
 
-                                None
-                            }
-                        });
+                            None
+                        }
+                    });
 
                     if let Some((c, i, rotation)) = res {
                         let position = Self::tile_pos(mouse_pos, player_pos);
