@@ -271,9 +271,9 @@ impl System for ChunkManager {
                                     .map(|m| {
                                         m.load_queue
                                             .drain(
-                                                0..((FRAME_LOAD_AMOUNT
+                                                ..((FRAME_LOAD_AMOUNT
                                                     * delta.as_secs_f32().ceil() as usize)
-                                                    .max(m.load_queue.len())),
+                                                    .min(m.load_queue.len())),
                                             )
                                             .collect()
                                     })
