@@ -20,6 +20,7 @@ use hex::{
         Display,
     },
     math::{Ortho, Vec2d},
+    Renderer,
 };
 use hex_instance::InstanceRenderer;
 use hex_physics::PhysicsManager;
@@ -76,6 +77,7 @@ fn init() -> anyhow::Result<()> {
     system_manager.add(ProjectileManager::default());
     system_manager.add(ConstructManager::default());
     system_manager.add(CullingManager::default());
+    system_manager.add(Renderer::new(&context.display)?);
     system_manager.add(InstanceRenderer::new(
         &context.display,
         Shape::rect(&context.display, Vec2d([1.0; 2]))?,
