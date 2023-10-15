@@ -7,9 +7,8 @@ use crate::{
 };
 use hex::{
     anyhow,
-    assets::Shape,
     assets::Texture,
-    components::{Camera, Sprite, Transform},
+    components::{Camera, Transform},
     ecs::{ev::Control, system_manager::System, ComponentManager, Context, EntityManager, Ev, Id},
     glium::{
         glutin::event::{Event, WindowEvent},
@@ -20,6 +19,7 @@ use hex::{
     math::Vec2d,
     once_cell::sync::OnceCell,
 };
+use hex_instance::Instance;
 use hex_physics::Physical;
 use noise::NoiseFn;
 use rand::prelude::*;
@@ -100,7 +100,7 @@ impl ChunkManager {
         chunk @ (x, y): (u32, u32),
         context: &Context,
         state: &mut State,
-    ) -> anyhow::Result<(Chunk, Sprite, Transform)> {
+    ) -> anyhow::Result<(Chunk, Instance, Transform)> {
         let chunks_dir = PathBuf::from(SAVE_DIR).join("chunks");
         let path = chunks_dir.join(Self::chunk_file(chunk));
         let data = if Path::exists(&path) {
@@ -153,13 +153,7 @@ impl ChunkManager {
 
         Ok((
             chunk,
-            Sprite::new(
-                Shape::rect(&context.display, Vec2d([1.0; 2]))?,
-                texture,
-                [1.0; 4],
-                -5.0,
-                true,
-            ),
+            Instance::new(texture, [1.0; 4], -4.0, true),
             Transform::new(
                 Vec2d(data.position) * CHUNK_SIZE as f32 - Vec2d([CHUNK_SIZE as f32 / 2.0; 2]),
                 0.0,
@@ -277,16 +271,16 @@ impl System for ChunkManager {
                                     .map(|m| {
                                         m.load_queue
                                             .drain(
-                                                ..((FRAME_LOAD_AMOUNT
+                                                0..((FRAME_LOAD_AMOUNT
                                                     * delta.as_secs_f32().ceil() as usize)
-                                                    .min(m.load_queue.len())),
+                                                    .max(m.load_queue.len())),
                                             )
                                             .collect()
                                     })
                                     .unwrap_or_default();
 
                                 for c in chunks {
-                                    if let Some((chunk, sprite, transform)) =
+                                    if let Some((chunk, instance, transform)) =
                                         if let Some(state) = cm.get_mut::<State>(player) {
                                             Some(self.load_chunk(c, context, state)?)
                                         } else {
@@ -296,7 +290,7 @@ impl System for ChunkManager {
                                         let e = em.add();
 
                                         cm.add(e, chunk, em);
-                                        cm.add(e, sprite, em);
+                                        cm.add(e, instance, em);
                                         cm.add(e, transform, em);
 
                                         if let Some(map) = cm.get_mut::<Map>(self.map) {
