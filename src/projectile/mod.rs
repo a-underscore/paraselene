@@ -30,7 +30,7 @@ impl Projectile {
                 spawn_time: OnceCell::new(),
                 alive_time: Duration::from_secs_f32(1.0),
                 velocity: Vec2d::new(0.0, 30.0),
-                cooldown: Duration::from_millis(50),
+                cooldown: Duration::from_millis(100),
                 trail_data: None,
                 dmg: 2.0,
             },
