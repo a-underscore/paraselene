@@ -16,7 +16,7 @@ use hex::{
     assets::Shape,
     ecs::{ComponentManager, Context, EntityManager, Id, SystemManager},
     glium::{
-        glutin::{dpi::Size, event_loop::EventLoop, window::WindowBuilder, ContextBuilder},
+        glutin::{event_loop::EventLoop, window::WindowBuilder, ContextBuilder},
         Display,
     },
     math::{Ortho, Vec2d},
@@ -31,8 +31,6 @@ use std::time::Duration;
 use tag::Tag;
 
 const SAVE_DIR: &str = "save";
-const WINDOW_DIMS_X: u32 = 1920;
-const WINDOW_DIMS_Y: u32 = 1080;
 const UI_CAM_DIMS: f32 = 10.0;
 const PHYSICS_CYCLES: u32 = 1;
 const PHYSICS_RATE: u32 = 5;
@@ -47,9 +45,7 @@ fn init() -> anyhow::Result<()> {
     util::setup_directories()?;
 
     let ev = EventLoop::new();
-    let wb = WindowBuilder::new()
-        .with_title("Paraselene")
-        .with_max_inner_size(Size::Logical((WINDOW_DIMS_X, WINDOW_DIMS_Y).into()));
+    let wb = WindowBuilder::new().with_title("Paraselene");
     let cb = ContextBuilder::new()
         .with_srgb(true)
         .with_vsync(true)
