@@ -89,7 +89,16 @@ impl Construct {
 
                                                     cm.add(entity, instance.clone(), em);
                                                     cm.add(entity, item.clone(), em);
-                                                    cm.add(entity, transform.clone(), em);
+                                                    cm.add(
+                                                        entity,
+                                                        Transform::new(
+                                                            transform.position(),
+                                                            0.0,
+                                                            Vec2d([1.0; 2]),
+                                                            true,
+                                                        ),
+                                                        em,
+                                                    );
                                                     cm.add(
                                                         entity,
                                                         Physical::new(

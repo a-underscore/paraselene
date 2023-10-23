@@ -48,7 +48,7 @@ fn init() -> anyhow::Result<()> {
     let wb = WindowBuilder::new().with_title("Paraselene");
     let cb = ContextBuilder::new()
         .with_srgb(true)
-        .with_vsync(true)
+        .with_vsync(false)
         .with_multisampling(8);
     let display = Display::new(wb, cb, &ev)?;
 
