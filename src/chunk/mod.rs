@@ -13,7 +13,7 @@ pub use tile_data::TileData;
 
 use hex::ecs::component_manager::Component;
 
-pub const CHUNK_SIZE: u32 = 8;
+pub const CHUNK_SIZE: u32 = 16;
 
 #[derive(Clone)]
 pub struct Chunk {
