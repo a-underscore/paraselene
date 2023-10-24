@@ -17,13 +17,13 @@ use hex::{
         BlitTarget, Surface,
     },
     math::Vec2d,
-    once_cell::sync::OnceCell,
 };
 use hex_instance::Instance;
 use hex_physics::Physical;
 use noise::NoiseFn;
 use rand::prelude::*;
 use std::{
+    cell::OnceCell,
     fs,
     path::{Path, PathBuf},
     rc::Rc,

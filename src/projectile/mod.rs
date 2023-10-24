@@ -7,11 +7,13 @@ use hex::{
     anyhow,
     ecs::{component_manager::Component, Context},
     math::Vec2d,
-    once_cell::sync::OnceCell,
 };
 use hex_instance::Instance;
 use hex_physics::Collider;
-use std::time::{Duration, Instant};
+use std::{
+    cell::OnceCell,
+    time::{Duration, Instant},
+};
 
 #[derive(Clone)]
 pub struct Projectile {

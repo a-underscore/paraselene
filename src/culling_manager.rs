@@ -7,9 +7,9 @@ use hex::{
     components::{Camera, Transform},
     ecs::{ev::Control, system_manager::System, ComponentManager, Context, EntityManager, Ev, Id},
     glium::glutin::event::Event,
-    once_cell::sync::OnceCell,
 };
 use hex_instance::Instance;
+use std::cell::OnceCell;
 
 #[derive(Default)]
 pub struct CullingManager {

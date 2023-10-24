@@ -8,10 +8,10 @@ use hex::{
         entity_manager::EntityManager,
         Context,
     },
-    once_cell::sync::Lazy,
 };
 use hex_instance::Instance;
 use noise::Perlin;
+use once_cell::sync::Lazy;
 use rand::prelude::*;
 use std::{collections::HashMap, fs, path::PathBuf};
 

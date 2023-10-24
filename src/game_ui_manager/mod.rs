@@ -29,10 +29,9 @@ use hex::{
         event_loop::ControlFlow,
     },
     math::Vec2d,
-    once_cell::sync::OnceCell,
 };
 use hex_ui::ui::Callback;
-use std::{collections::HashMap, f32::consts::PI};
+use std::{cell::OnceCell, collections::HashMap, f32::consts::PI};
 
 pub const ZOOM: f32 = 5.0;
 
