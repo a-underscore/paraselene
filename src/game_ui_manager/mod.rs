@@ -47,16 +47,19 @@ pub type Binds = HashMap<
 >;
 
 pub struct GameUiManager {
-    pub player: OnceCell<Option<Id>>,
-    pub prefab: OnceCell<Option<Id>>,
-    pub camera: OnceCell<Option<Id>>,
-    pub kp_cb: Binds,
-    pub main_menu: MainMenu,
+    player: OnceCell<Option<Id>>,
+    prefab: OnceCell<Option<Id>>,
+    camera: OnceCell<Option<Id>>,
+    kp_cb: Binds,
+    main_menu: MainMenu,
+    window_x: f32,
+    window_y: f32,
 }
 
 impl GameUiManager {
     pub fn new(
         context: &Context,
+        (window_x, window_y): (i32, i32),
         (em, cm): (&mut EntityManager, &mut ComponentManager),
     ) -> anyhow::Result<Self> {
         Ok(Self {
@@ -65,6 +68,8 @@ impl GameUiManager {
             camera: Default::default(),
             kp_cb: Default::default(),
             main_menu: MainMenu::new(&context.display, (em, cm))?,
+            window_x: window_x as f32,
+            window_y: window_y as f32,
         })
     }
 
@@ -320,10 +325,17 @@ impl System for GameUiManager {
                     if let Some(camera) = cm.get_mut::<Camera>(camera) {
                         let (dimensions, z) = {
                             let (dimensions, z) = camera.dimensions();
-                            let mut dimensions = dimensions - Vec2d([y; 2]);
+                            let mut dimensions = dimensions
+                                - (Vec2d::new(y / self.window_x, y / self.window_y) * 2.0);
 
-                            dimensions.set_x(dimensions.x().clamp(1.0, ZOOM * CAM_DIMS));
-                            dimensions.set_y(dimensions.y().clamp(1.0, ZOOM * CAM_DIMS));
+                            dimensions.set_x(dimensions.x().clamp(
+                                1.0 / self.window_x * 2.0,
+                                (ZOOM * CAM_DIMS) / self.window_x * 10.0,
+                            ));
+                            dimensions.set_y(dimensions.y().clamp(
+                                1.0 / self.window_y * 2.0,
+                                (ZOOM * CAM_DIMS) / self.window_y * 10.0,
+                            ));
 
                             (dimensions, z)
                         };

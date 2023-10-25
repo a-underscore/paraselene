@@ -9,7 +9,7 @@ use std::time::{Duration, Instant};
 pub const TICK_INTERVAL: Duration = Duration::from_millis(10);
 
 pub struct ConstructManager {
-    pub last_tick: Instant,
+    last_tick: Instant,
 }
 
 impl Default for ConstructManager {

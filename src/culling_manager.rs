@@ -13,8 +13,8 @@ use std::cell::OnceCell;
 
 #[derive(Default)]
 pub struct CullingManager {
-    pub camera: OnceCell<Option<Id>>,
-    pub player: OnceCell<Option<Id>>,
+    camera: OnceCell<Option<Id>>,
+    player: OnceCell<Option<Id>>,
 }
 
 impl System for CullingManager {

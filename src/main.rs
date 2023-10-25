@@ -44,11 +44,22 @@ fn main() {
 fn init() -> anyhow::Result<()> {
     util::setup_directories()?;
 
+    let (window_x, window_y) = {
+        let window_dims_x = 1920;
+        let window_dims_y = 1080;
+        let window_dims_gcd = util::gcd(window_dims_x, window_dims_y);
+
+        (
+            window_dims_y / window_dims_gcd,
+            window_dims_x / window_dims_gcd,
+        )
+    };
+
     let ev = EventLoop::new();
     let wb = WindowBuilder::new().with_title("Paraselene");
     let cb = ContextBuilder::new()
         .with_srgb(true)
-        .with_vsync(false)
+        .with_vsync(true)
         .with_multisampling(8);
     let display = Display::new(wb, cb, &ev)?;
 
@@ -68,8 +79,16 @@ fn init() -> anyhow::Result<()> {
         Some(Duration::from_secs_f32(1.0 / 30.0)),
     ));
     system_manager.add(ChunkManager::new((&mut em, &mut cm)));
-    system_manager.add(PlayerManager::new(&context, (&mut em, &mut cm))?);
-    system_manager.add(GameUiManager::new(&context, (&mut em, &mut cm))?);
+    system_manager.add(PlayerManager::new(
+        &context,
+        (window_x, window_y),
+        (&mut em, &mut cm),
+    )?);
+    system_manager.add(GameUiManager::new(
+        &context,
+        (window_x, window_y),
+        (&mut em, &mut cm),
+    )?);
     system_manager.add(ProjectileManager::default());
     system_manager.add(ConstructManager::default());
     system_manager.add(CullingManager::default());
@@ -78,17 +97,25 @@ fn init() -> anyhow::Result<()> {
         &context.display,
         Shape::rect(&context.display, Vec2d([1.0; 2]))?,
     )?);
-    system_manager.add(UiRenderer::new(
-        &context.display,
-        Ortho::new(
-            -UI_CAM_DIMS,
-            UI_CAM_DIMS,
-            -UI_CAM_DIMS,
-            UI_CAM_DIMS,
-            -UI_CAM_DIMS,
-            UI_CAM_DIMS,
-        ),
-    )?);
+
+    let ui_renderer = {
+        let x = window_x as f32 / 10.0;
+        let y = window_y as f32 / 10.0;
+
+        UiRenderer::new(
+            &context.display,
+            Ortho::new(
+                -UI_CAM_DIMS / x,
+                UI_CAM_DIMS / x,
+                -UI_CAM_DIMS / y,
+                UI_CAM_DIMS / y,
+                -UI_CAM_DIMS,
+                UI_CAM_DIMS,
+            ),
+        )?
+    };
+
+    system_manager.add(ui_renderer);
 
     context.init(ev, (em, cm), system_manager)?;
 

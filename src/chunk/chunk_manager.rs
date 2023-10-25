@@ -40,11 +40,11 @@ pub const FRAME_LOAD_AMOUNT: usize = 1;
 pub const ASTEROID_UPDATE_TIME: Duration = Duration::from_millis(250);
 
 pub struct ChunkManager {
-    pub player: OnceCell<Option<Id>>,
-    pub camera: OnceCell<Option<Id>>,
-    pub check: Instant,
-    pub frame: Instant,
-    pub map: Id,
+    player: OnceCell<Option<Id>>,
+    camera: OnceCell<Option<Id>>,
+    check: Instant,
+    frame: Instant,
+    map: Id,
 }
 
 impl ChunkManager {

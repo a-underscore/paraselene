@@ -64,3 +64,33 @@ pub fn lerp(f1: f32, f2: f32, t: f32) -> f32 {
 pub fn lerp_vec2d(v1: Vec2d, v2: Vec2d, t: f32) -> Vec2d {
     Vec2d::new(lerp(v1.x(), v2.x(), t), lerp(v1.y(), v2.y(), t))
 }
+
+pub fn gcd(u: i32, v: i32) -> i32 {
+    let mut v = v.wrapping_abs() as u32;
+
+    if u == 0 {
+        return v as i32;
+    }
+
+    let mut u = u.wrapping_abs() as u32;
+
+    if v == 0 {
+        return u as i32;
+    }
+
+    let gcd_exponent_on_two = (u | v).trailing_zeros();
+
+    u >>= u.trailing_zeros();
+    v >>= v.trailing_zeros();
+
+    while u != v {
+        if u < v {
+            core::mem::swap(&mut u, &mut v);
+        }
+
+        u -= v;
+        u >>= u.trailing_zeros();
+    }
+
+    (u << gcd_exponent_on_two) as i32
+}

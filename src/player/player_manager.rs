@@ -28,21 +28,23 @@ use std::time::{Duration, Instant};
 pub const CAM_DIMS: f32 = 50.0 / 3.0;
 
 pub struct PlayerManager {
-    pub player: Id,
-    pub camera: Id,
-    pub crosshair: Id,
-    pub prefab: Id,
-    pub mouse_pos: (f64, f64),
-    pub window_dims: (u32, u32),
-    pub crosshair_sprite: Sprite,
-    pub frame: Instant,
-    pub frame_time: Instant,
-    pub fps: u32,
+    player: Id,
+    camera: Id,
+    crosshair: Id,
+    prefab: Id,
+    mouse_pos: (f64, f64),
+    window_dims: (u32, u32),
+    frame: Instant,
+    frame_time: Instant,
+    window_x: f32,
+    window_y: f32,
+    fps: u32,
 }
 
 impl PlayerManager {
     pub fn new(
         context: &Context,
+        (window_x, window_y): (i32, i32),
         (em, cm): (&mut EntityManager, &mut ComponentManager),
     ) -> anyhow::Result<Self> {
         let player = em.add();
@@ -100,7 +102,17 @@ impl PlayerManager {
             Transform::new(Default::default(), 0.0, Vec2d::new(1.0, 1.0), true),
             em,
         );
-        cm.add(camera, Camera::new((Vec2d([CAM_DIMS; 2]), 10.0), true), em);
+        cm.add(
+            camera,
+            Camera::new(
+                (
+                    Vec2d::new(CAM_DIMS / window_x as f32, CAM_DIMS / window_y as f32),
+                    10.0,
+                ),
+                true,
+            ),
+            em,
+        );
         cm.add(camera, Tag::new("camera"), em);
 
         let crosshair = em.add();
@@ -136,11 +148,12 @@ impl PlayerManager {
             player,
             crosshair,
             prefab,
-            crosshair_sprite,
             frame: Instant::now(),
             mouse_pos: Default::default(),
             window_dims: Default::default(),
             frame_time: Instant::now(),
+            window_x: window_x as f32,
+            window_y: window_y as f32,
             fps: 0,
         })
     }
@@ -188,10 +201,12 @@ impl PlayerManager {
                     cm.rm::<Instance>(self.prefab, em);
                 }
 
-                if let Some(screen_pos) = cm
-                    .get::<ScreenTransform>(self.crosshair)
-                    .map(|st| st.position)
-                {
+                if let Some(screen_pos) = cm.get::<ScreenTransform>(self.crosshair).map(|st| {
+                    Vec2d::new(
+                        st.position.x() / self.window_x,
+                        st.position.y() / self.window_y,
+                    )
+                }) {
                     let res = cm.get_mut::<Transform>(self.prefab).and_then(|transform| {
                         if let Some(res) = c.map(|(c, i)| {
                             transform.set_position(screen_pos);
@@ -282,23 +297,22 @@ impl System for PlayerManager {
                 }
 
                 if let Some(mode) = cm.get::<State>(self.player).map(|p| p.mode) {
-                    if let Some(screen_pos) =
-                        cm.get::<Transform>(self.camera)
-                            .and_then(|camera_transform| {
-                                util::mouse_pos_world(
-                                    Vec2d::new(UI_CAM_DIMS * 2.0, UI_CAM_DIMS * 2.0),
-                                    camera_transform.scale(),
-                                    self.window_dims,
-                                    self.mouse_pos,
-                                )
-                            })
-                    {
+                    if let Some(screen_pos) = util::mouse_pos_world(
+                        Vec2d::new(
+                            UI_CAM_DIMS / (self.window_x / 10.0) * 2.0,
+                            UI_CAM_DIMS / (self.window_y / 10.0) * 2.0,
+                        ),
+                        Vec2d([1.0; 2]),
+                        self.window_dims,
+                        self.mouse_pos,
+                    ) {
                         if let Some(screen_transform) =
                             cm.get_mut::<ScreenTransform>(self.crosshair)
                         {
                             screen_transform.position = screen_pos;
                         }
                     }
+
                     let delta = now.duration_since(self.frame);
 
                     self.frame = now;
