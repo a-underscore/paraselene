@@ -32,7 +32,7 @@ use std::{
 
 pub const MAX_MAP_SIZE: u32 = 10000;
 pub const TILE_SIZE: u32 = 32;
-pub const CHUNK_DIST: f32 = 0.75;
+pub const CHUNK_DIST: f32 = 1.0;
 pub const MAX_CHUNK: u32 = MAX_MAP_SIZE / CHUNK_SIZE;
 pub const MIN_CHUNK: u32 = 2;
 pub const UNLOAD_BIAS: u32 = 8;
