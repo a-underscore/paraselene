@@ -106,7 +106,7 @@ impl PlayerManager {
             camera,
             Camera::new(
                 (
-                    Vec2d::new(CAM_DIMS / window_x as f32, CAM_DIMS / window_y as f32),
+                    Vec2d::new(CAM_DIMS / window_x as f32, CAM_DIMS / window_y as f32) * 5.0,
                     10.0,
                 ),
                 true,

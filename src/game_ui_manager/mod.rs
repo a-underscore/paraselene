@@ -315,27 +315,38 @@ impl System for GameUiManager {
                     .camera
                     .get_or_init(|| Tag::new("camera").find((em, cm)))
                 {
-                    let (_, y) = match delta {
-                        MouseScrollDelta::LineDelta(x, y) => (*x, *y),
-                        MouseScrollDelta::PixelDelta(PhysicalPosition { x, y }) => {
-                            (*x as f32, *y as f32)
-                        }
+                    let zoom_amount = {
+                        let (_, y) = match delta {
+                            MouseScrollDelta::LineDelta(x, y) => (*x, *y),
+                            MouseScrollDelta::PixelDelta(PhysicalPosition { x, y }) => {
+                                (*x as f32, *y as f32)
+                            }
+                        };
+
+                        y * 5.0
                     };
 
                     if let Some(camera) = cm.get_mut::<Camera>(camera) {
                         let (dimensions, z) = {
                             let (dimensions, z) = camera.dimensions();
-                            let mut dimensions = dimensions
-                                - (Vec2d::new(y / self.window_x, y / self.window_y) * 2.0);
+                            let dimensions = {
+                                let dimensions = dimensions
+                                    - (Vec2d::new(
+                                        zoom_amount / self.window_x,
+                                        zoom_amount / self.window_y,
+                                    ) * 2.0);
 
-                            dimensions.set_x(dimensions.x().clamp(
-                                1.0 / self.window_x * 2.0,
-                                (ZOOM * CAM_DIMS) / self.window_x * 10.0,
-                            ));
-                            dimensions.set_y(dimensions.y().clamp(
-                                1.0 / self.window_y * 2.0,
-                                (ZOOM * CAM_DIMS) / self.window_y * 10.0,
-                            ));
+                                Vec2d::new(
+                                    dimensions.x().clamp(
+                                        1.0 / self.window_x * 2.0,
+                                        (ZOOM * CAM_DIMS) / self.window_x * 10.0,
+                                    ),
+                                    dimensions.y().clamp(
+                                        1.0 / self.window_y * 2.0,
+                                        (ZOOM * CAM_DIMS) / self.window_y * 10.0,
+                                    ),
+                                )
+                            };
 
                             (dimensions, z)
                         };
