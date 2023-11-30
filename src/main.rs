@@ -33,7 +33,7 @@ use tag::Tag;
 const SAVE_DIR: &str = "save";
 const UI_CAM_DIMS: f32 = 10.0;
 const PHYSICS_CYCLES: u32 = 1;
-const PHYSICS_RATE: u32 = 5;
+const PHYSICS_RATE: u32 = 2;
 const PROJECTILE_LAYER: Id = 1;
 const PLAYER_LAYER: Id = 2;
 
@@ -59,7 +59,7 @@ fn init() -> anyhow::Result<()> {
     let wb = WindowBuilder::new().with_title("Paraselene");
     let cb = ContextBuilder::new()
         .with_srgb(true)
-        .with_vsync(true)
+        .with_vsync(false)
         .with_multisampling(8);
     let display = Display::new(wb, cb, &ev)?;
 
