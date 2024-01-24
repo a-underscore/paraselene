@@ -4,12 +4,10 @@ pub mod map;
 pub mod tile;
 pub mod tile_data;
 
-pub use crate::player::State;
 pub use chunk_data::ChunkData;
 pub use chunk_manager::ChunkManager;
 pub use map::Map;
 pub use tile::Tile;
-pub use tile_data::TileData;
 
 use hex::ecs::component_manager::Component;
 

@@ -5,7 +5,7 @@ pub mod item_data;
 
 pub use construct_data::ConstructData;
 pub use construct_manager::ConstructManager;
-pub use item::{Item, METAL, REFINED_METAL};
+pub use item::Item;
 pub use item_data::ItemData;
 
 use crate::{
